@@ -12,6 +12,9 @@
   --teal-dark: #159582;
   --button: #eef3f8;
   --shadow: 0 8px 28px rgba(38, 56, 78, 0.06);
+  --page-max-width: 1500px;
+  --field-max-width: 900px;
+  --textarea-max-width: 1200px;
 }
 
 * {
@@ -155,6 +158,8 @@ button {
 }
 
 .content {
+  max-width: var(--page-max-width);
+  margin: 0 auto;
   padding: 34px 28px 48px;
 }
 
@@ -295,6 +300,16 @@ textarea {
   background: var(--input-bg);
   color: #344762;
   outline: none;
+}
+
+.field.full-width input,
+.field.full-width select,
+.money-input {
+  max-width: var(--field-max-width);
+}
+
+.field.full-width textarea {
+  max-width: var(--textarea-max-width);
 }
 
 input,
@@ -571,6 +586,7 @@ select option {
   }
 
   .content {
+    max-width: none;
     padding: 24px 16px 36px;
   }
 
