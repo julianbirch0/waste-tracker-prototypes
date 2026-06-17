@@ -1,0 +1,130 @@
+Spec Ready Definition - Collection Date and Time Selector
+
+Feature name
+
+Collection date and time selector.
+
+Purpose
+
+To provide a clear, deliberate two-step interaction for selecting the planned collection date and time. The design avoids the current issue where the time selector is visually lost beneath the calendar.
+
+User outcome
+
+The user can select a collection date and time with confidence, confirm the selected value, and see the confirmed date and time clearly on the main page.
+
+Main page behaviour
+
+1. The page displays a section headed Collection date and time.
+2. The page displays a single summary line labelled Selected date and time.
+3. If no value has been set, the summary line displays No date and time selected yet.
+4. The page displays an action button labelled Select collection date and time.
+5. Selecting the action button displays the date and time picker panel.
+6. The picker panel is hidden by default when the page first opens.
+7. Once a date and time has been set, the summary line displays the selected value in a readable format.
+8. Once a date and time has been set, the action button label changes to Change collection date and time.
+
+Picker panel behaviour
+
+1. The picker panel supports a two-step process:
+   a. Select date.
+   b. Select time.
+2. The picker panel opens on the Select date step.
+3. The date and time steps are indicated by the panel headings only.
+4. No separate step pills or tab indicators are required.
+
+Date selection behaviour
+
+1. The Select date step displays the heading Select date.
+2. The Select date step displays helper text: Use a preset or pick a date from the calendar.
+3. The Select date step provides a Today preset.
+4. The Select date step provides a Tomorrow preset.
+5. The Select date step displays a simple calendar.
+6. The user can select one date only.
+7. Selecting Today sets the date to the current date.
+8. Selecting Tomorrow sets the date to the next calendar day.
+9. Selecting a calendar date sets the date to the selected calendar date.
+10. As soon as a date is selected, the picker automatically moves to the Select time step.
+11. No Next working day preset is required.
+
+Time selection behaviour
+
+1. The Select time step displays the heading Select time.
+2. The Select time step displays the selected date.
+3. The time defaults to 12:00.
+4. The Select time step provides time presets for 09:00, 12:00, and 15:00.
+5. Selecting a time preset updates the selected time.
+6. The user can adjust the hour using up and down controls.
+7. The hour increments and decrements by 1.
+8. The hour must remain between 00 and 23.
+9. If the hour is 00, the hour down control must not reduce it further.
+10. If the hour is 23, the hour up control must not increase it further.
+11. The user can adjust the minutes using up and down controls.
+12. The minute controls increment and decrement in 15-minute steps.
+13. If the selected time is 12:00 and the user decrements the minutes, the selected time becomes 11:45.
+14. If the selected time is 12:45 and the user increments the minutes, the selected time becomes 13:00.
+15. The minimum selectable time using the controls is 00:00.
+16. The maximum selectable time using the controls is 23:45.
+17. The user can manually overtype the hour.
+18. Manually entered hours must be numeric and between 0 and 23.
+19. The user can manually overtype the minutes.
+20. Manually entered minutes must be numeric and between 0 and 59.
+21. Manually entered values are displayed with leading zeroes.
+22. Invalid manual input prevents the date and time from being set.
+23. Invalid manual input displays a clear validation message.
+
+Time panel actions
+
+1. The Select time step provides a Back to set date button.
+2. Selecting Back to set date returns the user to the Select date step.
+3. The Select time step provides a Set date and time button.
+4. Selecting Set date and time confirms the selected date and time.
+5. On confirmation, the picker panel closes.
+6. On confirmation, the main page summary updates to display the selected date and time.
+7. The confirmation action does not display a browser alert or dialogue.
+
+Display rules
+
+1. Dates should be displayed in a clear UK-friendly readable format.
+2. Times should be displayed in 24-hour HH:MM format.
+3. Hours and minutes should always be displayed with leading zeroes.
+4. The main page should display a single selected value, not separate date and time lines.
+
+Out of scope for this version
+
+1. Company-specific working day rules.
+2. Saturday, Sunday, or bank holiday restrictions.
+3. Next working day logic.
+4. Time windows.
+5. Time zone handling.
+6. Backend save behaviour.
+7. User permissions.
+8. Audit history.
+9. Mobile-native date/time picker integration.
+
+Prototype location
+
+Repository: julianbirch0/waste-tracker-prototypes
+Folder: date-time-selector-prototype
+
+Acceptance criteria
+
+1. The page opens with the picker panel hidden.
+2. The page shows the caption Collection date and time.
+3. The page shows one summary line labelled Selected date and time.
+4. The initial summary value is No date and time selected yet.
+5. The user can open the picker by selecting Select collection date and time.
+6. The picker opens on Select date.
+7. The user can select Today.
+8. The user can select Tomorrow.
+9. The user can select a single date from the calendar.
+10. Selecting a date automatically opens Select time.
+11. The selected time defaults to 12:00.
+12. The user can select 09:00, 12:00, or 15:00 using preset buttons.
+13. The user can increment and decrement hours within 00 to 23.
+14. The user can increment and decrement minutes in 15-minute steps, including hour rollover.
+15. The user can manually type valid hour and minute values.
+16. Invalid hour or minute values are rejected with a validation message.
+17. Selecting Back to set date returns the user to date selection.
+18. Selecting Set date and time closes the picker and updates the page summary.
+19. No browser alert is shown on confirmation.
+20. After confirmation, the main page button reads Change collection date and time.
