@@ -1,7 +1,9 @@
+var pickerPanel = document.getElementById('pickerPanel');
+var openPickerButton = document.getElementById('openPickerButton');
+var pageSelectedDateTime = document.getElementById('pageSelectedDateTime');
+
 var datePanel = document.getElementById('datePanel');
 var timePanel = document.getElementById('timePanel');
-var dateStepPill = document.getElementById('dateStepPill');
-var timeStepPill = document.getElementById('timeStepPill');
 
 var todayButton = document.getElementById('todayButton');
 var tomorrowButton = document.getElementById('tomorrowButton');
@@ -23,11 +25,14 @@ var backButton = document.getElementById('backButton');
 var setButton = document.getElementById('setButton');
 
 var selectedDate = null;
+var confirmedDate = null;
 var visibleMonth = new Date();
 visibleMonth.setDate(1);
 
 var selectedHour = 12;
 var selectedMinute = 0;
+var confirmedHour = null;
+var confirmedMinute = null;
 
 function padNumber(value) {
   value = Number(value);
@@ -57,22 +62,40 @@ function formatDateForDisplay(date) {
   });
 }
 
-function formatTimeForDisplay() {
-  return padNumber(selectedHour) + ':' + padNumber(selectedMinute);
+function formatTimeForDisplay(hour, minute) {
+  return padNumber(hour) + ':' + padNumber(minute);
+}
+
+function getSelectedDateTimeText() {
+  return formatDateForDisplay(selectedDate) + ' at ' + formatTimeForDisplay(selectedHour, selectedMinute);
+}
+
+function getConfirmedDateTimeText() {
+  if (!confirmedDate) {
+    return 'No date and time selected yet.';
+  }
+
+  return formatDateForDisplay(confirmedDate) + ' at ' + formatTimeForDisplay(confirmedHour, confirmedMinute);
 }
 
 function setActivePanel(panelName) {
   if (panelName === 'date') {
     datePanel.classList.add('active-panel');
     timePanel.classList.remove('active-panel');
-    dateStepPill.classList.add('active');
-    timeStepPill.classList.remove('active');
   } else {
     datePanel.classList.remove('active-panel');
     timePanel.classList.add('active-panel');
-    dateStepPill.classList.remove('active');
-    timeStepPill.classList.add('active');
   }
+}
+
+function showPicker() {
+  pickerPanel.classList.remove('hidden');
+  setActivePanel('date');
+  renderCalendar();
+}
+
+function hidePicker() {
+  pickerPanel.classList.add('hidden');
 }
 
 function setSelectedDate(date) {
@@ -144,6 +167,16 @@ function parseManualInput() {
   return true;
 }
 
+function updatePageSummary() {
+  pageSelectedDateTime.textContent = getConfirmedDateTimeText();
+
+  if (confirmedDate) {
+    openPickerButton.textContent = 'Change collection date and time';
+  } else {
+    openPickerButton.textContent = 'Select collection date and time';
+  }
+}
+
 function updateSummary() {
   selectedDateText.textContent = formatDateForDisplay(selectedDate);
 
@@ -153,7 +186,7 @@ function updateSummary() {
     return;
   }
 
-  summaryText.textContent = 'Collection planned for ' + formatDateForDisplay(selectedDate) + ' at ' + formatTimeForDisplay() + '.';
+  summaryText.textContent = 'Collection planned for ' + getSelectedDateTimeText() + '.';
 
   if (!validationMessage.textContent) {
     setButton.disabled = false;
@@ -221,7 +254,22 @@ function changeVisibleMonth(change) {
   renderCalendar();
 }
 
+function confirmSelection() {
+  if (!parseManualInput()) {
+    return;
+  }
+
+  confirmedDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
+  confirmedHour = selectedHour;
+  confirmedMinute = selectedMinute;
+
+  updatePageSummary();
+  hidePicker();
+}
+
 function wireEvents() {
+  openPickerButton.addEventListener('click', showPicker);
+
   todayButton.addEventListener('click', function () {
     setDateOffset(0);
   });
@@ -283,13 +331,7 @@ function wireEvents() {
     setActivePanel('date');
   });
 
-  setButton.addEventListener('click', function () {
-    if (!parseManualInput()) {
-      return;
-    }
-
-    alert('Date and time set:\n' + formatDateForDisplay(selectedDate) + ' at ' + formatTimeForDisplay());
-  });
+  setButton.addEventListener('click', confirmSelection);
 }
 
 function initialise() {
@@ -297,7 +339,9 @@ function initialise() {
   renderCalendar();
   updateTimeInputs();
   updateSummary();
+  updatePageSummary();
   setActivePanel('date');
+  hidePicker();
 }
 
 initialise();
