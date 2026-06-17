@@ -31,7 +31,7 @@
   });
 
   clearFilterButton.addEventListener('click', function () {
-    resetSelectionState();
+    resetToInitialFilterState();
     filterCaption.textContent = 'No filter set, all dates shown';
     hidePanel();
     renderCalendar();
@@ -74,8 +74,7 @@
     });
   }
 
-  showTab('presets');
-  updateInstruction();
+  resetToInitialFilterState();
   renderCalendar();
 
   function showTab(tabName) {
@@ -250,6 +249,23 @@
     state.rangeEnd = null;
     state.selectedDate = null;
     updateInstruction();
+  }
+
+  function resetToInitialFilterState() {
+    state.visibleMonth = startOfMonth(new Date());
+    state.mode = 'single';
+    state.rangeStart = null;
+    state.rangeEnd = null;
+    state.selectedDate = null;
+    setCustomModeRadio('single');
+    updateInstruction();
+    showTab('presets');
+  }
+
+  function setCustomModeRadio(mode) {
+    for (var i = 0; i < modeInputs.length; i += 1) {
+      modeInputs[i].checked = modeInputs[i].value === mode;
+    }
   }
 
   function formatDate(date) {
