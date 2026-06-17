@@ -6,6 +6,7 @@ What it demonstrates
 
 - Initial caption: No filter set, all dates shown
 - Button to open and hide the date filter panel
+- Button label changes from Set date filter to Edit date filter once a filter is active
 - Date filter panel with two tabs:
   - Presets
   - Custom
@@ -18,6 +19,7 @@ What it demonstrates
 - Custom options:
   - Single date
   - Date range
+- Switching from Single date to Date range keeps the existing single date as the range start
 - Calendar month navigation
 - Immediate panel collapse after selecting a preset, a single date, or the end date of a date range
 - Clear filter action
