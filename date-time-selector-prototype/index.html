@@ -8,87 +8,93 @@
 </head>
 <body>
   <main class="prototype-shell">
-    <section class="selector-card" aria-labelledby="selectorTitle">
+    <section class="selector-card" aria-labelledby="pageTitle">
       <div class="selector-header">
         <div>
           <p class="eyebrow">WasteTracker prototype</p>
-          <h1 id="selectorTitle">Date and time selector</h1>
-        </div>
-
-        <div class="step-indicator" aria-label="Current step">
-          <span id="dateStepPill" class="step-pill active">1 Date</span>
-          <span id="timeStepPill" class="step-pill">2 Time</span>
+          <h1 id="pageTitle">Collection date and time</h1>
         </div>
       </div>
 
-      <div id="datePanel" class="panel active-panel">
-        <h2>Select date</h2>
-        <p class="hint">Use a preset or pick a date from the calendar.</p>
-
-        <div class="preset-row" aria-label="Date presets">
-          <button type="button" id="todayButton" class="preset-button">Today</button>
-          <button type="button" id="tomorrowButton" class="preset-button">Tomorrow</button>
-        </div>
-
-        <div class="calendar-card">
-          <div class="calendar-header">
-            <button type="button" id="previousMonthButton" class="icon-button" aria-label="Previous month">‹</button>
-            <div id="calendarMonthLabel" class="calendar-month-label"></div>
-            <button type="button" id="nextMonthButton" class="icon-button" aria-label="Next month">›</button>
-          </div>
-
-          <div class="weekday-row" aria-hidden="true">
-            <span>Mon</span>
-            <span>Tue</span>
-            <span>Wed</span>
-            <span>Thu</span>
-            <span>Fri</span>
-            <span>Sat</span>
-            <span>Sun</span>
-          </div>
-
-          <div id="calendarGrid" class="calendar-grid" aria-label="Calendar dates"></div>
-        </div>
+      <div class="page-summary">
+        <div class="summary-label">Selected date and time</div>
+        <div id="pageSelectedDateTime" class="summary-text">No date and time selected yet.</div>
       </div>
 
-      <div id="timePanel" class="panel">
-        <h2>Select time</h2>
-        <p class="hint">Selected date: <strong id="selectedDateText">None selected</strong></p>
+      <button type="button" id="openPickerButton" class="primary-button page-action-button">
+        Select collection date and time
+      </button>
 
-        <div class="preset-row" aria-label="Time presets">
-          <button type="button" class="preset-button time-preset" data-hour="9" data-minute="0">09:00</button>
-          <button type="button" class="preset-button time-preset" data-hour="12" data-minute="0">12:00</button>
-          <button type="button" class="preset-button time-preset" data-hour="15" data-minute="0">15:00</button>
-        </div>
+      <div id="pickerPanel" class="picker-panel hidden" aria-label="Collection date and time picker">
+        <div id="datePanel" class="panel active-panel">
+          <h2>Select date</h2>
+          <p class="hint">Use a preset or pick a date from the calendar.</p>
 
-        <div class="time-picker" aria-label="Time picker">
-          <div class="time-column">
-            <button type="button" id="hourUpButton" class="arrow-button" aria-label="Increase hour">▲</button>
-            <input id="hourInput" class="time-input" type="text" inputmode="numeric" maxlength="2" aria-label="Hour" value="12">
-            <button type="button" id="hourDownButton" class="arrow-button" aria-label="Decrease hour">▼</button>
-            <div class="time-label">Hours</div>
+          <div class="preset-row" aria-label="Date presets">
+            <button type="button" id="todayButton" class="preset-button">Today</button>
+            <button type="button" id="tomorrowButton" class="preset-button">Tomorrow</button>
           </div>
 
-          <div class="time-separator">:</div>
+          <div class="calendar-card">
+            <div class="calendar-header">
+              <button type="button" id="previousMonthButton" class="icon-button" aria-label="Previous month">‹</button>
+              <div id="calendarMonthLabel" class="calendar-month-label"></div>
+              <button type="button" id="nextMonthButton" class="icon-button" aria-label="Next month">›</button>
+            </div>
 
-          <div class="time-column">
-            <button type="button" id="minuteUpButton" class="arrow-button" aria-label="Increase minutes">▲</button>
-            <input id="minuteInput" class="time-input" type="text" inputmode="numeric" maxlength="2" aria-label="Minute" value="00">
-            <button type="button" id="minuteDownButton" class="arrow-button" aria-label="Decrease minutes">▼</button>
-            <div class="time-label">Minutes</div>
+            <div class="weekday-row" aria-hidden="true">
+              <span>Mon</span>
+              <span>Tue</span>
+              <span>Wed</span>
+              <span>Thu</span>
+              <span>Fri</span>
+              <span>Sat</span>
+              <span>Sun</span>
+            </div>
+
+            <div id="calendarGrid" class="calendar-grid" aria-label="Calendar dates"></div>
           </div>
         </div>
 
-        <p id="validationMessage" class="validation-message" role="alert"></p>
+        <div id="timePanel" class="panel">
+          <h2>Select time</h2>
+          <p class="hint">Selected date: <strong id="selectedDateText">None selected</strong></p>
 
-        <div class="summary-card">
-          <div class="summary-label">Selection</div>
-          <div id="summaryText" class="summary-text">No date and time selected.</div>
-        </div>
+          <div class="preset-row" aria-label="Time presets">
+            <button type="button" class="preset-button time-preset" data-hour="9" data-minute="0">09:00</button>
+            <button type="button" class="preset-button time-preset" data-hour="12" data-minute="0">12:00</button>
+            <button type="button" class="preset-button time-preset" data-hour="15" data-minute="0">15:00</button>
+          </div>
 
-        <div class="action-row">
-          <button type="button" id="backButton" class="secondary-button">Back</button>
-          <button type="button" id="setButton" class="primary-button">Set date and time</button>
+          <div class="time-picker" aria-label="Time picker">
+            <div class="time-column">
+              <button type="button" id="hourUpButton" class="arrow-button" aria-label="Increase hour">▲</button>
+              <input id="hourInput" class="time-input" type="text" inputmode="numeric" maxlength="2" aria-label="Hour" value="12">
+              <button type="button" id="hourDownButton" class="arrow-button" aria-label="Decrease hour">▼</button>
+              <div class="time-label">Hours</div>
+            </div>
+
+            <div class="time-separator">:</div>
+
+            <div class="time-column">
+              <button type="button" id="minuteUpButton" class="arrow-button" aria-label="Increase minutes">▲</button>
+              <input id="minuteInput" class="time-input" type="text" inputmode="numeric" maxlength="2" aria-label="Minute" value="00">
+              <button type="button" id="minuteDownButton" class="arrow-button" aria-label="Decrease minutes">▼</button>
+              <div class="time-label">Minutes</div>
+            </div>
+          </div>
+
+          <p id="validationMessage" class="validation-message" role="alert"></p>
+
+          <div class="summary-card">
+            <div class="summary-label">Selection</div>
+            <div id="summaryText" class="summary-text">No date and time selected.</div>
+          </div>
+
+          <div class="action-row">
+            <button type="button" id="backButton" class="secondary-button">Back to set date</button>
+            <button type="button" id="setButton" class="primary-button">Set date and time</button>
+          </div>
         </div>
       </div>
     </section>
