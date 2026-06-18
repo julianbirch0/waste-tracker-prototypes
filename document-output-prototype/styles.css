@@ -165,43 +165,13 @@ button:hover {
   line-height: 1.45;
 }
 
-.document-body h2 {
-  margin-top: 0;
-  font-size: 18px;
+.document-title {
+  margin: 0 0 24px 0;
+  text-align: center;
+  font-size: 22px;
+  font-weight: bold;
 }
 
 .document-body p {
   margin: 0 0 8px 0;
-}
-
-@media print {
-  body {
-    background: #fff;
-  }
-
-  .control-panel {
-    display: none;
-  }
-
-  .app-shell {
-    display: block;
-  }
-
-  .preview-panel {
-    padding: 0;
-    overflow: visible;
-  }
-
-  .document-page {
-    width: auto;
-    min-height: auto;
-    margin: 0;
-    padding: 0;
-    box-shadow: none;
-  }
-
-  @page {
-    size: A4 portrait;
-    margin: 14mm;
-  }
 }
