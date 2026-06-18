@@ -1,7 +1,11 @@
 var logo1DataUrl = "";
 var logo2DataUrl = "";
+var currentDocumentData = null;
 
 var sampleJson = {
+  "document": {
+    "title": "Work Order"
+  },
   "broker": {
     "companyName": "Example Waste Broker Ltd",
     "addressLine1": "Example House",
@@ -22,9 +26,7 @@ function initialise() {
 
   document.getElementById("renderButton").onclick = renderFromJsonInput;
   document.getElementById("resetButton").onclick = resetSample;
-  document.getElementById("printButton").onclick = function () {
-    window.print();
-  };
+  document.getElementById("downloadButton").onclick = downloadPdf;
 
   document.getElementById("logoFile1").onchange = function (event) {
     readLogoFile(event, function (dataUrl) {
@@ -79,6 +81,7 @@ function renderFromJsonInput() {
     return;
   }
 
+  currentDocumentData = data;
   renderDocument(data);
 }
 
@@ -125,12 +128,62 @@ function renderFooter(data) {
 }
 
 function renderBody(data) {
+  var documentData = data.document || {};
+  var title = valueOrBlank(documentData.title) || "Work Order";
+
   return '' +
     '<section class="document-body">' +
-      '<h2>Document body placeholder</h2>' +
+      '<div class="document-title">' + escapeHtml(title) + '</div>' +
       '<p>This area is intentionally plain for now.</p>' +
-      '<p>The next iteration can add the work order title, subcontractor details, producer site details and waste item table.</p>' +
+      '<p>The next iteration can add subcontractor details, producer site details and waste item table.</p>' +
     '</section>';
+}
+
+function downloadPdf() {
+  var errorElement = document.getElementById("errorMessage");
+  var documentElement = document.querySelector(".document-page");
+  var documentData = currentDocumentData || {};
+  var title = "WasteTracker Document";
+  var fileName;
+  var options;
+
+  errorElement.textContent = "";
+
+  if (!documentElement) {
+    errorElement.textContent = "No document is available to download.";
+    return;
+  }
+
+  if (!window.html2pdf) {
+    errorElement.textContent = "PDF download library has not loaded. Please refresh the page and try again.";
+    return;
+  }
+
+  if (documentData.document && documentData.document.title) {
+    title = valueOrBlank(documentData.document.title) || title;
+  }
+
+  fileName = makeSafeFileName(title) + ".pdf";
+
+  options = {
+    margin: 0,
+    filename: fileName,
+    image: {
+      type: "jpeg",
+      quality: 0.98
+    },
+    html2canvas: {
+      scale: 2,
+      useCORS: true
+    },
+    jsPDF: {
+      unit: "mm",
+      format: "a4",
+      orientation: "portrait"
+    }
+  };
+
+  window.html2pdf().set(options).from(documentElement).save();
 }
 
 function renderLogo(dataUrl, placeholderText) {
@@ -159,6 +212,19 @@ function valueOrBlank(value) {
   }
 
   return String(value).trim();
+}
+
+function makeSafeFileName(value) {
+  var cleanValue = valueOrBlank(value);
+
+  if (!cleanValue) {
+    cleanValue = "WasteTracker Document";
+  }
+
+  return cleanValue
+    .replace(/[^a-z0-9\-_ ]/gi, "")
+    .replace(/\s+/g, "-")
+    .toLowerCase();
 }
 
 function escapeHtml(value) {
