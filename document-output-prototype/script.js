@@ -142,6 +142,8 @@ function renderBody(data) {
 function downloadPdf() {
   var errorElement = document.getElementById("errorMessage");
   var documentElement = document.querySelector(".document-page");
+  var exportContainer;
+  var exportElement;
   var documentData = currentDocumentData || {};
   var title = "WasteTracker Document";
   var fileName;
@@ -165,6 +167,21 @@ function downloadPdf() {
 
   fileName = makeSafeFileName(title) + ".pdf";
 
+  exportContainer = document.createElement("div");
+  exportContainer.style.position = "fixed";
+  exportContainer.style.left = "-10000px";
+  exportContainer.style.top = "0";
+  exportContainer.style.background = "#ffffff";
+
+  exportElement = documentElement.cloneNode(true);
+  exportElement.style.margin = "0";
+  exportElement.style.boxShadow = "none";
+  exportElement.style.width = "210mm";
+  exportElement.style.minHeight = "296mm";
+
+  exportContainer.appendChild(exportElement);
+  document.body.appendChild(exportContainer);
+
   options = {
     margin: 0,
     filename: fileName,
@@ -174,16 +191,25 @@ function downloadPdf() {
     },
     html2canvas: {
       scale: 2,
-      useCORS: true
+      useCORS: true,
+      backgroundColor: "#ffffff"
     },
     jsPDF: {
       unit: "mm",
       format: "a4",
       orientation: "portrait"
+    },
+    pagebreak: {
+      mode: ["css", "legacy"]
     }
   };
 
-  window.html2pdf().set(options).from(documentElement).save();
+  window.html2pdf().set(options).from(exportElement).save().then(function () {
+    document.body.removeChild(exportContainer);
+  }).catch(function (error) {
+    document.body.removeChild(exportContainer);
+    errorElement.textContent = "PDF download error:\n" + error.message;
+  });
 }
 
 function renderLogo(dataUrl, placeholderText) {
