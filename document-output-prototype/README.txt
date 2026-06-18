@@ -9,7 +9,7 @@ It is intentionally not production code.
 
 Current prototype
 -----------------
-This first version renders:
+This version renders:
 
 - Repeatable header
 - Repeatable footer
@@ -17,7 +17,9 @@ This first version renders:
 - Footer logo upload
 - Broker company name and address/contact details
 - WasteTracker strapline
+- Non-repeating document title at the top of the body section
 - Placeholder body area
+- Download button to generate a PDF from the preview
 
 How to use
 ----------
@@ -27,11 +29,14 @@ Paste or edit the JSON in the left-hand panel, then click Render.
 
 Use the two logo file inputs to test different header and footer logos.
 
-Use Print / Save as PDF to test basic browser PDF output.
+Click Download to generate a PDF from the current preview.
 
 JSON structure
 --------------
 {
+  "document": {
+    "title": "Work Order"
+  },
   "broker": {
     "companyName": "Example Waste Broker Ltd",
     "addressLine1": "Example House",
@@ -52,3 +57,5 @@ Notes
 Blank broker address fields are skipped, so addressLine4 can be blank without leaving an empty line.
 
 Logo boxes reserve a fixed space. Uploaded logos are scaled to fit without distortion or cropping.
+
+PDF download is generated in the browser using html2pdf.js. The browser controls the final download location depending on its settings.
