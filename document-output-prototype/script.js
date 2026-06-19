@@ -172,7 +172,7 @@ function renderWorkOrderSummary(data) {
     '<section class="work-order-summary">' +
       '<div class="broker-summary">' +
         '<div class="broker-name-line">' + brokerNameLine + '</div>' +
-        '<div>' + escapeHtml(getValue(data, "street_address")) + ' &nbsp;' + escapeHtml(getValue(data, "city")) + ' &nbsp;' + escapeHtml(getValue(data, "postcode")) + '</div>' +
+        '<div>' + escapeHtml(formatBrokerAddressLine(data)) + '</div>' +
         '<div class="broker-contact-line"><span>' + escapeHtml(getValue(data, "company_email")) + '</span><span>' + escapeHtml(getValue(data, "company_phone")) + '</span></div>' +
         '<div class="broker-registration-row">' +
           '<span>COMPANY NUMBER: ' + escapeHtml(getValue(data, "registration_number")) + '</span>' +
@@ -181,6 +181,31 @@ function renderWorkOrderSummary(data) {
         '</div>' +
       '</div>' +
     '</section>';
+}
+
+function formatBrokerAddressLine(data) {
+  var streetAddress = getValue(data, "street_address");
+  var city = getValue(data, "city");
+  var postcode = getValue(data, "postcode");
+  var parts = [];
+
+  if (streetAddress) {
+    if (streetAddress.charAt(streetAddress.length - 1) !== ',') {
+      streetAddress += ',';
+    }
+
+    parts.push(streetAddress);
+  }
+
+  if (city) {
+    parts.push(city);
+  }
+
+  if (postcode) {
+    parts.push(postcode);
+  }
+
+  return parts.join(' ');
 }
 
 function renderCarrierSection(data) {
