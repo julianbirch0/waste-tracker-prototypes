@@ -146,11 +146,20 @@ function renderBody(data) {
 }
 
 function renderWorkOrderSummary(data) {
+  var brokerTradingName = getValue(data, "broker_trading_name");
+  var brokerNameLine = '';
+
+  brokerNameLine += '<span>' + escapeHtml(getValue(data, "broker_registered_name")) + '</span>';
+
+  if (brokerTradingName) {
+    brokerNameLine += '<span>T/A:&nbsp;&nbsp;' + escapeHtml(brokerTradingName) + '</span>';
+  }
+
   return '' +
     '<section class="work-order-summary">' +
       '<div class="work-order-number">Work Order:&nbsp;&nbsp;' + escapeHtml(getValue(data, "work_order_number")) + '</div>' +
       '<div class="broker-summary">' +
-        '<div class="broker-line-wide"><span>' + escapeHtml(getValue(data, "broker_registered_name")) + '</span><span>T/A:&nbsp;&nbsp;' + escapeHtml(getValue(data, "broker_trading_name")) + '</span></div>' +
+        '<div class="broker-line-wide">' + brokerNameLine + '</div>' +
         '<div>' + escapeHtml(getValue(data, "street_address")) + ' &nbsp;' + escapeHtml(getValue(data, "city")) + ' &nbsp;' + escapeHtml(getValue(data, "postcode")) + '</div>' +
         '<div>' + escapeHtml(getValue(data, "company_email")) + ' &nbsp;' + escapeHtml(getValue(data, "company_phone")) + '</div>' +
         '<div class="broker-line-wide"><span>Company Number: ' + escapeHtml(getValue(data, "registration_number")) + '</span><span>VAT Number: ' + escapeHtml(getValue(data, "vat_number")) + '</span></div>' +
@@ -160,12 +169,19 @@ function renderWorkOrderSummary(data) {
 }
 
 function renderCarrierSection(data) {
+  var subcontractorTradingName = getValue(data, "subcontractor_trading_name");
+  var tradingNameHtml = '';
+
+  if (subcontractorTradingName) {
+    tradingNameHtml = '<div><span class="inline-label">T/A:</span>' + escapeHtml(subcontractorTradingName) + '</div>';
+  }
+
   return '' +
     '<section class="section section-tight">' +
       renderSectionBar('Carrier') +
       '<div class="carrier-grid">' +
         '<div>' + escapeHtml(getValue(data, "subcontractor_registered_name")) + '</div>' +
-        '<div><span class="inline-label">T/A:</span>' + escapeHtml(getValue(data, "subcontractor_trading_name")) + '</div>' +
+        tradingNameHtml +
         '<div class="full-width">' + escapeHtml(getValue(data, "subcontractor_office_address")) + '</div>' +
         '<div class="full-width"><span class="inline-label">Waste Licence:</span>' + escapeHtml(getValue(data, "subcontractor_waste_licence")) + '</div>' +
       '</div>' +
@@ -173,6 +189,13 @@ function renderCarrierSection(data) {
 }
 
 function renderServiceSection(data) {
+  var notes = getValue(data, "notes");
+  var notesHtml = '';
+
+  if (notes) {
+    notesHtml = '<div class="notes-box">Notes: ' + escapeHtml(notes) + '</div>';
+  }
+
   return '' +
     '<section class="section">' +
       renderSectionBar('Service') +
@@ -182,7 +205,7 @@ function renderServiceSection(data) {
       '</div>' +
       '<div class="site-address">Site address:&nbsp; ' + escapeHtml(getValue(data, "site_name")) + ' &nbsp;' + escapeHtml(getValue(data, "site_address")) + '</div>' +
       renderWasteItemsTable(data) +
-      '<div class="notes-box">Notes: ' + escapeHtml(getValue(data, "notes")) + '</div>' +
+      notesHtml +
     '</section>';
 }
 
