@@ -115,19 +115,52 @@ button:hover {
   background-size: 5mm 5mm, 5mm 5mm, 10mm 10mm, 10mm 10mm;
 }
 
-.document-page.grid-enabled::after {
-  content: "0mm          50mm          100mm          150mm          200mm";
+.measurement-rulers {
+  display: none;
+  pointer-events: none;
+}
+
+.document-page.grid-enabled .measurement-rulers {
+  display: block;
+}
+
+.ruler-label {
   position: absolute;
-  top: 1mm;
-  left: 1mm;
   z-index: 21;
-  padding: 2px 4px;
+  padding: 1px 3px;
   background: rgba(255, 255, 255, 0.86);
   color: #333;
   font-family: Consolas, Monaco, monospace;
   font-size: 9px;
-  pointer-events: none;
-  white-space: pre;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.x-ruler-label {
+  top: 1mm;
+  transform: translateX(-50%);
+}
+
+.x-ruler-label.ruler-start {
+  transform: none;
+}
+
+.y-ruler-label {
+  left: 1mm;
+  transform: translateY(-50%);
+}
+
+.y-ruler-label.ruler-start {
+  transform: none;
+}
+
+.guide-line-x-20 {
+  position: absolute;
+  left: 20mm;
+  top: 0;
+  bottom: 0;
+  z-index: 21;
+  border-left: 2px solid rgba(0, 120, 0, 0.55);
 }
 
 .document-header {
@@ -380,7 +413,7 @@ button:hover {
   }
 
   .document-page.grid-enabled::before,
-  .document-page.grid-enabled::after {
+  .measurement-rulers {
     display: none;
   }
 
