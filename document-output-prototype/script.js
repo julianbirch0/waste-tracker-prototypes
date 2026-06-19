@@ -301,13 +301,13 @@ function renderSectionBar(text) {
 }
 
 function renderMeasurementRulers() {
-  var xLabels = [0, 10, 15, 20, 50, 100, 150, 200];
+  var xLabels = [0, 10, 12.5, 15, 20, 50, 100, 150, 200];
   var yLabels = [0, 20, 50, 100, 150, 200, 250, 290];
   var html = '<div class="measurement-rulers">';
   var i;
   var className;
 
-  html += '<div class="guide-line-x-15"></div>';
+  html += '<div class="guide-line-x-12-5"></div>';
 
   for (i = 0; i < xLabels.length; i++) {
     className = 'ruler-label x-ruler-label';
@@ -368,12 +368,12 @@ function attachMeasurementHandlers() {
   page.onmousemove = function (event) {
     var position;
 
-    if (!gridEnabled || lockedMeasurement) {
+    if (!gridEnabled) {
       return;
     }
 
     position = getMeasurementPosition(event, page);
-    updateMeasurementReadout(position, null);
+    updateMeasurementReadout(position, lockedMeasurement);
   };
 
   page.onclick = function (event) {
@@ -385,15 +385,15 @@ function attachMeasurementHandlers() {
 
     position = getMeasurementPosition(event, page);
     lockedMeasurement = position;
-    updateMeasurementReadout(position, position);
+    updateMeasurementReadout(position, lockedMeasurement);
   };
 
   page.onmouseleave = function () {
-    if (!gridEnabled || lockedMeasurement) {
+    if (!gridEnabled) {
       return;
     }
 
-    updateMeasurementReadout(null, null);
+    updateMeasurementReadout(null, lockedMeasurement);
   };
 }
 
@@ -423,12 +423,16 @@ function updateMeasurementReadout(position, lockedPosition) {
     return;
   }
 
-  if (!position) {
+  if (!position && !lockedPosition) {
     readout.textContent = "Grid on. Move over the page for x/y. Click to lock a position.";
     return;
   }
 
-  text = "Current: x=" + formatMeasurement(position.x) + "mm, y=" + formatMeasurement(position.y) + "mm";
+  if (position) {
+    text = "Current: x=" + formatMeasurement(position.x) + "mm, y=" + formatMeasurement(position.y) + "mm";
+  } else {
+    text = "Current: move over the page for x/y";
+  }
 
   if (lockedPosition) {
     text += "\nLocked:  x=" + formatMeasurement(lockedPosition.x) + "mm, y=" + formatMeasurement(lockedPosition.y) + "mm";
