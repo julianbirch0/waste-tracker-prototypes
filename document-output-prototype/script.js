@@ -149,21 +149,24 @@ function renderWorkOrderSummary(data) {
   var brokerTradingName = getValue(data, "broker_trading_name");
   var brokerNameLine = '';
 
-  brokerNameLine += '<span>' + escapeHtml(getValue(data, "broker_registered_name")) + '</span>';
+  brokerNameLine += escapeHtml(getValue(data, "broker_registered_name"));
 
   if (brokerTradingName) {
-    brokerNameLine += '<span>T/A:&nbsp;&nbsp;' + escapeHtml(brokerTradingName) + '</span>';
+    brokerNameLine += ' &nbsp; TRADING NAME: ' + escapeHtml(brokerTradingName);
   }
 
   return '' +
     '<section class="work-order-summary">' +
-      '<div class="work-order-number">Work Order:&nbsp;&nbsp;' + escapeHtml(getValue(data, "work_order_number")) + '</div>' +
+      '<div class="work-order-number">WORK ORDER:&nbsp;&nbsp;' + escapeHtml(getValue(data, "work_order_number")) + '</div>' +
       '<div class="broker-summary">' +
-        '<div class="broker-line-wide">' + brokerNameLine + '</div>' +
+        '<div class="broker-name-line">' + brokerNameLine + '</div>' +
         '<div>' + escapeHtml(getValue(data, "street_address")) + ' &nbsp;' + escapeHtml(getValue(data, "city")) + ' &nbsp;' + escapeHtml(getValue(data, "postcode")) + '</div>' +
-        '<div>' + escapeHtml(getValue(data, "company_email")) + ' &nbsp;' + escapeHtml(getValue(data, "company_phone")) + '</div>' +
-        '<div class="broker-line-wide"><span>Company Number: ' + escapeHtml(getValue(data, "registration_number")) + '</span><span>VAT Number: ' + escapeHtml(getValue(data, "vat_number")) + '</span></div>' +
-        '<div>Waste Licence&nbsp;&nbsp; ' + escapeHtml(getValue(data, "waste_licence")) + '</div>' +
+        '<div class="broker-contact-line"><span>' + escapeHtml(getValue(data, "company_email")) + '</span><span>' + escapeHtml(getValue(data, "company_phone")) + '</span></div>' +
+        '<div class="broker-registration-row">' +
+          '<span>COMPANY NUMBER: ' + escapeHtml(getValue(data, "registration_number")) + '</span>' +
+          '<span>VAT NUMBER: ' + escapeHtml(getValue(data, "vat_number")) + '</span>' +
+          '<span>WASTE LICENCE: ' + escapeHtml(getValue(data, "waste_licence")) + '</span>' +
+        '</div>' +
       '</div>' +
     '</section>';
 }
@@ -183,7 +186,7 @@ function renderCarrierSection(data) {
         '<div>' + escapeHtml(getValue(data, "subcontractor_registered_name")) + '</div>' +
         tradingNameHtml +
         '<div class="full-width">' + escapeHtml(getValue(data, "subcontractor_office_address")) + '</div>' +
-        '<div class="full-width"><span class="inline-label">Waste Licence:</span>' + escapeHtml(getValue(data, "subcontractor_waste_licence")) + '</div>' +
+        '<div class="full-width"><span class="inline-label">WASTE LICENCE:</span>' + escapeHtml(getValue(data, "subcontractor_waste_licence")) + '</div>' +
       '</div>' +
     '</section>';
 }
@@ -193,7 +196,7 @@ function renderServiceSection(data) {
   var notesHtml = '';
 
   if (notes) {
-    notesHtml = '<div class="notes-box">Notes: ' + escapeHtml(notes) + '</div>';
+    notesHtml = '<div class="notes-box">NOTES: ' + escapeHtml(notes) + '</div>';
   }
 
   return '' +
@@ -203,7 +206,7 @@ function renderServiceSection(data) {
         '<div>' + escapeHtml(getValue(data, "activity")) + ' &nbsp;(' + escapeHtml(getValue(data, "wait_and_load_time")) + ' minutes)</div>' +
         '<div class="service-date">' + escapeHtml(getValue(data, "service_date_and_time")) + '</div>' +
       '</div>' +
-      '<div class="site-address">Site address:&nbsp; ' + escapeHtml(getValue(data, "site_name")) + ' &nbsp;' + escapeHtml(getValue(data, "site_address")) + '</div>' +
+      '<div class="site-address">SITE ADDRESS:&nbsp; ' + escapeHtml(getValue(data, "site_name")) + ' &nbsp;' + escapeHtml(getValue(data, "site_address")) + '</div>' +
       renderWasteItemsTable(data) +
       notesHtml +
     '</section>';
