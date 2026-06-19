@@ -165,7 +165,7 @@ function renderWorkOrderSummary(data) {
   brokerNameLine += escapeHtml(getValue(data, "broker_registered_name"));
 
   if (brokerTradingName) {
-    brokerNameLine += ' &nbsp; T/A: ' + escapeHtml(brokerTradingName);
+    brokerNameLine += ' t/a ' + escapeHtml(brokerTradingName);
   }
 
   return '' +
