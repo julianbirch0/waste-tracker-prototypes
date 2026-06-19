@@ -6,7 +6,7 @@ body {
   margin: 0;
   font-family: Arial, Helvetica, sans-serif;
   background: #e9e9e9;
-  color: #222;
+  color: #111;
 }
 
 .app-shell {
@@ -81,46 +81,33 @@ button:hover {
   width: 210mm;
   min-height: 297mm;
   margin: 0 auto;
-  padding: 14mm;
+  padding: 12mm;
   background: #fff;
   box-shadow: 0 0 8px rgba(0, 0, 0, 0.25);
   display: flex;
   flex-direction: column;
+  font-size: 13px;
+  line-height: 1.22;
 }
 
 .document-header {
   display: grid;
-  grid-template-columns: 220px 1fr;
-  column-gap: 24px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #999;
+  grid-template-columns: 42mm 1fr 42mm;
+  align-items: start;
+  min-height: 24mm;
 }
 
-.document-footer {
-  display: grid;
-  grid-template-columns: 160px 1fr;
-  column-gap: 24px;
-  padding-top: 10px;
-  border-top: 1px solid #999;
-  margin-top: auto;
-  align-items: center;
-}
-
-.logo-box {
-  width: 200px;
-  height: 72px;
+.header-logo-box {
+  width: 40mm;
+  height: 20mm;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: flex-start;
   overflow: hidden;
 }
 
-.footer-logo-box {
-  width: 150px;
-  height: 50px;
-}
-
-.logo-box img {
+.header-logo-box img,
+.footer-logo-box img {
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
@@ -135,43 +122,208 @@ button:hover {
   align-items: center;
   justify-content: center;
   color: #777;
-  font-size: 12px;
+  font-size: 10px;
   text-align: center;
-  padding: 6px;
+  padding: 3px;
 }
 
-.broker-details {
+.document-title {
+  text-align: center;
+  font-size: 30px;
+  font-weight: 400;
+  letter-spacing: 3px;
+  line-height: 1;
+  margin-top: 2mm;
+}
+
+.document-body {
+  flex: 1;
+  padding-top: 11mm;
+}
+
+.work-order-meta {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20mm;
+  font-size: 16px;
+  margin-bottom: 6mm;
+  padding-bottom: 5mm;
+  border-bottom: 1px solid #d9d9d9;
+}
+
+.meta-right {
   text-align: right;
-  font-size: 12px;
-  line-height: 1.35;
 }
 
-.broker-name {
-  font-weight: bold;
-  font-size: 14px;
-  margin-bottom: 4px;
+.section {
+  margin-bottom: 7mm;
+}
+
+.section-tight {
+  margin-bottom: 5mm;
+}
+
+.section-bar {
+  background: #d9d9d9;
+  font-size: 16px;
+  line-height: 1.1;
+  padding: 2px 5px;
+  margin-bottom: 3mm;
+}
+
+.carrier-grid,
+.broker-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 12mm;
+  row-gap: 2mm;
+}
+
+.full-width {
+  grid-column: 1 / -1;
+}
+
+.inline-label {
+  display: inline-block;
+  margin-right: 8mm;
+}
+
+.service-top-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10mm;
+  margin-bottom: 4mm;
+}
+
+.service-date {
+  text-align: right;
+}
+
+.site-address {
+  margin-bottom: 4mm;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  margin-bottom: 1mm;
+}
+
+.data-table th,
+.data-table td {
+  border: 1px solid #d9d9d9;
+  padding: 2px 5px;
+  font-size: 12px;
+  vertical-align: top;
+}
+
+.data-table th {
+  font-weight: 400;
+  text-align: center;
+}
+
+.data-table .col-container {
+  width: 26%;
+}
+
+.data-table .col-size {
+  width: 10%;
+}
+
+.data-table .col-qty {
+  width: 10%;
+}
+
+.data-table .col-ewc {
+  width: 15%;
+}
+
+.data-table .col-description {
+  width: 39%;
+}
+
+.notes-box {
+  min-height: 18mm;
+  border: 1px solid #d9d9d9;
+  padding: 3px 5px;
+}
+
+.producer-lines,
+.broker-lines {
+  padding: 0 5px;
+}
+
+.producer-lines div,
+.broker-lines div,
+.carrier-grid div,
+.broker-grid div {
+  margin-bottom: 1.5mm;
+}
+
+.receiving-facility-note {
+  padding: 0 5px;
+  font-style: italic;
+}
+
+.document-footer {
+  display: grid;
+  grid-template-columns: 42mm 1fr;
+  align-items: end;
+  gap: 10mm;
+  border-top: 1px solid #d9d9d9;
+  padding-top: 3mm;
+  margin-top: auto;
+}
+
+.footer-logo-box {
+  width: 30mm;
+  height: 13mm;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-start;
+  overflow: hidden;
 }
 
 .footer-strapline {
   text-align: right;
-  font-size: 12px;
-  color: #333;
+  font-size: 10px;
+  line-height: 1.25;
+  color: #1f2a44;
 }
 
-.document-body {
-  padding-top: 24px;
-  padding-bottom: 24px;
-  font-size: 13px;
-  line-height: 1.45;
+.footer-strapline-main {
+  letter-spacing: 0.5px;
 }
 
-.document-title {
-  margin: 0 0 24px 0;
-  text-align: center;
-  font-size: 22px;
-  font-weight: bold;
-}
+@media print {
+  body {
+    background: #fff;
+  }
 
-.document-body p {
-  margin: 0 0 8px 0;
+  .control-panel {
+    display: none;
+  }
+
+  .app-shell {
+    display: block;
+  }
+
+  .preview-panel {
+    padding: 0;
+    overflow: visible;
+  }
+
+  .document-page {
+    width: auto;
+    min-height: auto;
+    margin: 0;
+    padding: 0;
+    box-shadow: none;
+  }
+
+  @page {
+    size: A4 portrait;
+    margin: 12mm;
+  }
 }
