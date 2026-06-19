@@ -173,7 +173,7 @@ function renderWorkOrderSummary(data) {
       '<div class="broker-summary">' +
         '<div class="broker-name-line">' + brokerNameLine + '</div>' +
         '<div>' + escapeHtml(formatBrokerAddressLine(data)) + '</div>' +
-        '<div class="broker-contact-line"><span>' + escapeHtml(getValue(data, "company_email")) + '</span><span>' + escapeHtml(getValue(data, "company_phone")) + '</span></div>' +
+        '<div class="broker-contact-line"><span>EMAIL: ' + escapeHtml(getValue(data, "company_email")) + '</span><span>PHONE: ' + escapeHtml(getValue(data, "company_phone")) + '</span></div>' +
         '<div class="broker-registration-row">' +
           '<span>COMPANY NUMBER: ' + escapeHtml(getValue(data, "registration_number")) + '</span>' +
           '<span>VAT NUMBER: ' + escapeHtml(getValue(data, "vat_number")) + '</span>' +
