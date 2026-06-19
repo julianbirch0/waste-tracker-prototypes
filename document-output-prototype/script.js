@@ -42,6 +42,7 @@ var sampleJson = {
       "waste_description": "Paper and cardboard packaging"
     }
   ],
+  "price": 1234.5,
   "notes": "Driver must report to site reception before entering the yard.",
   "footer": {
     "wasteTrackerStrapline": "POWERED BY WASTE TRACKER UK",
@@ -152,7 +153,7 @@ function renderWorkOrderSummary(data) {
   brokerNameLine += escapeHtml(getValue(data, "broker_registered_name"));
 
   if (brokerTradingName) {
-    brokerNameLine += ' &nbsp; TRADING NAME: ' + escapeHtml(brokerTradingName);
+    brokerNameLine += ' &nbsp; T/A: ' + escapeHtml(brokerTradingName);
   }
 
   return '' +
@@ -194,6 +195,7 @@ function renderCarrierSection(data) {
 function renderServiceSection(data) {
   var notes = getValue(data, "notes");
   var notesHtml = '';
+  var priceHtml = renderPriceLine(data);
 
   if (notes) {
     notesHtml = '<div class="notes-box">NOTES: ' + escapeHtml(notes) + '</div>';
@@ -208,6 +210,7 @@ function renderServiceSection(data) {
       '</div>' +
       '<div class="site-address">SITE ADDRESS:&nbsp; ' + escapeHtml(getValue(data, "site_name")) + ' &nbsp;' + escapeHtml(getValue(data, "site_address")) + '</div>' +
       renderWasteItemsTable(data) +
+      priceHtml +
       notesHtml +
     '</section>';
 }
@@ -244,6 +247,23 @@ function renderWasteItemsTable(data) {
   html += '</tbody></table>';
 
   return html;
+}
+
+function renderPriceLine(data) {
+  var price = getRawValue(data, "price");
+  var formattedPrice;
+
+  if (price === "" || price === null || price === undefined) {
+    return '';
+  }
+
+  formattedPrice = formatCurrencyAmount(price);
+
+  if (!formattedPrice) {
+    return '';
+  }
+
+  return '<div class="price-line">PRICE: £' + escapeHtml(formattedPrice) + '</div>';
 }
 
 function renderReceivingFacilitySection(data) {
@@ -354,6 +374,12 @@ function renderLogo(dataUrl, placeholderText) {
 }
 
 function getValue(source, path) {
+  var value = getRawValue(source, path);
+
+  return valueOrBlank(value);
+}
+
+function getRawValue(source, path) {
   var parts;
   var current;
   var i;
@@ -363,7 +389,7 @@ function getValue(source, path) {
   }
 
   if (source[path] !== undefined && source[path] !== null) {
-    return valueOrBlank(source[path]);
+    return source[path];
   }
 
   parts = path.split(".");
@@ -377,7 +403,7 @@ function getValue(source, path) {
     current = current[parts[i]];
   }
 
-  return valueOrBlank(current);
+  return current;
 }
 
 function valueOrBlank(value) {
@@ -386,6 +412,19 @@ function valueOrBlank(value) {
   }
 
   return String(value).trim();
+}
+
+function formatCurrencyAmount(value) {
+  var numberValue = Number(value);
+
+  if (isNaN(numberValue)) {
+    return "";
+  }
+
+  return numberValue.toLocaleString("en-GB", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
 }
 
 function makeSafeFileName(value) {
