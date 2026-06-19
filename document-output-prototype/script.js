@@ -135,11 +135,15 @@ function renderDocument(data) {
 
 function renderHeader(data) {
   var title = getValue(data, "document.title") || getValue(data, "document_title") || "WORK ORDER";
+  var number = getValue(data, "work_order_number");
 
   return '' +
     '<header class="document-header">' +
       '<div class="header-logo-box">' + renderLogo(logo1DataUrl, 'Logo file 1') + '</div>' +
-      '<div class="document-title">' + escapeHtml(title) + '</div>' +
+      '<div class="header-centre">' +
+        '<div class="document-title">' + escapeHtml(title) + '</div>' +
+        '<div class="document-number">NUMBER: ' + escapeHtml(number) + '</div>' +
+      '</div>' +
       '<div></div>' +
     '</header>';
 }
@@ -166,7 +170,6 @@ function renderWorkOrderSummary(data) {
 
   return '' +
     '<section class="work-order-summary">' +
-      '<div class="work-order-number">NUMBER: ' + escapeHtml(getValue(data, "work_order_number")) + '</div>' +
       '<div class="broker-summary">' +
         '<div class="broker-name-line">' + brokerNameLine + '</div>' +
         '<div>' + escapeHtml(getValue(data, "street_address")) + ' &nbsp;' + escapeHtml(getValue(data, "city")) + ' &nbsp;' + escapeHtml(getValue(data, "postcode")) + '</div>' +
