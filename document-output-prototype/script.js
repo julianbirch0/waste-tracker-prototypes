@@ -4,20 +4,52 @@ var currentDocumentData = null;
 
 var sampleJson = {
   "document": {
-    "title": "Work Order"
+    "title": "WORK ORDER"
   },
-  "broker": {
-    "companyName": "Example Waste Broker Ltd",
-    "addressLine1": "Example House",
-    "addressLine2": "1 Example Road",
-    "addressLine3": "Example Town",
-    "addressLine4": "",
-    "postcode": "EX1 2AB",
-    "phoneNumber": "01234 567890",
-    "emailAddress": "ops@examplebroker.co.uk"
-  },
+  "work_order_number": "WO-000123",
+  "agreement_number": "AGR-4567",
+  "subcontractor_registered_name": "ABC Waste Transport Ltd",
+  "subcontractor_trading_name": "ABC Transport",
+  "subcontractor_office_address": "Unit 4 Industrial Estate, Somewhere, CD2 3EF",
+  "subcontractor_waste_licence": "CBDU654321",
+  "activity": "Exchange and remove",
+  "wait_and_load_time": "30",
+  "service_date_and_time": "14/10/2026 08:00 - 12:00",
+  "site_address": "Factory Road, Industrial Park, Example Town, EF4 5GH",
+  "wasteItems": [
+    {
+      "container_type": "Skip",
+      "size": "8 yd",
+      "qty": "1",
+      "ewc": "20 03 01",
+      "waste_description": "Mixed municipal waste"
+    },
+    {
+      "container_type": "Eurobin",
+      "size": "1100L",
+      "qty": "2",
+      "ewc": "15 01 01",
+      "waste_description": "Paper and cardboard packaging"
+    }
+  ],
+  "notes": "Driver must report to site reception before entering the yard.",
+  "producer_name": "Producer Company Ltd",
+  "producer_address": "Factory Road, Industrial Park, Example Town, EF4 5GH",
+  "producer_phone": "07900 000000",
+  "producer_email": "site@example-producer.co.uk",
+  "broker_registered_name": "Example Waste Broker Ltd",
+  "broker_trading_name": "Example Broker",
+  "street_address": "Example House, 1 Example Road",
+  "city": "Example Town",
+  "postcode": "EX1 2AB",
+  "company_email": "ops@examplebroker.co.uk",
+  "company_phone": "01234 567890",
+  "registration_number": "12345678",
+  "vat_number": "GB123456789",
+  "waste_licence": "CBDU123456",
   "footer": {
-    "wasteTrackerStrapline": "WasteTracker - simple, compliant digital waste tracking"
+    "wasteTrackerStrapline": "POWERED BY WASTE TRACKER UK",
+    "website": "www.wastetracker.uk"
   }
 };
 
@@ -97,46 +129,159 @@ function renderDocument(data) {
 }
 
 function renderHeader(data) {
-  var broker = data.broker || {};
-  var brokerLines = [];
-
-  addOptionalLine(brokerLines, broker.companyName, true);
-  addOptionalLine(brokerLines, broker.addressLine1, false);
-  addOptionalLine(brokerLines, broker.addressLine2, false);
-  addOptionalLine(brokerLines, broker.addressLine3, false);
-  addOptionalLine(brokerLines, broker.addressLine4, false);
-  addOptionalLine(brokerLines, broker.postcode, false);
-  addOptionalLine(brokerLines, broker.phoneNumber, false);
-  addOptionalLine(brokerLines, broker.emailAddress, false);
+  var title = getValue(data, "document.title") || getValue(data, "document_title") || "WORK ORDER";
 
   return '' +
     '<header class="document-header">' +
-      '<div class="logo-box">' + renderLogo(logo1DataUrl, 'Logo file 1') + '</div>' +
-      '<div class="broker-details">' + brokerLines.join('') + '</div>' +
+      '<div class="header-logo-box">' + renderLogo(logo1DataUrl, 'Logo file 1') + '</div>' +
+      '<div class="document-title">' + escapeHtml(title) + '</div>' +
+      '<div></div>' +
     '</header>';
 }
 
+function renderBody(data) {
+  return '' +
+    '<main class="document-body">' +
+      renderMetaRow(data) +
+      renderCarrierSection(data) +
+      renderServiceSection(data) +
+      renderProducerSection(data) +
+      renderReceivingFacilitySection(data) +
+      renderBrokerSection(data) +
+    '</main>';
+}
+
+function renderMetaRow(data) {
+  return '' +
+    '<section class="work-order-meta">' +
+      '<div>Work Order:&nbsp;&nbsp;' + escapeHtml(getValue(data, "work_order_number")) + '</div>' +
+      '<div class="meta-right">Agreement:&nbsp;&nbsp;' + escapeHtml(getValue(data, "agreement_number")) + '</div>' +
+    '</section>';
+}
+
+function renderCarrierSection(data) {
+  return '' +
+    '<section class="section section-tight">' +
+      renderSectionBar('Carrier') +
+      '<div class="carrier-grid">' +
+        '<div>' + escapeHtml(getValue(data, "subcontractor_registered_name")) + '</div>' +
+        '<div><span class="inline-label">T/A:</span>' + escapeHtml(getValue(data, "subcontractor_trading_name")) + '</div>' +
+        '<div class="full-width">' + escapeHtml(getValue(data, "subcontractor_office_address")) + '</div>' +
+        '<div class="full-width"><span class="inline-label">Waste Licence:</span>' + escapeHtml(getValue(data, "subcontractor_waste_licence")) + '</div>' +
+      '</div>' +
+    '</section>';
+}
+
+function renderServiceSection(data) {
+  return '' +
+    '<section class="section">' +
+      renderSectionBar('Service') +
+      '<div class="service-top-row">' +
+        '<div>' + escapeHtml(getValue(data, "activity")) + ' &nbsp;(' + escapeHtml(getValue(data, "wait_and_load_time")) + ' minutes)</div>' +
+        '<div class="service-date">' + escapeHtml(getValue(data, "service_date_and_time")) + '</div>' +
+      '</div>' +
+      '<div class="site-address">Site address:&nbsp; ' + escapeHtml(getValue(data, "site_address")) + '</div>' +
+      renderWasteItemsTable(data) +
+      '<div class="notes-box">Notes: ' + escapeHtml(getValue(data, "notes")) + '</div>' +
+    '</section>';
+}
+
+function renderWasteItemsTable(data) {
+  var rows = data.wasteItems || data.waste_items || [];
+  var html = '';
+  var i;
+
+  html += '<table class="data-table">';
+  html += '<thead><tr>';
+  html += '<th class="col-container">Container</th>';
+  html += '<th class="col-size">Size</th>';
+  html += '<th class="col-qty">Qty</th>';
+  html += '<th class="col-ewc">EWC</th>';
+  html += '<th class="col-description">Description</th>';
+  html += '</tr></thead>';
+  html += '<tbody>';
+
+  if (!rows.length) {
+    html += '<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>';
+  }
+
+  for (i = 0; i < rows.length; i++) {
+    html += '<tr>';
+    html += '<td>' + escapeHtml(getValue(rows[i], "container_type")) + '</td>';
+    html += '<td>' + escapeHtml(getValue(rows[i], "size")) + '</td>';
+    html += '<td>' + escapeHtml(getValue(rows[i], "qty")) + '</td>';
+    html += '<td>' + escapeHtml(getValue(rows[i], "ewc")) + '</td>';
+    html += '<td>' + escapeHtml(getValue(rows[i], "waste_description")) + '</td>';
+    html += '</tr>';
+  }
+
+  html += '</tbody></table>';
+
+  return html;
+}
+
+function renderProducerSection(data) {
+  return '' +
+    '<section class="section">' +
+      renderSectionBar('Producer') +
+      '<div class="producer-lines">' +
+        renderLine(getValue(data, "producer_name")) +
+        renderLine(getValue(data, "producer_address")) +
+        renderLine(getValue(data, "producer_phone") + ' &nbsp;&nbsp;&nbsp; ' + getValue(data, "producer_email")) +
+      '</div>' +
+    '</section>';
+}
+
+function renderReceivingFacilitySection(data) {
+  return '' +
+    '<section class="section section-tight">' +
+      renderSectionBar('Receiving Facility') +
+      '<div class="receiving-facility-note">To be confirmed by carrier.</div>' +
+    '</section>';
+}
+
+function renderBrokerSection(data) {
+  return '' +
+    '<section class="section">' +
+      renderSectionBar('Broker') +
+      '<div class="broker-grid">' +
+        '<div>' + escapeHtml(getValue(data, "broker_registered_name")) + '</div>' +
+        '<div><span class="inline-label">T/A:</span>' + escapeHtml(getValue(data, "broker_trading_name")) + '</div>' +
+        '<div class="full-width">' + escapeHtml(getValue(data, "street_address")) + ' &nbsp;' + escapeHtml(getValue(data, "city")) + ' &nbsp;' + escapeHtml(getValue(data, "postcode")) + '</div>' +
+        '<div class="full-width">' + escapeHtml(getValue(data, "company_email")) + ' &nbsp;' + escapeHtml(getValue(data, "company_phone")) + '</div>' +
+        '<div>Company Number: ' + escapeHtml(getValue(data, "registration_number")) + '</div>' +
+        '<div>VAT Number: ' + escapeHtml(getValue(data, "vat_number")) + '</div>' +
+        '<div class="full-width">Waste Licence&nbsp;&nbsp; ' + escapeHtml(getValue(data, "waste_licence")) + '</div>' +
+      '</div>' +
+    '</section>';
+}
+
 function renderFooter(data) {
-  var footer = data.footer || {};
-  var strapline = valueOrBlank(footer.wasteTrackerStrapline);
+  var strapline = getValue(data, "footer.wasteTrackerStrapline") || "POWERED BY WASTE TRACKER UK";
+  var website = getValue(data, "footer.website") || "www.wastetracker.uk";
 
   return '' +
     '<footer class="document-footer">' +
-      '<div class="logo-box footer-logo-box">' + renderLogo(logo2DataUrl, 'Logo file 2') + '</div>' +
-      '<div class="footer-strapline">' + escapeHtml(strapline) + '</div>' +
+      '<div class="footer-logo-box">' + renderLogo(logo2DataUrl, 'Logo file 2') + '</div>' +
+      '<div class="footer-strapline">' +
+        '<div class="footer-strapline-main">' + escapeHtml(strapline) + '</div>' +
+        '<div>' + escapeHtml(website) + '</div>' +
+      '</div>' +
     '</footer>';
 }
 
-function renderBody(data) {
-  var documentData = data.document || {};
-  var title = valueOrBlank(documentData.title) || "Work Order";
+function renderSectionBar(text) {
+  return '<div class="section-bar">' + escapeHtml(text) + '</div>';
+}
 
-  return '' +
-    '<section class="document-body">' +
-      '<div class="document-title">' + escapeHtml(title) + '</div>' +
-      '<p>This area is intentionally plain for now.</p>' +
-      '<p>The next iteration can add subcontractor details, producer site details and waste item table.</p>' +
-    '</section>';
+function renderLine(value) {
+  var cleanValue = valueOrBlank(value);
+
+  if (!cleanValue) {
+    return '';
+  }
+
+  return '<div>' + escapeHtml(cleanValue) + '</div>';
 }
 
 function downloadPdf() {
@@ -220,16 +365,31 @@ function renderLogo(dataUrl, placeholderText) {
   return '<div class="logo-placeholder">' + escapeHtml(placeholderText) + '</div>';
 }
 
-function addOptionalLine(lines, value, isCompanyName) {
-  var cleanValue = valueOrBlank(value);
-  var className;
+function getValue(source, path) {
+  var parts;
+  var current;
+  var i;
 
-  if (!cleanValue) {
-    return;
+  if (!source || !path) {
+    return "";
   }
 
-  className = isCompanyName ? ' class="broker-name"' : '';
-  lines.push('<div' + className + '>' + escapeHtml(cleanValue) + '</div>');
+  if (source[path] !== undefined && source[path] !== null) {
+    return valueOrBlank(source[path]);
+  }
+
+  parts = path.split(".");
+  current = source;
+
+  for (i = 0; i < parts.length; i++) {
+    if (!current || current[parts[i]] === undefined || current[parts[i]] === null) {
+      return "";
+    }
+
+    current = current[parts[i]];
+  }
+
+  return valueOrBlank(current);
 }
 
 function valueOrBlank(value) {
