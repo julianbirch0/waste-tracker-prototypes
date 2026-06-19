@@ -154,9 +154,9 @@ button:hover {
   transform: none;
 }
 
-.guide-line-x-15 {
+.guide-line-x-12-5 {
   position: absolute;
-  left: 15mm;
+  left: 12.5mm;
   top: 0;
   bottom: 0;
   z-index: 21;
@@ -212,8 +212,8 @@ button:hover {
 .document-body {
   flex: 1;
   padding-top: 5mm;
-  padding-left: 5mm;
-  padding-right: 5mm;
+  padding-left: 2.5mm;
+  padding-right: 2.5mm;
 }
 
 .work-order-summary {
@@ -262,9 +262,9 @@ button:hover {
   background: #d9d9d9;
   font-size: 16px;
   line-height: 1.1;
-  padding: 2px 5mm;
-  margin-left: -5mm;
-  margin-right: -5mm;
+  padding: 2.5mm;
+  margin-left: -2.5mm;
+  margin-right: -2.5mm;
   margin-bottom: 3mm;
 }
 
