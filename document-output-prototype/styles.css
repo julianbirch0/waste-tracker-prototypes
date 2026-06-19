@@ -256,6 +256,19 @@ button:hover {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
   column-gap: 8mm;
+  align-items: start;
+}
+
+.broker-registration-row span:nth-child(1) {
+  text-align: left;
+}
+
+.broker-registration-row span:nth-child(2) {
+  text-align: center;
+}
+
+.broker-registration-row span:nth-child(3) {
+  text-align: right;
 }
 
 .section {
