@@ -94,7 +94,7 @@ button:hover {
   display: grid;
   grid-template-columns: 42mm 1fr 42mm;
   align-items: start;
-  min-height: 24mm;
+  min-height: 20mm;
 }
 
 .header-logo-box {
@@ -138,7 +138,7 @@ button:hover {
 
 .document-body {
   flex: 1;
-  padding-top: 11mm;
+  padding-top: 5mm;
 }
 
 .work-order-summary {
@@ -160,9 +160,19 @@ button:hover {
   margin-bottom: 1.4mm;
 }
 
-.broker-line-wide {
+.broker-name-line {
+  display: block;
+}
+
+.broker-contact-line {
   display: flex;
-  gap: 14mm;
+  gap: 22mm;
+}
+
+.broker-registration-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  column-gap: 8mm;
 }
 
 .section {
