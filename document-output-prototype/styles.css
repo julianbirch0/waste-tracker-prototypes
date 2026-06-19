@@ -200,6 +200,12 @@ button:hover {
   padding: 3px;
 }
 
+.header-centre {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
 .document-title {
   text-align: center;
   font-size: 30px;
@@ -207,6 +213,13 @@ button:hover {
   letter-spacing: 0;
   line-height: 1;
   margin-top: 2mm;
+}
+
+.document-number {
+  font-size: 16px;
+  line-height: 1;
+  margin-top: 5mm;
+  text-align: center;
 }
 
 .document-body {
@@ -220,12 +233,6 @@ button:hover {
   margin-bottom: 15mm;
   padding-bottom: 11mm;
   border-bottom: 1px solid #d9d9d9;
-}
-
-.work-order-number {
-  font-size: 16px;
-  text-align: center;
-  margin-bottom: 6mm;
 }
 
 .broker-summary {
