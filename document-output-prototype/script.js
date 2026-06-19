@@ -124,6 +124,7 @@ function renderDocument(data) {
 
   preview.innerHTML =
     '<div class="document-page">' +
+      renderMeasurementRulers() +
       renderHeader(data) +
       renderBody(data) +
       renderFooter(data) +
@@ -297,6 +298,40 @@ function renderFooter(data) {
 
 function renderSectionBar(text) {
   return '<div class="section-bar">' + escapeHtml(text) + '</div>';
+}
+
+function renderMeasurementRulers() {
+  var xLabels = [0, 20, 50, 100, 150, 200];
+  var yLabels = [0, 20, 50, 100, 150, 200, 250, 290];
+  var html = '<div class="measurement-rulers">';
+  var i;
+  var className;
+
+  html += '<div class="guide-line-x-20"></div>';
+
+  for (i = 0; i < xLabels.length; i++) {
+    className = 'ruler-label x-ruler-label';
+
+    if (xLabels[i] === 0) {
+      className += ' ruler-start';
+    }
+
+    html += '<div class="' + className + '" style="left: ' + xLabels[i] + 'mm;">' + xLabels[i] + 'mm</div>';
+  }
+
+  for (i = 0; i < yLabels.length; i++) {
+    className = 'ruler-label y-ruler-label';
+
+    if (yLabels[i] === 0) {
+      className += ' ruler-start';
+    }
+
+    html += '<div class="' + className + '" style="top: ' + yLabels[i] + 'mm;">' + yLabels[i] + 'mm</div>';
+  }
+
+  html += '</div>';
+
+  return html;
 }
 
 function toggleGrid() {
