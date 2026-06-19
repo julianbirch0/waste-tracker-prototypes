@@ -301,13 +301,13 @@ function renderSectionBar(text) {
 }
 
 function renderMeasurementRulers() {
-  var xLabels = [0, 20, 50, 100, 150, 200];
+  var xLabels = [0, 10, 15, 20, 50, 100, 150, 200];
   var yLabels = [0, 20, 50, 100, 150, 200, 250, 290];
   var html = '<div class="measurement-rulers">';
   var i;
   var className;
 
-  html += '<div class="guide-line-x-20"></div>';
+  html += '<div class="guide-line-x-15"></div>';
 
   for (i = 0; i < xLabels.length; i++) {
     className = 'ruler-label x-ruler-label';
