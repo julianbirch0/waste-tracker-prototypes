@@ -230,9 +230,8 @@ button:hover {
 }
 
 .work-order-summary {
-  margin-bottom: 15mm;
+  margin-bottom: 0;
   padding-bottom: 11mm;
-  border-bottom: 1px solid #d9d9d9;
 }
 
 .broker-summary {
