@@ -203,8 +203,8 @@ button:hover {
 .document-title {
   text-align: center;
   font-size: 30px;
-  font-weight: 400;
-  letter-spacing: 3px;
+  font-weight: 700;
+  letter-spacing: 0;
   line-height: 1;
   margin-top: 2mm;
 }
