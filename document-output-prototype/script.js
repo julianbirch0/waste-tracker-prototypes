@@ -7,7 +7,16 @@ var sampleJson = {
     "title": "WORK ORDER"
   },
   "work_order_number": "WO-000123",
-  "agreement_number": "AGR-4567",
+  "broker_registered_name": "Example Waste Broker Ltd",
+  "broker_trading_name": "Example Broker",
+  "street_address": "Example House, 1 Example Road",
+  "city": "Example Town",
+  "postcode": "EX1 2AB",
+  "company_email": "ops@examplebroker.co.uk",
+  "company_phone": "01234 567890",
+  "registration_number": "12345678",
+  "vat_number": "GB123456789",
+  "waste_licence": "CBDU123456",
   "subcontractor_registered_name": "ABC Waste Transport Ltd",
   "subcontractor_trading_name": "ABC Transport",
   "subcontractor_office_address": "Unit 4 Industrial Estate, Somewhere, CD2 3EF",
@@ -15,6 +24,7 @@ var sampleJson = {
   "activity": "Exchange and remove",
   "wait_and_load_time": "30",
   "service_date_and_time": "14/10/2026 08:00 - 12:00",
+  "site_name": "Main Manufacturing Site",
   "site_address": "Factory Road, Industrial Park, Example Town, EF4 5GH",
   "wasteItems": [
     {
@@ -33,20 +43,6 @@ var sampleJson = {
     }
   ],
   "notes": "Driver must report to site reception before entering the yard.",
-  "producer_name": "Producer Company Ltd",
-  "producer_address": "Factory Road, Industrial Park, Example Town, EF4 5GH",
-  "producer_phone": "07900 000000",
-  "producer_email": "site@example-producer.co.uk",
-  "broker_registered_name": "Example Waste Broker Ltd",
-  "broker_trading_name": "Example Broker",
-  "street_address": "Example House, 1 Example Road",
-  "city": "Example Town",
-  "postcode": "EX1 2AB",
-  "company_email": "ops@examplebroker.co.uk",
-  "company_phone": "01234 567890",
-  "registration_number": "12345678",
-  "vat_number": "GB123456789",
-  "waste_licence": "CBDU123456",
   "footer": {
     "wasteTrackerStrapline": "POWERED BY WASTE TRACKER UK",
     "website": "www.wastetracker.uk"
@@ -142,20 +138,24 @@ function renderHeader(data) {
 function renderBody(data) {
   return '' +
     '<main class="document-body">' +
-      renderMetaRow(data) +
+      renderWorkOrderSummary(data) +
       renderCarrierSection(data) +
       renderServiceSection(data) +
-      renderProducerSection(data) +
       renderReceivingFacilitySection(data) +
-      renderBrokerSection(data) +
     '</main>';
 }
 
-function renderMetaRow(data) {
+function renderWorkOrderSummary(data) {
   return '' +
-    '<section class="work-order-meta">' +
-      '<div>Work Order:&nbsp;&nbsp;' + escapeHtml(getValue(data, "work_order_number")) + '</div>' +
-      '<div class="meta-right">Agreement:&nbsp;&nbsp;' + escapeHtml(getValue(data, "agreement_number")) + '</div>' +
+    '<section class="work-order-summary">' +
+      '<div class="work-order-number">Work Order:&nbsp;&nbsp;' + escapeHtml(getValue(data, "work_order_number")) + '</div>' +
+      '<div class="broker-summary">' +
+        '<div class="broker-line-wide"><span>' + escapeHtml(getValue(data, "broker_registered_name")) + '</span><span>T/A:&nbsp;&nbsp;' + escapeHtml(getValue(data, "broker_trading_name")) + '</span></div>' +
+        '<div>' + escapeHtml(getValue(data, "street_address")) + ' &nbsp;' + escapeHtml(getValue(data, "city")) + ' &nbsp;' + escapeHtml(getValue(data, "postcode")) + '</div>' +
+        '<div>' + escapeHtml(getValue(data, "company_email")) + ' &nbsp;' + escapeHtml(getValue(data, "company_phone")) + '</div>' +
+        '<div class="broker-line-wide"><span>Company Number: ' + escapeHtml(getValue(data, "registration_number")) + '</span><span>VAT Number: ' + escapeHtml(getValue(data, "vat_number")) + '</span></div>' +
+        '<div>Waste Licence&nbsp;&nbsp; ' + escapeHtml(getValue(data, "waste_licence")) + '</div>' +
+      '</div>' +
     '</section>';
 }
 
@@ -180,7 +180,7 @@ function renderServiceSection(data) {
         '<div>' + escapeHtml(getValue(data, "activity")) + ' &nbsp;(' + escapeHtml(getValue(data, "wait_and_load_time")) + ' minutes)</div>' +
         '<div class="service-date">' + escapeHtml(getValue(data, "service_date_and_time")) + '</div>' +
       '</div>' +
-      '<div class="site-address">Site address:&nbsp; ' + escapeHtml(getValue(data, "site_address")) + '</div>' +
+      '<div class="site-address">Site address:&nbsp; ' + escapeHtml(getValue(data, "site_name")) + ' &nbsp;' + escapeHtml(getValue(data, "site_address")) + '</div>' +
       renderWasteItemsTable(data) +
       '<div class="notes-box">Notes: ' + escapeHtml(getValue(data, "notes")) + '</div>' +
     '</section>';
@@ -220,39 +220,11 @@ function renderWasteItemsTable(data) {
   return html;
 }
 
-function renderProducerSection(data) {
-  return '' +
-    '<section class="section">' +
-      renderSectionBar('Producer') +
-      '<div class="producer-lines">' +
-        renderLine(getValue(data, "producer_name")) +
-        renderLine(getValue(data, "producer_address")) +
-        renderLine(getValue(data, "producer_phone") + ' &nbsp;&nbsp;&nbsp; ' + getValue(data, "producer_email")) +
-      '</div>' +
-    '</section>';
-}
-
 function renderReceivingFacilitySection(data) {
   return '' +
     '<section class="section section-tight">' +
       renderSectionBar('Receiving Facility') +
       '<div class="receiving-facility-note">To be confirmed by carrier.</div>' +
-    '</section>';
-}
-
-function renderBrokerSection(data) {
-  return '' +
-    '<section class="section">' +
-      renderSectionBar('Broker') +
-      '<div class="broker-grid">' +
-        '<div>' + escapeHtml(getValue(data, "broker_registered_name")) + '</div>' +
-        '<div><span class="inline-label">T/A:</span>' + escapeHtml(getValue(data, "broker_trading_name")) + '</div>' +
-        '<div class="full-width">' + escapeHtml(getValue(data, "street_address")) + ' &nbsp;' + escapeHtml(getValue(data, "city")) + ' &nbsp;' + escapeHtml(getValue(data, "postcode")) + '</div>' +
-        '<div class="full-width">' + escapeHtml(getValue(data, "company_email")) + ' &nbsp;' + escapeHtml(getValue(data, "company_phone")) + '</div>' +
-        '<div>Company Number: ' + escapeHtml(getValue(data, "registration_number")) + '</div>' +
-        '<div>VAT Number: ' + escapeHtml(getValue(data, "vat_number")) + '</div>' +
-        '<div class="full-width">Waste Licence&nbsp;&nbsp; ' + escapeHtml(getValue(data, "waste_licence")) + '</div>' +
-      '</div>' +
     '</section>';
 }
 
@@ -272,16 +244,6 @@ function renderFooter(data) {
 
 function renderSectionBar(text) {
   return '<div class="section-bar">' + escapeHtml(text) + '</div>';
-}
-
-function renderLine(value) {
-  var cleanValue = valueOrBlank(value);
-
-  if (!cleanValue) {
-    return '';
-  }
-
-  return '<div>' + escapeHtml(cleanValue) + '</div>';
 }
 
 function downloadPdf() {
