@@ -1,6 +1,8 @@
 var logo1DataUrl = "";
 var logo2DataUrl = "";
 var currentDocumentData = null;
+var gridEnabled = false;
+var lockedMeasurement = null;
 
 var sampleJson = {
   "document": {
@@ -56,6 +58,7 @@ function initialise() {
   document.getElementById("renderButton").onclick = renderFromJsonInput;
   document.getElementById("resetButton").onclick = resetSample;
   document.getElementById("downloadButton").onclick = downloadPdf;
+  document.getElementById("gridToggleButton").onclick = toggleGrid;
 
   document.getElementById("logoFile1").onchange = function (event) {
     readLogoFile(event, function (dataUrl) {
@@ -72,6 +75,7 @@ function initialise() {
   };
 
   renderFromJsonInput();
+  updateMeasurementReadout(null, null);
 }
 
 function resetSample() {
@@ -112,6 +116,7 @@ function renderFromJsonInput() {
 
   currentDocumentData = data;
   renderDocument(data);
+  applyGridState();
 }
 
 function renderDocument(data) {
@@ -123,6 +128,8 @@ function renderDocument(data) {
       renderBody(data) +
       renderFooter(data) +
     '</div>';
+
+  attachMeasurementHandlers();
 }
 
 function renderHeader(data) {
@@ -292,6 +299,115 @@ function renderSectionBar(text) {
   return '<div class="section-bar">' + escapeHtml(text) + '</div>';
 }
 
+function toggleGrid() {
+  gridEnabled = !gridEnabled;
+  lockedMeasurement = null;
+  applyGridState();
+  updateMeasurementReadout(null, null);
+}
+
+function applyGridState() {
+  var page = document.querySelector(".document-page");
+  var button = document.getElementById("gridToggleButton");
+
+  if (!page || !button) {
+    return;
+  }
+
+  if (gridEnabled) {
+    page.classList.add("grid-enabled");
+    button.textContent = "Hide grid";
+  } else {
+    page.classList.remove("grid-enabled");
+    button.textContent = "Show grid";
+  }
+}
+
+function attachMeasurementHandlers() {
+  var page = document.querySelector(".document-page");
+
+  if (!page) {
+    return;
+  }
+
+  page.onmousemove = function (event) {
+    var position;
+
+    if (!gridEnabled || lockedMeasurement) {
+      return;
+    }
+
+    position = getMeasurementPosition(event, page);
+    updateMeasurementReadout(position, null);
+  };
+
+  page.onclick = function (event) {
+    var position;
+
+    if (!gridEnabled) {
+      return;
+    }
+
+    position = getMeasurementPosition(event, page);
+    lockedMeasurement = position;
+    updateMeasurementReadout(position, position);
+  };
+
+  page.onmouseleave = function () {
+    if (!gridEnabled || lockedMeasurement) {
+      return;
+    }
+
+    updateMeasurementReadout(null, null);
+  };
+}
+
+function getMeasurementPosition(event, page) {
+  var rect = page.getBoundingClientRect();
+  var xPx = event.clientX - rect.left;
+  var yPx = event.clientY - rect.top;
+  var xMm = (xPx / rect.width) * 210;
+  var yMm = (yPx / rect.height) * 297;
+
+  return {
+    x: xMm,
+    y: yMm
+  };
+}
+
+function updateMeasurementReadout(position, lockedPosition) {
+  var readout = document.getElementById("measurementReadout");
+  var text;
+
+  if (!readout) {
+    return;
+  }
+
+  if (!gridEnabled) {
+    readout.textContent = "Grid off.";
+    return;
+  }
+
+  if (!position) {
+    readout.textContent = "Grid on. Move over the page for x/y. Click to lock a position.";
+    return;
+  }
+
+  text = "Current: x=" + formatMeasurement(position.x) + "mm, y=" + formatMeasurement(position.y) + "mm";
+
+  if (lockedPosition) {
+    text += "\nLocked:  x=" + formatMeasurement(lockedPosition.x) + "mm, y=" + formatMeasurement(lockedPosition.y) + "mm";
+  } else {
+    text += "\nClick to lock this position.";
+  }
+
+  readout.textContent = text;
+}
+
+function formatMeasurement(value) {
+  return Number(value).toFixed(1);
+}
+
 function downloadPdf() {
   var errorElement = document.getElementById("errorMessage");
   var documentElement = document.querySelector(".document-page");
@@ -327,6 +443,7 @@ function downloadPdf() {
   exportContainer.style.background = "#ffffff";
 
   exportElement = documentElement.cloneNode(true);
+  exportElement.classList.remove("grid-enabled");
   exportElement.style.margin = "0";
   exportElement.style.boxShadow = "none";
   exportElement.style.width = "210mm";
