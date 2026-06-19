@@ -141,18 +141,28 @@ button:hover {
   padding-top: 11mm;
 }
 
-.work-order-meta {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20mm;
-  font-size: 16px;
-  margin-bottom: 6mm;
-  padding-bottom: 5mm;
+.work-order-summary {
+  margin-bottom: 15mm;
+  padding-bottom: 11mm;
   border-bottom: 1px solid #d9d9d9;
 }
 
-.meta-right {
-  text-align: right;
+.work-order-number {
+  font-size: 16px;
+  margin-bottom: 6mm;
+}
+
+.broker-summary {
+  padding: 0 5px;
+}
+
+.broker-summary div {
+  margin-bottom: 1.4mm;
+}
+
+.broker-line-wide {
+  display: flex;
+  gap: 14mm;
 }
 
 .section {
@@ -171,8 +181,7 @@ button:hover {
   margin-bottom: 3mm;
 }
 
-.carrier-grid,
-.broker-grid {
+.carrier-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   column-gap: 12mm;
@@ -249,15 +258,7 @@ button:hover {
   padding: 3px 5px;
 }
 
-.producer-lines,
-.broker-lines {
-  padding: 0 5px;
-}
-
-.producer-lines div,
-.broker-lines div,
-.carrier-grid div,
-.broker-grid div {
+.carrier-grid div {
   margin-bottom: 1.5mm;
 }
 
