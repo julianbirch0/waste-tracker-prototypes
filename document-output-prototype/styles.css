@@ -91,7 +91,7 @@ button:hover {
   width: 210mm;
   min-height: 297mm;
   margin: 0 auto;
-  padding: 12mm;
+  padding: 10mm;
   background: #fff;
   box-shadow: 0 0 8px rgba(0, 0, 0, 0.25);
   display: flex;
@@ -154,9 +154,9 @@ button:hover {
   transform: none;
 }
 
-.guide-line-x-20 {
+.guide-line-x-15 {
   position: absolute;
-  left: 20mm;
+  left: 15mm;
   top: 0;
   bottom: 0;
   z-index: 21;
@@ -212,8 +212,8 @@ button:hover {
 .document-body {
   flex: 1;
   padding-top: 5mm;
-  padding-left: 8mm;
-  padding-right: 8mm;
+  padding-left: 5mm;
+  padding-right: 5mm;
 }
 
 .work-order-summary {
@@ -262,7 +262,9 @@ button:hover {
   background: #d9d9d9;
   font-size: 16px;
   line-height: 1.1;
-  padding: 2px 5px;
+  padding: 2px 5mm;
+  margin-left: -5mm;
+  margin-right: -5mm;
   margin-bottom: 3mm;
 }
 
@@ -419,6 +421,6 @@ button:hover {
 
   @page {
     size: A4 portrait;
-    margin: 12mm;
+    margin: 10mm;
   }
 }
