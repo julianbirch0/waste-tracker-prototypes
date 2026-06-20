@@ -336,6 +336,7 @@ button:hover {
 }
 
 .data-table th {
+  background: #ececec;
   font-weight: 400;
   text-align: center;
 }
