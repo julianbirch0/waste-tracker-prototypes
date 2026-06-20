@@ -240,6 +240,10 @@ function renderServiceSection(data) {
     waitAndLoadText = ' (' + escapeHtml(waitAndLoadTime) + ' minutes)';
   }
 
+  if (notes) {
+    notesHtml = '<div class="notes-box">NOTES: ' + escapeHtml(notes) + '</div>';
+  }
+
   return '' +
     '<section class="section">' +
       renderSectionBar('Service') +
