@@ -404,6 +404,11 @@ button:hover {
   font-style: italic;
 }
 
+.receiving-facility-detail {
+  padding: 0;
+  font-style: normal;
+}
+
 .document-footer {
   display: grid;
   grid-template-columns: 42mm 1fr;
@@ -432,6 +437,15 @@ button:hover {
 
 .footer-strapline-main {
   letter-spacing: 0.5px;
+}
+
+.footer-meta {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: space-between;
+  padding-top: 8mm;
+  font-size: 10pt;
+  line-height: 1;
 }
 
 @media print {
