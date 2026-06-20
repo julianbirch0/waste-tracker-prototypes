@@ -210,20 +210,21 @@ function formatBrokerAddressLine(data) {
 
 function renderCarrierSection(data) {
   var subcontractorTradingName = getValue(data, "subcontractor_trading_name");
-  var tradingNameHtml = '';
+  var subcontractorNameLine = '';
+
+  subcontractorNameLine += escapeHtml(getValue(data, "subcontractor_registered_name"));
 
   if (subcontractorTradingName) {
-    tradingNameHtml = '<div><span class="inline-label">T/A:</span>' + escapeHtml(subcontractorTradingName) + '</div>';
+    subcontractorNameLine += ' t/a ' + escapeHtml(subcontractorTradingName);
   }
 
   return '' +
     '<section class="section section-tight">' +
       renderSectionBar('Carrier') +
       '<div class="carrier-grid">' +
-        '<div>' + escapeHtml(getValue(data, "subcontractor_registered_name")) + '</div>' +
-        tradingNameHtml +
-        '<div class="full-width">' + escapeHtml(getValue(data, "subcontractor_office_address")) + '</div>' +
-        '<div class="full-width"><span class="inline-label">WASTE LICENCE:</span>' + escapeHtml(getValue(data, "subcontractor_waste_licence")) + '</div>' +
+        '<div>' + subcontractorNameLine + '</div>' +
+        '<div>' + escapeHtml(getValue(data, "subcontractor_office_address")) + '</div>' +
+        '<div>WASTE LICENCE: ' + escapeHtml(getValue(data, "subcontractor_waste_licence")) + '</div>' +
       '</div>' +
     '</section>';
 }
