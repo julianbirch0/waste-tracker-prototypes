@@ -289,10 +289,11 @@ button:hover {
 }
 
 .carrier-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  column-gap: 12mm;
-  row-gap: 2mm;
+  display: block;
+}
+
+.carrier-grid div {
+  margin-bottom: 1.4mm;
 }
 
 .full-width {
@@ -367,10 +368,6 @@ button:hover {
   min-height: 18mm;
   border: 1px solid #d9d9d9;
   padding: 3px 5px;
-}
-
-.carrier-grid div {
-  margin-bottom: 1.5mm;
 }
 
 .receiving-facility-note {
