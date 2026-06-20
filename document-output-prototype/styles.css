@@ -346,10 +346,13 @@ button:hover {
 .data-table .col-ewc {
   width: 1%;
   white-space: nowrap;
+  padding-left: 14px;
+  padding-right: 14px;
 }
 
 .data-table .col-description {
   width: auto;
+  text-align: left;
 }
 
 .data-table tbody td:nth-child(1),
@@ -359,6 +362,8 @@ button:hover {
   text-align: center;
   vertical-align: top;
   white-space: nowrap;
+  padding-left: 14px;
+  padding-right: 14px;
 }
 
 .data-table tbody td:nth-child(5) {
