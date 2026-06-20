@@ -3,6 +3,7 @@ var logo2DataUrl = "";
 var currentDocumentData = null;
 var gridEnabled = false;
 var lockedMeasurement = null;
+var documentCreatedAt = null;
 
 var sampleJson = {
   "document": {
@@ -46,6 +47,7 @@ var sampleJson = {
   ],
   "price": 1234.5,
   "notes": "Driver must report to site reception before entering the yard.",
+  "receiving_facility": "",
   "footer": {
     "wasteTrackerStrapline": "POWERED BY WASTE TRACKER UK",
     "website": "www.wastetracker.uk"
@@ -115,11 +117,12 @@ function renderFromJsonInput() {
   }
 
   currentDocumentData = data;
-  renderDocument(data);
+  documentCreatedAt = new Date();
+  renderDocument(data, documentCreatedAt);
   applyGridState();
 }
 
-function renderDocument(data) {
+function renderDocument(data, createdAt) {
   var preview = document.getElementById("documentPreview");
 
   preview.innerHTML =
@@ -127,7 +130,7 @@ function renderDocument(data) {
       renderMeasurementRulers() +
       renderHeader(data) +
       renderBody(data) +
-      renderFooter(data) +
+      renderFooter(data, createdAt) +
     '</div>';
 
   attachMeasurementHandlers();
@@ -310,16 +313,27 @@ function renderPriceLine(data) {
 }
 
 function renderReceivingFacilitySection(data) {
+  var receivingFacility = getValue(data, "receiving_facility") || getValue(data, "receivingFacility");
+
+  if (receivingFacility) {
+    return '' +
+      '<section class="section section-tight">' +
+        renderSectionBar('Receiving Facility') +
+        '<div class="receiving-facility-detail">' + escapeHtml(receivingFacility) + '</div>' +
+      '</section>';
+  }
+
   return '' +
     '<section class="section section-tight">' +
       renderSectionBar('Receiving Facility') +
-      '<div class="receiving-facility-note">To be confirmed by carrier.</div>' +
+      '<div class="receiving-facility-note">To be confirmed by the carrier.</div>' +
     '</section>';
 }
 
-function renderFooter(data) {
+function renderFooter(data, createdAt) {
   var strapline = getValue(data, "footer.wasteTrackerStrapline") || "POWERED BY WASTE TRACKER UK";
   var website = getValue(data, "footer.website") || "www.wastetracker.uk";
+  var createdText = formatDisplayTimestamp(createdAt || new Date());
 
   return '' +
     '<footer class="document-footer">' +
@@ -327,6 +341,10 @@ function renderFooter(data) {
       '<div class="footer-strapline">' +
         '<div class="footer-strapline-main">' + escapeHtml(strapline) + '</div>' +
         '<div>' + escapeHtml(website) + '</div>' +
+      '</div>' +
+      '<div class="footer-meta">' +
+        '<span>Page 1 of 1</span>' +
+        '<span>Document created: ' + escapeHtml(createdText) + '</span>' +
       '</div>' +
     '</footer>';
 }
@@ -484,31 +502,34 @@ function formatMeasurement(value) {
 
 function downloadPdf() {
   var errorElement = document.getElementById("errorMessage");
-  var documentElement = document.querySelector(".document-page");
+  var documentElement;
   var exportContainer;
   var exportElement;
   var documentData = currentDocumentData || {};
-  var title = "WasteTracker Document";
+  var downloadTimestamp = new Date();
+  var workOrderNumber = getValue(documentData, "work_order_number") || "work-order";
   var fileName;
   var options;
 
   errorElement.textContent = "";
-
-  if (!documentElement) {
-    errorElement.textContent = "No document is available to download.";
-    return;
-  }
 
   if (!window.html2pdf) {
     errorElement.textContent = "PDF download library has not loaded. Please refresh the page and try again.";
     return;
   }
 
-  if (documentData.document && documentData.document.title) {
-    title = valueOrBlank(documentData.document.title) || title;
+  documentCreatedAt = downloadTimestamp;
+  renderDocument(documentData, documentCreatedAt);
+  applyGridState();
+
+  documentElement = document.querySelector(".document-page");
+
+  if (!documentElement) {
+    errorElement.textContent = "No document is available to download.";
+    return;
   }
 
-  fileName = makeSafeFileName(title) + ".pdf";
+  fileName = makeSafeFileName(workOrderNumber) + "-" + formatFileTimestamp(downloadTimestamp) + ".pdf";
 
   exportContainer = document.createElement("div");
   exportContainer.style.position = "fixed";
@@ -616,6 +637,30 @@ function formatCurrencyAmount(value) {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   });
+}
+
+function padNumber(value) {
+  return String(value).length === 1 ? "0" + value : String(value);
+}
+
+function formatDisplayTimestamp(value) {
+  var dateValue = value || new Date();
+
+  return dateValue.getFullYear() + "-" +
+    padNumber(dateValue.getMonth() + 1) + "-" +
+    padNumber(dateValue.getDate()) + " " +
+    padNumber(dateValue.getHours()) + ":" +
+    padNumber(dateValue.getMinutes());
+}
+
+function formatFileTimestamp(value) {
+  var dateValue = value || new Date();
+
+  return String(dateValue.getFullYear()) +
+    padNumber(dateValue.getMonth() + 1) +
+    padNumber(dateValue.getDate()) + "_" +
+    padNumber(dateValue.getHours()) +
+    padNumber(dateValue.getMinutes());
 }
 
 function makeSafeFileName(value) {
