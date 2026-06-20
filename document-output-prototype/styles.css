@@ -323,14 +323,14 @@ button:hover {
 .data-table {
   width: 100%;
   border-collapse: collapse;
-  table-layout: fixed;
+  table-layout: auto;
   margin-bottom: 1mm;
 }
 
 .data-table th,
 .data-table td {
   border: 1px solid #d9d9d9;
-  padding: 2px 5px;
+  padding: 3px 7px;
   font-size: 12px;
   vertical-align: top;
 }
@@ -340,33 +340,31 @@ button:hover {
   text-align: center;
 }
 
-.data-table .col-container {
-  width: 26%;
-}
-
-.data-table .col-size {
-  width: 10%;
-}
-
-.data-table .col-qty {
-  width: 10%;
-}
-
+.data-table .col-container,
+.data-table .col-size,
+.data-table .col-qty,
 .data-table .col-ewc {
-  width: 15%;
+  width: 1%;
+  white-space: nowrap;
 }
 
 .data-table .col-description {
-  width: 39%;
+  width: auto;
 }
 
-.data-table tbody td:nth-child(2) {
-  text-align: right;
-}
-
+.data-table tbody td:nth-child(1),
+.data-table tbody td:nth-child(2),
 .data-table tbody td:nth-child(3),
 .data-table tbody td:nth-child(4) {
   text-align: center;
+  vertical-align: top;
+  white-space: nowrap;
+}
+
+.data-table tbody td:nth-child(5) {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: normal;
 }
 
 .price-line {
