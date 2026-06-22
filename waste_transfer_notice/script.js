@@ -6,7 +6,6 @@ var documentCreatedAt = null;
 var sampleJson = {
   "document": {
     "title": "Duty of care: waste transfer note",
-    "instruction": "Keep this page and copy it for future use. Please write as clearly as possible.",
     "footer_left": "Based on WMC2A Version 3, August 2011",
     "footer_right": "page 1 of 1"
   },
@@ -149,30 +148,31 @@ function renderHeader(data) {
   return '' +
     '<header class="document-header">' +
       '<div class="document-title">' + escapeHtml(getValue(data, "document.title")) + '</div>' +
-      '<div class="document-instruction">' + escapeHtml(getValue(data, "document.instruction")) + '</div>' +
     '</header>';
 }
 
 function renderSectionA(data) {
   return '' +
-    '<section class="form-section">' +
+    '<section class="form-section section-a">' +
       '<div class="section-title">Section A – Description of waste</div>' +
-      '<div class="two-columns">' +
+      '<div class="two-columns section-a-columns">' +
         '<div>' +
-          fieldRow('A1', 'Description of the waste being transferred', getValue(data, 'section_a.description')) +
-          lineRow(getValue(data, 'section_a.regulations_codes')) +
-          fieldRow('', 'List of Waste Regulations code(s)', '') +
+          fieldLabelRow('A1', 'Description of the waste being transferred') +
+          valueLines(getValue(data, 'section_a.description'), 2) +
+          fieldLabelRow('', 'List of Waste Regulations code(s)') +
+          valueLines(getValue(data, 'section_a.regulations_codes'), 1) +
         '</div>' +
         '<div>' +
-          '<div class="field-row"><span class="field-code">A2</span><span>How is the waste contained?</span></div>' +
-          '<div class="check-grid">' +
+          '<div class="field-row section-a-question"><span class="field-code">A2</span><span>How is the waste contained?</span></div>' +
+          '<div class="check-grid section-a-check-grid">' +
             checkboxLabel('Loose', getBoolean(data, 'section_a.contained.loose')) +
             checkboxLabel('Sacks', getBoolean(data, 'section_a.contained.sacks')) +
             checkboxLabel('Skip', getBoolean(data, 'section_a.contained.skip')) +
             checkboxLabel('Drum', getBoolean(data, 'section_a.contained.drum')) +
           '</div>' +
-          '<div class="field-row"><span>Other</span>' + checkbox(getBoolean(data, 'section_a.contained.other')) + '<span class="field-line">' + escapeHtml(getValue(data, 'section_a.contained.other_text')) + '</span></div>' +
-          fieldRow('A3', 'How much waste? For example, number of sacks, weight', getValue(data, 'section_a.quantity')) +
+          '<div class="field-row section-a-other"><span>Other</span>' + checkbox(getBoolean(data, 'section_a.contained.other')) + '<span class="field-line">' + escapeHtml(getValue(data, 'section_a.contained.other_text')) + '</span></div>' +
+          fieldLabelRow('A3', 'How much waste? For example, number of sacks, weight') +
+          valueLines(getValue(data, 'section_a.quantity'), 1) +
         '</div>' +
       '</div>' +
     '</section>';
@@ -281,6 +281,20 @@ function renderFooter(data) {
 
 function fieldRow(code, label, value) {
   return '<div class="field-row"><span class="field-code">' + escapeHtml(code) + '</span><span class="field-label">' + label + '</span><span class="field-line">' + escapeHtml(value) + '</span></div>';
+}
+
+function fieldLabelRow(code, label) {
+  return '<div class="field-row field-label-row"><span class="field-code">' + escapeHtml(code) + '</span><span class="field-label">' + label + '</span></div>';
+}
+
+function valueLines(value, count) {
+  var html = '';
+  var text = valueOrBlank(value);
+  var i;
+  for (i = 0; i < count; i++) {
+    html += '<div class="field-row value-line-row"><span class="field-line">' + (i === 0 ? escapeHtml(text) : '') + '</span></div>';
+  }
+  return html;
 }
 
 function lineRow(value) {
