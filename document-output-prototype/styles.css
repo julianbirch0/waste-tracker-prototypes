@@ -446,9 +446,9 @@ button:hover {
 
 .footer-meta {
   position: absolute;
-  left: 0;
-  right: 0;
-  bottom: -8mm;
+  left: 12mm;
+  right: 12mm;
+  bottom: 12mm;
   display: flex;
   justify-content: space-between;
   font-size: 6pt;
