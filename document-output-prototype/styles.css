@@ -410,20 +410,25 @@ button:hover {
 }
 
 .document-footer {
+  position: absolute;
+  left: 2mm;
+  right: 2mm;
+  top: 254mm;
+  height: 18mm;
   display: grid;
-  grid-template-columns: 42mm 1fr;
-  align-items: end;
-  gap: 10mm;
-  border-top: 1px solid #d9d9d9;
-  padding-top: 3mm;
-  margin-top: auto;
+  grid-template-columns: 38mm 1fr;
+  align-items: center;
+  gap: 8mm;
+  border: 2pt solid #d9d9d9;
+  padding: 2mm 3mm;
+  margin: 0;
 }
 
 .footer-logo-box {
-  width: 30mm;
-  height: 13mm;
+  width: 28mm;
+  height: 11mm;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: flex-start;
   overflow: hidden;
 }
@@ -440,11 +445,13 @@ button:hover {
 }
 
 .footer-meta {
-  grid-column: 1 / -1;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -8mm;
   display: flex;
   justify-content: space-between;
-  padding-top: 8mm;
-  font-size: 10pt;
+  font-size: 6pt;
   line-height: 1;
 }
 
