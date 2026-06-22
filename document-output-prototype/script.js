@@ -342,11 +342,11 @@ function renderFooter(data, createdAt) {
         '<div class="footer-strapline-main">' + escapeHtml(strapline) + '</div>' +
         '<div>' + escapeHtml(website) + '</div>' +
       '</div>' +
-      '<div class="footer-meta">' +
-        '<span>Page 1 of 1</span>' +
-        '<span>Document created: ' + escapeHtml(createdText) + '</span>' +
-      '</div>' +
-    '</footer>';
+    '</footer>' +
+    '<div class="footer-meta">' +
+      '<span>Page 1 of 1</span>' +
+      '<span>Document created: ' + escapeHtml(createdText) + '</span>' +
+    '</div>';
 }
 
 function renderSectionBar(text) {
