@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Waste Transfer Notice</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="control-panel">
+      <h1>Waste Transfer Notice</h1>
+
+      <div class="control-group">
+        <label for="jsonInput">Pasted JSON</label>
+        <textarea id="jsonInput" spellcheck="false"></textarea>
+      </div>
+
+      <div class="button-row">
+        <button id="renderButton" type="button">Render</button>
+        <button id="resetButton" type="button">Reset sample</button>
+        <button id="downloadButton" type="button">Download</button>
+        <button id="gridToggleButton" type="button">Show grid</button>
+      </div>
+
+      <div id="measurementReadout" class="measurement-readout">Grid off.</div>
+      <div id="errorMessage" class="error-message"></div>
+    </aside>
+
+    <main class="preview-panel">
+      <div id="documentPreview"></div>
+    </main>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
