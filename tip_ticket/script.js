@@ -12,7 +12,17 @@ var sampleJson = {
   "footer": {
     "wasteTrackerStrapline": "POWERED BY WASTE TRACKER UK",
     "website": "www.wastetracker.uk"
-  }
+  },
+  "receiving_facility_registered_name": "Example Receiving Facility Ltd",
+  "receiving_facility_trading_name": "Example Facility",
+  "receiving_facility_street_address": "Facility House, 1 Waste Road",
+  "receiving_facility_city": "Example Town",
+  "receiving_facility_postcode": "EX1 2AB",
+  "receiving_facility_email": "ops@examplefacility.co.uk",
+  "receiving_facility_phone": "01234 567890",
+  "receiving_facility_company_number": "12345678",
+  "receiving_facility_vat_number": "GB123456789",
+  "receiving_facility_waste_licence": "EPR/AB1234CD"
 };
 
 function initialise() {
@@ -63,7 +73,7 @@ function renderDocument(data) {
     '<div class="document-page">' +
       renderMeasurementRulers() +
       renderHeader(data) +
-      '<main class="tip-ticket-body"><div class="tip-ticket-placeholder">Tip ticket content to follow</div></main>' +
+      renderBody(data) +
       renderFooter(data) +
     '</div>';
   attachMeasurementHandlers();
@@ -71,6 +81,69 @@ function renderDocument(data) {
 
 function renderHeader(data) {
   return '<header class="document-header"><div class="document-title">' + escapeHtml(getValue(data, "document.title")) + '</div><div class="header-logo-box">' + renderLogo(logo1DataUrl, 'Logo file 1') + '</div></header>';
+}
+
+function renderBody(data) {
+  return '' +
+    '<main class="document-body">' +
+      renderReceivingFacilitySummary(data) +
+      '<section class="section">' +
+        renderSectionBar('Waste Items') +
+      '</section>' +
+    '</main>';
+}
+
+function renderReceivingFacilitySummary(data) {
+  var tradingName = getValue(data, "receiving_facility_trading_name");
+  var nameLine = '';
+
+  nameLine += escapeHtml(getValue(data, "receiving_facility_registered_name"));
+
+  if (tradingName) {
+    nameLine += ' t/a ' + escapeHtml(tradingName);
+  }
+
+  return '' +
+    '<section class="receiving-facility-summary-section">' +
+      '<div class="receiving-facility-summary">' +
+        '<div class="receiving-facility-name-line">' + nameLine + '</div>' +
+        '<div>' + escapeHtml(formatReceivingFacilityAddressLine(data)) + '</div>' +
+        '<div class="receiving-facility-contact-line"><span>EMAIL: ' + escapeHtml(getValue(data, "receiving_facility_email")) + '</span><span>PHONE: ' + escapeHtml(getValue(data, "receiving_facility_phone")) + '</span></div>' +
+        '<div class="receiving-facility-registration-row">' +
+          '<span>COMPANY NUMBER: ' + escapeHtml(getValue(data, "receiving_facility_company_number")) + '</span>' +
+          '<span>VAT NUMBER: ' + escapeHtml(getValue(data, "receiving_facility_vat_number")) + '</span>' +
+          '<span>WASTE LICENCE: ' + escapeHtml(getValue(data, "receiving_facility_waste_licence")) + '</span>' +
+        '</div>' +
+      '</div>' +
+    '</section>';
+}
+
+function formatReceivingFacilityAddressLine(data) {
+  var streetAddress = getValue(data, "receiving_facility_street_address");
+  var city = getValue(data, "receiving_facility_city");
+  var postcode = getValue(data, "receiving_facility_postcode");
+  var parts = [];
+
+  if (streetAddress) {
+    if (streetAddress.charAt(streetAddress.length - 1) !== ',') {
+      streetAddress += ',';
+    }
+    parts.push(streetAddress);
+  }
+
+  if (city) {
+    parts.push(city);
+  }
+
+  if (postcode) {
+    parts.push(postcode);
+  }
+
+  return parts.join(' ');
+}
+
+function renderSectionBar(text) {
+  return '<div class="section-bar">' + escapeHtml(text) + '</div>';
 }
 
 function renderFooter(data) {
