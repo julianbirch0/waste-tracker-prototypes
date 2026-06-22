@@ -10,6 +10,24 @@ var sampleJson = {
     "title": "Waste Transfer Notice",
     "subtitle": "Producer to Carrier"
   },
+  "wasteItems": [
+    {
+      "waste_description": "Mixed municipal waste",
+      "ewc": "20 03 01",
+      "container_type": "Skip",
+      "size": "8 yd",
+      "qty": "1",
+      "hazardous": "No"
+    },
+    {
+      "waste_description": "Paper and cardboard packaging",
+      "ewc": "15 01 01",
+      "container_type": "Eurobin",
+      "size": "1100L",
+      "qty": "2",
+      "hazardous": "No"
+    }
+  ],
   "footer": {
     "wasteTrackerStrapline": "POWERED BY WASTE TRACKER UK",
     "website": "www.wastetracker.uk"
@@ -91,7 +109,7 @@ function renderDocument(data, createdAt) {
     '<div class="document-page">' +
       renderMeasurementRulers() +
       renderHeader(data) +
-      renderBody() +
+      renderBody(data) +
       renderFooter(data, createdAt) +
     '</div>';
 
@@ -113,8 +131,52 @@ function renderHeader(data) {
     '</header>';
 }
 
-function renderBody() {
-  return '<main class="document-body"></main>';
+function renderBody(data) {
+  return '' +
+    '<main class="document-body">' +
+      renderSectionBar('Section A - Description of waste') +
+      renderWasteItemsTable(data) +
+    '</main>';
+}
+
+function renderSectionBar(text) {
+  return '<div class="section-bar">' + escapeHtml(text) + '</div>';
+}
+
+function renderWasteItemsTable(data) {
+  var rows = data.wasteItems || data.waste_items || [];
+  var html = '';
+  var i;
+
+  html += '<table class="data-table">';
+  html += '<thead><tr>';
+  html += '<th class="col-description">Description</th>';
+  html += '<th class="col-ewc">EWC</th>';
+  html += '<th class="col-container">Container</th>';
+  html += '<th class="col-size">Size</th>';
+  html += '<th class="col-qty">Quantity</th>';
+  html += '<th class="col-hazardous">Hazardous</th>';
+  html += '</tr></thead>';
+  html += '<tbody>';
+
+  if (!rows.length) {
+    html += '<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td></tr>';
+  }
+
+  for (i = 0; i < rows.length; i++) {
+    html += '<tr>';
+    html += '<td>' + escapeHtml(getValue(rows[i], "waste_description") || getValue(rows[i], "description")) + '</td>';
+    html += '<td>' + escapeHtml(getValue(rows[i], "ewc")) + '</td>';
+    html += '<td>' + escapeHtml(getValue(rows[i], "container_type") || getValue(rows[i], "container")) + '</td>';
+    html += '<td>' + escapeHtml(getValue(rows[i], "size")) + '</td>';
+    html += '<td>' + escapeHtml(getValue(rows[i], "qty") || getValue(rows[i], "quantity")) + '</td>';
+    html += '<td>' + escapeHtml(getValue(rows[i], "hazardous")) + '</td>';
+    html += '</tr>';
+  }
+
+  html += '</tbody></table>';
+
+  return html;
 }
 
 function renderFooter(data, createdAt) {
