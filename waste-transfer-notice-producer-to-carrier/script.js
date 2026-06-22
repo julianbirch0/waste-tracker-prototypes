@@ -7,7 +7,8 @@ var documentCreatedAt = null;
 
 var sampleJson = {
   "document": {
-    "title": "Waste Transfer Notice"
+    "title": "Waste Transfer Notice",
+    "subtitle": "Producer to Carrier"
   },
   "footer": {
     "wasteTrackerStrapline": "POWERED BY WASTE TRACKER UK",
@@ -99,11 +100,15 @@ function renderDocument(data, createdAt) {
 
 function renderHeader(data) {
   var title = getValue(data, "document.title") || getValue(data, "document_title") || "Waste Transfer Notice";
+  var subtitle = getValue(data, "document.subtitle") || getValue(data, "document_subtitle") || "Producer to Carrier";
 
   return '' +
     '<header class="document-header">' +
       '<div class="header-logo-box">' + renderLogo(logo1DataUrl, 'Logo file 1') + '</div>' +
-      '<div class="document-title">' + escapeHtml(title) + '</div>' +
+      '<div class="header-title-block">' +
+        '<div class="document-title">' + escapeHtml(title) + '</div>' +
+        '<div class="document-subtitle">' + escapeHtml(subtitle) + '</div>' +
+      '</div>' +
       '<div></div>' +
     '</header>';
 }
