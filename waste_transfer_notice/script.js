@@ -171,7 +171,7 @@ function renderSectionA(data) {
             checkboxLabel('Drum', getBoolean(data, 'section_a.contained.drum')) +
           '</div>' +
           '<div class="field-row section-a-other"><span>Other</span>' + checkbox(getBoolean(data, 'section_a.contained.other')) + '<span class="field-line">' + escapeHtml(getValue(data, 'section_a.contained.other_text')) + '</span></div>' +
-          fieldLabelRow('A3', 'How much waste? For example, number of sacks, weight') +
+          fieldLabelRow('A3', 'How much waste?') +
           valueLines(getValue(data, 'section_a.quantity'), 1) +
         '</div>' +
       '</div>' +
