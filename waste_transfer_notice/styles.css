@@ -224,6 +224,7 @@ button:hover {
 .field-code {
   font-weight: 700;
   margin-right: 2px;
+  min-width: 16px;
 }
 
 .field-line {
@@ -231,6 +232,7 @@ button:hover {
   min-height: 12px;
   flex: 1;
   padding: 0 3px 1px 3px;
+  font-weight: 700;
 }
 
 .field-line.empty {
@@ -321,6 +323,7 @@ button:hover {
   border: 1px solid #999;
   height: 20px;
   padding: 2px 4px;
+  font-weight: 700;
 }
 
 .footer-line {
