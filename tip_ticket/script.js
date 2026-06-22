@@ -22,7 +22,11 @@ var sampleJson = {
   "receiving_facility_phone": "01234 567890",
   "receiving_facility_company_number": "12345678",
   "receiving_facility_vat_number": "GB123456789",
-  "receiving_facility_waste_licence": "EPR/AB1234CD"
+  "receiving_facility_waste_licence": "EPR/AB1234CD",
+  "carrier_registered_name": "ABC Waste Transport Ltd",
+  "carrier_trading_name": "ABC Transport",
+  "carrier_office_address": "Unit 4 Industrial Estate, Somewhere, CD2 3EF",
+  "carrier_waste_licence": "CBDU654321"
 };
 
 function initialise() {
@@ -87,6 +91,7 @@ function renderBody(data) {
   return '' +
     '<main class="document-body">' +
       renderReceivingFacilitySummary(data) +
+      renderCarrierSection(data) +
       '<section class="section">' +
         renderSectionBar('Waste Items') +
       '</section>' +
@@ -140,6 +145,27 @@ function formatReceivingFacilityAddressLine(data) {
   }
 
   return parts.join(' ');
+}
+
+function renderCarrierSection(data) {
+  var carrierTradingName = getValue(data, "carrier_trading_name");
+  var carrierNameLine = '';
+
+  carrierNameLine += escapeHtml(getValue(data, "carrier_registered_name"));
+
+  if (carrierTradingName) {
+    carrierNameLine += ' t/a ' + escapeHtml(carrierTradingName);
+  }
+
+  return '' +
+    '<section class="section section-tight">' +
+      renderSectionBar('Carrier') +
+      '<div class="carrier-grid">' +
+        '<div>' + carrierNameLine + '</div>' +
+        '<div>' + escapeHtml(getValue(data, "carrier_office_address")) + '</div>' +
+        '<div>WASTE LICENCE: ' + escapeHtml(getValue(data, "carrier_waste_licence")) + '</div>' +
+      '</div>' +
+    '</section>';
 }
 
 function renderSectionBar(text) {
