@@ -199,19 +199,66 @@ button:hover {
   line-height: 1;
 }
 
-.tip-ticket-body {
-  padding-top: 8mm;
-  min-height: 215mm;
+.document-body {
+  padding-top: 5mm;
+  padding-left: 2.5mm;
+  padding-right: 2.5mm;
 }
 
-.tip-ticket-placeholder {
-  border: 1px dashed #aaa;
-  min-height: 45mm;
+.receiving-facility-summary-section {
+  margin-bottom: 0;
+  padding-bottom: 3mm;
+}
+
+.receiving-facility-summary {
+  padding: 0;
+}
+
+.receiving-facility-summary div {
+  margin-bottom: 1.4mm;
+}
+
+.receiving-facility-name-line {
+  display: block;
+}
+
+.receiving-facility-contact-line {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #777;
-  font-size: 14px;
+  gap: 20mm;
+}
+
+.receiving-facility-registration-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  column-gap: 8mm;
+  align-items: start;
+}
+
+.receiving-facility-registration-row span:nth-child(1) {
+  text-align: left;
+}
+
+.receiving-facility-registration-row span:nth-child(2) {
+  text-align: center;
+}
+
+.receiving-facility-registration-row span:nth-child(3) {
+  text-align: right;
+}
+
+.section {
+  margin-bottom: 7mm;
+}
+
+.section-bar {
+  background: #d9d9d9;
+  border-radius: 2mm;
+  font-size: 16px;
+  line-height: 1.1;
+  padding: 2.5mm;
+  margin-left: -2.5mm;
+  margin-right: -2.5mm;
+  margin-bottom: 3mm;
 }
 
 .document-footer {
