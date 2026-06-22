@@ -227,6 +227,89 @@ button:hover {
 
 .document-body {
   flex: 1;
+  padding-top: 18mm;
+  padding-left: 2.5mm;
+  padding-right: 2.5mm;
+}
+
+.section-bar {
+  background: #d9d9d9;
+  border-radius: 2mm;
+  font-size: 16px;
+  line-height: 1.1;
+  padding: 2.5mm;
+  margin-left: -2.5mm;
+  margin-right: -2.5mm;
+  margin-bottom: 3mm;
+}
+
+.data-table {
+  width: 100%;
+  border: 1px solid #d9d9d9;
+  border-collapse: separate;
+  border-radius: 2mm;
+  border-spacing: 0;
+  margin-bottom: 1mm;
+  overflow: hidden;
+  table-layout: auto;
+}
+
+.data-table th,
+.data-table td {
+  border: 0;
+  border-right: 1px solid #d9d9d9;
+  border-bottom: 1px solid #d9d9d9;
+  padding: 3px 7px;
+  font-size: 12px;
+  vertical-align: top;
+}
+
+.data-table tr > *:last-child {
+  border-right: 0;
+}
+
+.data-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.data-table th {
+  background: #ececec;
+  font-weight: 400;
+  text-align: center;
+}
+
+.data-table .col-description {
+  width: auto;
+  text-align: left;
+}
+
+.data-table .col-ewc,
+.data-table .col-container,
+.data-table .col-size,
+.data-table .col-qty,
+.data-table .col-hazardous {
+  width: 1%;
+  white-space: nowrap;
+  padding-left: 14px;
+  padding-right: 14px;
+}
+
+.data-table tbody td:nth-child(1) {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+.data-table tbody td:nth-child(2),
+.data-table tbody td:nth-child(3),
+.data-table tbody td:nth-child(4),
+.data-table tbody td:nth-child(5),
+.data-table tbody td:nth-child(6) {
+  text-align: center;
+  vertical-align: top;
+  white-space: nowrap;
+  padding-left: 14px;
+  padding-right: 14px;
 }
 
 .document-footer {
