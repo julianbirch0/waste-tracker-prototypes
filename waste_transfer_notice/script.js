@@ -1,3 +1,5 @@
+var logo1DataUrl = "";
+var logo2DataUrl = "";
 var currentDocumentData = null;
 var gridEnabled = false;
 var lockedMeasurement = null;
@@ -8,6 +10,10 @@ var sampleJson = {
     "title": "Duty of care: waste transfer note",
     "footer_left": "Based on WMC2A Version 3, August 2011",
     "footer_right": "page 1 of 1"
+  },
+  "footer": {
+    "wasteTrackerStrapline": "POWERED BY WASTE TRACKER UK",
+    "website": "www.wastetracker.uk"
   },
   "section_a": {
     "description": "Mixed municipal waste from office and welfare areas.",
@@ -102,6 +108,21 @@ function initialise() {
   document.getElementById("resetButton").onclick = resetSample;
   document.getElementById("downloadButton").onclick = downloadPdf;
   document.getElementById("gridToggleButton").onclick = toggleGrid;
+
+  document.getElementById("logoFile1").onchange = function (event) {
+    readLogoFile(event, function (dataUrl) {
+      logo1DataUrl = dataUrl;
+      renderFromJsonInput();
+    });
+  };
+
+  document.getElementById("logoFile2").onchange = function (event) {
+    readLogoFile(event, function (dataUrl) {
+      logo2DataUrl = dataUrl;
+      renderFromJsonInput();
+    });
+  };
+
   renderFromJsonInput();
   updateMeasurementReadout(null, null);
 }
@@ -109,6 +130,24 @@ function initialise() {
 function resetSample() {
   document.getElementById("jsonInput").value = JSON.stringify(sampleJson, null, 2);
   renderFromJsonInput();
+}
+
+function readLogoFile(event, callback) {
+  var file = event.target.files && event.target.files[0];
+  var reader;
+
+  if (!file) {
+    callback("");
+    return;
+  }
+
+  reader = new FileReader();
+
+  reader.onload = function (loadEvent) {
+    callback(loadEvent.target.result);
+  };
+
+  reader.readAsDataURL(file);
 }
 
 function renderFromJsonInput() {
@@ -148,6 +187,7 @@ function renderHeader(data) {
   return '' +
     '<header class="document-header">' +
       '<div class="document-title">' + escapeHtml(getValue(data, "document.title")) + '</div>' +
+      '<div class="header-logo-box">' + renderLogo(logo1DataUrl, 'Logo file 1') + '</div>' +
     '</header>';
 }
 
@@ -272,7 +312,17 @@ function renderSignatures(data) {
 }
 
 function renderFooter(data) {
+  var strapline = getValue(data, 'footer.wasteTrackerStrapline') || getValue(data, 'footer.wastetracker_stapline') || 'POWERED BY WASTE TRACKER UK';
+  var website = getValue(data, 'footer.website') || 'www.wastetracker.uk';
+
   return '' +
+    '<footer class="document-footer">' +
+      '<div class="footer-logo-box">' + renderLogo(logo2DataUrl, 'Logo file 2') + '</div>' +
+      '<div class="footer-strapline">' +
+        '<div class="footer-strapline-main">' + escapeHtml(strapline) + '</div>' +
+        '<div>' + escapeHtml(website) + '</div>' +
+      '</div>' +
+    '</footer>' +
     '<div class="footer-line">' +
       '<span>' + escapeHtml(getValue(data, 'document.footer_left') || 'Based on WMC2A Version 3, August 2011') + '</span>' +
       '<span>' + escapeHtml(getValue(data, 'document.footer_right') || 'page 1 of 1') + '</span>' +
@@ -329,6 +379,14 @@ function checkbox(checked) {
 
 function signatureRow(label, value) {
   return '<div class="signature-line"><strong>' + escapeHtml(label) + '</strong><div class="signature-box">' + escapeHtml(value) + '</div></div>';
+}
+
+function renderLogo(dataUrl, placeholderText) {
+  if (dataUrl) {
+    return '<img src="' + dataUrl + '" alt="' + escapeHtml(placeholderText) + '">';
+  }
+
+  return '<div class="logo-placeholder">' + escapeHtml(placeholderText) + '</div>';
 }
 
 function renderMeasurementRulers() {
