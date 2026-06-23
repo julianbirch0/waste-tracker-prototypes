@@ -355,6 +355,81 @@ button:hover {
   word-break: normal;
 }
 
+.signature-section {
+  position: absolute;
+  left: 10mm;
+  right: 10mm;
+  bottom: 35mm;
+  border-top: 2px solid #333;
+  padding-top: 3mm;
+  font-size: 12px;
+  line-height: 1.2;
+}
+
+.signature-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 12mm;
+}
+
+.signature-party-title {
+  font-weight: 700;
+  margin-bottom: 2mm;
+}
+
+.signature-field-row {
+  display: grid;
+  grid-template-columns: 24mm 1fr;
+  column-gap: 3mm;
+  align-items: end;
+  margin-bottom: 2mm;
+}
+
+.signature-label {
+  font-weight: 400;
+}
+
+.signature-line {
+  border-bottom: 1px solid #777;
+  min-height: 5mm;
+  padding: 0 2mm 1mm 2mm;
+}
+
+.signature-prefilled {
+  font-weight: 700;
+}
+
+.signature-row-large {
+  align-items: start;
+}
+
+.signature-box {
+  border: 1px solid #999;
+  min-height: 10mm;
+}
+
+.waste-hierarchy-confirmation {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  column-gap: 2mm;
+  align-items: start;
+  margin-top: 3mm;
+  font-size: 9px;
+  line-height: 1.25;
+}
+
+.confirmation-yes {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.empty-checkbox {
+  width: 3.2mm;
+  height: 3.2mm;
+  border: 1px solid #555;
+  display: inline-block;
+}
+
 .document-footer {
   position: absolute;
   left: 10mm;
