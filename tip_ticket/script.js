@@ -99,6 +99,7 @@ function renderDocument(data) {
       renderMeasurementRulers() +
       renderHeader(data) +
       renderBody(data) +
+      renderSignatureSection(data) +
       renderFooter(data) +
     '</div>';
   attachMeasurementHandlers();
@@ -242,6 +243,54 @@ function formatWeight(row) {
   }
 
   return weight;
+}
+
+function renderSignatureSection(data) {
+  return '' +
+    '<section class="signature-section">' +
+      '<div class="signature-grid">' +
+        renderSignatureColumn('Carrier', formatCarrierName(data), true) +
+        renderSignatureColumn('Receiving facility', formatReceivingFacilityName(data), false) +
+      '</div>' +
+    '</section>';
+}
+
+function renderSignatureColumn(title, representing, includeConfirmation) {
+  var html = '';
+
+  html += '<div class="signature-column">';
+  html += '<div class="signature-party-title">' + escapeHtml(title) + '</div>';
+  html += '<div class="signature-field-row"><span class="signature-label">Name</span><span class="signature-line"></span></div>';
+  html += '<div class="signature-field-row"><span class="signature-label">Representing</span><span class="signature-line signature-prefilled">' + escapeHtml(representing) + '</span></div>';
+  html += '<div class="signature-field-row signature-row-large"><span class="signature-label">Signature</span><span class="signature-box"></span></div>';
+
+  if (includeConfirmation) {
+    html += '<div class="waste-hierarchy-confirmation">' +
+      '<span>By signing above, I confirm that I have fulfilled my duty to apply the waste hierarchy as required by Section 12 of the Waste (England and Wales) Regulations 2011</span>' +
+      '<span class="confirmation-yes">Yes</span>' +
+      '<span class="empty-checkbox"></span>' +
+    '</div>';
+  }
+
+  html += '</div>';
+
+  return html;
+}
+
+function formatCarrierName(data) {
+  return formatNameWithTradingName(getValue(data, "carrier_registered_name"), getValue(data, "carrier_trading_name"));
+}
+
+function formatReceivingFacilityName(data) {
+  return formatNameWithTradingName(getValue(data, "receiving_facility_registered_name"), getValue(data, "receiving_facility_trading_name"));
+}
+
+function formatNameWithTradingName(registeredName, tradingName) {
+  if (registeredName && tradingName) {
+    return registeredName + ' t/a ' + tradingName;
+  }
+
+  return registeredName || tradingName;
 }
 
 function renderSectionBar(text) {
