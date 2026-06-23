@@ -311,8 +311,8 @@ function renderLogo(dataUrl, placeholderText) {
 }
 
 function renderMeasurementRulers() {
-  var xLabels = [0, 10, 50, 100, 150, 200];
-  var yLabels = [0, 20, 50, 100, 150, 200, 250, 290];
+  var xLabels = [0, 10, 50, 100, 150, 200, 250, 290];
+  var yLabels = [0, 20, 50, 100, 150, 200];
   var html = '<div class="measurement-rulers">';
   var i;
   for (i = 0; i < xLabels.length; i++) {
@@ -364,8 +364,8 @@ function attachMeasurementHandlers() {
 function getMeasurementPosition(event, page) {
   var rect = page.getBoundingClientRect();
   return {
-    x: ((event.clientX - rect.left) / rect.width) * 210,
-    y: ((event.clientY - rect.top) / rect.height) * 297
+    x: ((event.clientX - rect.left) / rect.width) * 297,
+    y: ((event.clientY - rect.top) / rect.height) * 210
   };
 }
 
@@ -414,8 +414,8 @@ function downloadPdf() {
   exportElement.classList.remove('grid-enabled');
   exportElement.style.margin = '0';
   exportElement.style.boxShadow = 'none';
-  exportElement.style.width = '210mm';
-  exportElement.style.minHeight = '296mm';
+  exportElement.style.width = '297mm';
+  exportElement.style.minHeight = '209mm';
   exportContainer.appendChild(exportElement);
   document.body.appendChild(exportContainer);
   options = {
@@ -423,7 +423,7 @@ function downloadPdf() {
     filename: 'tip-ticket-' + formatFileTimestamp(new Date()) + '.pdf',
     image: { type: 'jpeg', quality: 0.98 },
     html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
-    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
     pagebreak: { mode: ['css', 'legacy'] }
   };
   window.html2pdf().set(options).from(exportElement).save().then(function () {
