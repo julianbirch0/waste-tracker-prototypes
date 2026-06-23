@@ -239,6 +239,7 @@ function renderWasteItemsTable(data) {
   }
 
   html += '</tbody></table>';
+  html += '<div class="table-key">E - For Net Weight, \'E\' indicates that the weight is estimated.</div>';
 
   return html;
 }
@@ -282,9 +283,7 @@ function renderSignatureColumn(partyName, representing, includeConfirmation) {
 
   if (includeConfirmation) {
     html += '<div class="waste-hierarchy-confirmation">' +
-      '<span>By signing above, I confirm that I have fulfilled my duty to apply the waste hierarchy as required by Section 12 of the Waste (England and Wales) Regulations 2011</span>' +
-      '<span class="confirmation-yes">YES</span>' +
-      '<span class="empty-checkbox"></span>' +
+      '<span>By signing above, I confirm that I have fulfilled my duty to apply the waste hierarchy as required by Section 12 of the Waste (England and Wales) Regulations 2011.</span>' +
     '</div>';
   }
 
