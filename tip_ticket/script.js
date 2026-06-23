@@ -41,7 +41,7 @@ var sampleJson = {
       "weight_in": "240 kg",
       "weight_out": "140 kg",
       "weight": "100 kg",
-      "weight_estimated": true,
+      "weight_estimated": false,
       "ewc": "20 03 01",
       "waste_description": "Mixed municipal waste"
     },
@@ -52,7 +52,7 @@ var sampleJson = {
       "weight_in": "",
       "weight_out": null,
       "weight": "75 kg",
-      "weight_estimated": false,
+      "weight_estimated": true,
       "ewc": "15 01 01",
       "waste_description": "Paper and cardboard packaging"
     }
@@ -161,7 +161,7 @@ function renderCompanyDetailsColumns(data) {
         '<div class="company-detail-content">' +
           '<div>' + escapeHtml(formatCarrierName(data)) + '</div>' +
           '<div>' + escapeHtml(getValue(data, "carrier_office_address")) + '</div>' +
-          '<div>SIC: ' + escapeHtml(getValue(data, "carrier_sic")) + '</div>' +
+          '<div>SIC code (2007): ' + escapeHtml(getValue(data, "carrier_sic")) + '</div>' +
           '<div>WASTE LICENCE: ' + escapeHtml(getValue(data, "carrier_waste_licence")) + '</div>' +
           '<div>VEHICLE REGISTRATION: ' + escapeHtml(getValue(data, "carrier_vehicle_registration")) + '</div>' +
         '</div>' +
