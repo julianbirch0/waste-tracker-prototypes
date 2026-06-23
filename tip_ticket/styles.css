@@ -89,8 +89,8 @@ button:hover {
 }
 
 .document-page {
-  width: 210mm;
-  min-height: 297mm;
+  width: 297mm;
+  min-height: 210mm;
   margin: 0 auto;
   padding: 9mm 10mm 8mm 10mm;
   background: #fff;
@@ -509,7 +509,7 @@ button:hover {
   }
 
   @page {
-    size: A4 portrait;
+    size: A4 landscape;
     margin: 0;
   }
 }
