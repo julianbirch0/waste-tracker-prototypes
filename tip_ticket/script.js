@@ -26,7 +26,23 @@ var sampleJson = {
   "carrier_registered_name": "ABC Waste Transport Ltd",
   "carrier_trading_name": "ABC Transport",
   "carrier_office_address": "Unit 4 Industrial Estate, Somewhere, CD2 3EF",
-  "carrier_waste_licence": "CBDU654321"
+  "carrier_waste_licence": "CBDU654321",
+  "wasteItems": [
+    {
+      "container_type": "Skip",
+      "size": "8 yd",
+      "qty": "1",
+      "ewc": "20 03 01",
+      "waste_description": "Mixed municipal waste"
+    },
+    {
+      "container_type": "Eurobin",
+      "size": "1100L",
+      "qty": "2",
+      "ewc": "15 01 01",
+      "waste_description": "Paper and cardboard packaging"
+    }
+  ]
 };
 
 function initialise() {
@@ -94,6 +110,7 @@ function renderBody(data) {
       renderCarrierSection(data) +
       '<section class="section">' +
         renderSectionBar('Waste Items') +
+        renderWasteItemsTable(data) +
       '</section>' +
     '</main>';
 }
@@ -166,6 +183,40 @@ function renderCarrierSection(data) {
         '<div>WASTE LICENCE: ' + escapeHtml(getValue(data, "carrier_waste_licence")) + '</div>' +
       '</div>' +
     '</section>';
+}
+
+function renderWasteItemsTable(data) {
+  var rows = data.wasteItems || data.waste_items || [];
+  var html = '';
+  var i;
+
+  html += '<table class="data-table">';
+  html += '<thead><tr>';
+  html += '<th class="col-container">Container</th>';
+  html += '<th class="col-size">Size</th>';
+  html += '<th class="col-qty">Qty</th>';
+  html += '<th class="col-ewc">EWC</th>';
+  html += '<th class="col-description">Description</th>';
+  html += '</tr></thead>';
+  html += '<tbody>';
+
+  if (!rows.length) {
+    html += '<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>';
+  }
+
+  for (i = 0; i < rows.length; i++) {
+    html += '<tr>';
+    html += '<td>' + escapeHtml(getValue(rows[i], "container_type")) + '</td>';
+    html += '<td>' + escapeHtml(getValue(rows[i], "size")) + '</td>';
+    html += '<td>' + escapeHtml(getValue(rows[i], "qty")) + '</td>';
+    html += '<td>' + escapeHtml(getValue(rows[i], "ewc")) + '</td>';
+    html += '<td>' + escapeHtml(getValue(rows[i], "waste_description")) + '</td>';
+    html += '</tr>';
+  }
+
+  html += '</tbody></table>';
+
+  return html;
 }
 
 function renderSectionBar(text) {
