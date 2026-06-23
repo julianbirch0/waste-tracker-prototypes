@@ -278,7 +278,7 @@ function renderSignatureColumn(partyName, representing, includeConfirmation) {
   html += '<div class="signature-column">';
   html += '<div class="signature-field-row"><span class="signature-label">Name</span><span class="signature-line"><span class="signature-placeholder">' + escapeHtml(partyName) + '</span></span></div>';
   html += '<div class="signature-field-row"><span class="signature-label">Representing</span><span class="signature-line signature-prefilled field-value">' + escapeHtml(representing) + '</span></div>';
-  html += '<div class="signature-field-row signature-row-large"><span class="signature-label">Signature</span><span class="signature-box"></span></div>';
+  html += '<div class="signature-field-row signature-row-large"><span class="signature-label">Signature</span><span class="signature-box"><span class="signature-box-placeholder">' + escapeHtml(partyName) + '</span></span></div>';
 
   if (includeConfirmation) {
     html += '<div class="waste-hierarchy-confirmation">' +
