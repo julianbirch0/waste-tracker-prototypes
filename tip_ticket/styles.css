@@ -457,6 +457,13 @@ button:hover {
   border-bottom: 1px solid #777;
   min-height: 5mm;
   padding: 0 2mm 1mm 2mm;
+  display: flex;
+  align-items: flex-end;
+}
+
+.signature-placeholder {
+  color: #bfbfbf;
+  font-weight: 400;
 }
 
 .signature-prefilled {
