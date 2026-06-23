@@ -128,8 +128,7 @@ function renderHeader(data) {
 function renderBody(data) {
   return '' +
     '<main class="document-body">' +
-      renderReceivingFacilitySummary(data) +
-      renderCarrierSection(data) +
+      renderCompanyDetailsColumns(data) +
       '<section class="section">' +
         renderSectionBar('Waste Items') +
         renderWasteItemsTable(data) +
@@ -137,26 +136,28 @@ function renderBody(data) {
     '</main>';
 }
 
-function renderReceivingFacilitySummary(data) {
-  var tradingName = getValue(data, "receiving_facility_trading_name");
-  var nameLine = '';
-
-  nameLine += escapeHtml(getValue(data, "receiving_facility_registered_name"));
-
-  if (tradingName) {
-    nameLine += ' t/a ' + escapeHtml(tradingName);
-  }
-
+function renderCompanyDetailsColumns(data) {
   return '' +
-    '<section class="receiving-facility-summary-section">' +
-      '<div class="receiving-facility-summary">' +
-        '<div class="receiving-facility-name-line">' + nameLine + '</div>' +
-        '<div>' + escapeHtml(formatReceivingFacilityAddressLine(data)) + '</div>' +
-        '<div class="receiving-facility-contact-line"><span>EMAIL: ' + escapeHtml(getValue(data, "receiving_facility_email")) + '</span><span>PHONE: ' + escapeHtml(getValue(data, "receiving_facility_phone")) + '</span></div>' +
-        '<div class="receiving-facility-registration-row">' +
-          '<span>COMPANY NUMBER: ' + escapeHtml(getValue(data, "receiving_facility_company_number")) + '</span>' +
-          '<span>VAT NUMBER: ' + escapeHtml(getValue(data, "receiving_facility_vat_number")) + '</span>' +
-          '<span>WASTE LICENCE: ' + escapeHtml(getValue(data, "receiving_facility_waste_licence")) + '</span>' +
+    '<section class="company-details-columns">' +
+      '<div class="company-detail-column">' +
+        renderSectionBar('Receiving Facility') +
+        '<div class="company-detail-content">' +
+          '<div>' + escapeHtml(formatReceivingFacilityName(data)) + '</div>' +
+          '<div>' + escapeHtml(formatReceivingFacilityAddressLine(data)) + '</div>' +
+          '<div>EMAIL: ' + escapeHtml(getValue(data, "receiving_facility_email")) + '</div>' +
+          '<div>PHONE: ' + escapeHtml(getValue(data, "receiving_facility_phone")) + '</div>' +
+          '<div>COMPANY NUMBER: ' + escapeHtml(getValue(data, "receiving_facility_company_number")) + '</div>' +
+          '<div>VAT NUMBER: ' + escapeHtml(getValue(data, "receiving_facility_vat_number")) + '</div>' +
+          '<div>WASTE LICENCE: ' + escapeHtml(getValue(data, "receiving_facility_waste_licence")) + '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="company-detail-column">' +
+        renderSectionBar('Carrier') +
+        '<div class="company-detail-content">' +
+          '<div>' + escapeHtml(formatCarrierName(data)) + '</div>' +
+          '<div>' + escapeHtml(getValue(data, "carrier_office_address")) + '</div>' +
+          '<div>WASTE LICENCE: ' + escapeHtml(getValue(data, "carrier_waste_licence")) + '</div>' +
+          '<div>VEHICLE REGISTRATION: ' + escapeHtml(getValue(data, "carrier_vehicle_registration")) + '</div>' +
         '</div>' +
       '</div>' +
     '</section>';
@@ -184,30 +185,6 @@ function formatReceivingFacilityAddressLine(data) {
   }
 
   return parts.join(' ');
-}
-
-function renderCarrierSection(data) {
-  var carrierTradingName = getValue(data, "carrier_trading_name");
-  var carrierNameLine = '';
-
-  carrierNameLine += escapeHtml(getValue(data, "carrier_registered_name"));
-
-  if (carrierTradingName) {
-    carrierNameLine += ' t/a ' + escapeHtml(carrierTradingName);
-  }
-
-  return '' +
-    '<section class="section section-tight">' +
-      renderSectionBar('Carrier') +
-      '<div class="carrier-grid">' +
-        '<div>' + carrierNameLine + '</div>' +
-        '<div>' + escapeHtml(getValue(data, "carrier_office_address")) + '</div>' +
-        '<div class="carrier-registration-row">' +
-          '<span>WASTE LICENCE: ' + escapeHtml(getValue(data, "carrier_waste_licence")) + '</span>' +
-          '<span>VEHICLE REGISTRATION: ' + escapeHtml(getValue(data, "carrier_vehicle_registration")) + '</span>' +
-        '</div>' +
-      '</div>' +
-    '</section>';
 }
 
 function renderWasteItemsTable(data) {
