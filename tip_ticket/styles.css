@@ -155,7 +155,8 @@ button:hover {
 
 .document-header {
   display: grid;
-  grid-template-columns: 42mm 1fr;
+  grid-template-columns: 40mm 1fr auto;
+  column-gap: 10pt;
   align-items: start;
   min-height: 20mm;
   padding-bottom: 3px;
@@ -193,35 +194,35 @@ button:hover {
   padding: 3px;
 }
 
-.header-title-panel {
-  justify-self: end;
-  text-align: right;
-}
-
 .document-title {
   font-size: 20px;
   font-weight: 700;
   line-height: 1;
+  text-align: left;
+  padding-top: 1mm;
+}
+
+.header-reference-panel {
+  justify-self: end;
   text-align: right;
-  margin-bottom: 3mm;
+  padding-top: 0;
 }
 
 .header-reference-row {
   display: grid;
   grid-template-columns: auto 48mm;
   column-gap: 4mm;
-  align-items: end;
+  align-items: baseline;
   justify-content: end;
   font-size: 12px;
-  line-height: 1.2;
-  margin-bottom: 1.5mm;
+  line-height: 1.15;
+  margin-bottom: 1mm;
 }
 
 .header-reference-field {
   display: inline-block;
-  min-height: 4.5mm;
-  border-bottom: 1px solid #777;
-  padding: 0 2mm 0.5mm 2mm;
+  min-height: 3.8mm;
+  padding: 0;
   font-weight: 700;
   text-align: left;
 }
