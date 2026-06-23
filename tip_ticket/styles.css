@@ -235,8 +235,11 @@ button:hover {
   display: inline-block;
   min-height: 3.8mm;
   padding: 0;
-  font-weight: 700;
   text-align: left;
+}
+
+.field-value {
+  font-weight: 700;
 }
 
 .document-body {
