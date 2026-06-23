@@ -122,9 +122,9 @@ function renderHeader(data) {
         '<div class="document-subtitle">' + escapeHtml(getValue(data, "document.subtitle") || 'Carrier to Receiving Facility') + '</div>' +
       '</div>' +
       '<div class="header-reference-panel">' +
-        '<div class="header-reference-row"><span>Intake Reference:</span><span class="header-reference-field">' + escapeHtml(getValue(data, "document.intake_reference")) + '</span></div>' +
-        '<div class="header-reference-row"><span>DEFRA Tracking Number:</span><span class="header-reference-field">' + escapeHtml(getValue(data, "document.defra_tracking_number")) + '</span></div>' +
-        '<div class="header-reference-row"><span>Intake Date and Time:</span><span class="header-reference-field">' + escapeHtml(getValue(data, "document.intake_datetime")) + '</span></div>' +
+        renderDetailLine('Intake Reference', getValue(data, "document.intake_reference"), 'header-reference-row') +
+        renderDetailLine('DEFRA Tracking Number', getValue(data, "document.defra_tracking_number"), 'header-reference-row') +
+        renderDetailLine('Intake Date and Time', getValue(data, "document.intake_datetime"), 'header-reference-row') +
       '</div>' +
     '</header>';
 }
@@ -146,26 +146,37 @@ function renderCompanyDetailsColumns(data) {
       '<div class="company-detail-column">' +
         renderSectionBar('Receiving Facility') +
         '<div class="company-detail-content">' +
-          '<div>' + escapeHtml(formatReceivingFacilityName(data)) + '</div>' +
-          '<div>' + escapeHtml(formatReceivingFacilityAddressLine(data)) + '</div>' +
-          '<div>EMAIL: ' + escapeHtml(getValue(data, "receiving_facility_email")) + '</div>' +
-          '<div>PHONE: ' + escapeHtml(getValue(data, "receiving_facility_phone")) + '</div>' +
-          '<div>COMPANY NUMBER: ' + escapeHtml(getValue(data, "receiving_facility_company_number")) + '</div>' +
-          '<div>VAT NUMBER: ' + escapeHtml(getValue(data, "receiving_facility_vat_number")) + '</div>' +
-          '<div>WASTE LICENCE: ' + escapeHtml(getValue(data, "receiving_facility_waste_licence")) + '</div>' +
+          renderFieldValueOnly(formatReceivingFacilityName(data)) +
+          renderFieldValueOnly(formatReceivingFacilityAddressLine(data)) +
+          renderDetailLine('Email', getValue(data, "receiving_facility_email"), '') +
+          renderDetailLine('Phone', getValue(data, "receiving_facility_phone"), '') +
+          renderDetailLine('Company Number', getValue(data, "receiving_facility_company_number"), '') +
+          renderDetailLine('VAT Number', getValue(data, "receiving_facility_vat_number"), '') +
+          renderDetailLine('Waste Licence', getValue(data, "receiving_facility_waste_licence"), '') +
         '</div>' +
       '</div>' +
       '<div class="company-detail-column">' +
         renderSectionBar('Carrier') +
         '<div class="company-detail-content">' +
-          '<div>' + escapeHtml(formatCarrierName(data)) + '</div>' +
-          '<div>' + escapeHtml(getValue(data, "carrier_office_address")) + '</div>' +
-          '<div>SIC code (2007): ' + escapeHtml(getValue(data, "carrier_sic")) + '</div>' +
-          '<div>WASTE LICENCE: ' + escapeHtml(getValue(data, "carrier_waste_licence")) + '</div>' +
-          '<div>VEHICLE REGISTRATION: ' + escapeHtml(getValue(data, "carrier_vehicle_registration")) + '</div>' +
+          renderFieldValueOnly(formatCarrierName(data)) +
+          renderFieldValueOnly(getValue(data, "carrier_office_address")) +
+          renderDetailLine('SIC Code (2007)', getValue(data, "carrier_sic"), '') +
+          renderDetailLine('Waste Licence', getValue(data, "carrier_waste_licence"), '') +
+          renderDetailLine('Vehicle Registration', getValue(data, "carrier_vehicle_registration"), '') +
         '</div>' +
       '</div>' +
     '</section>';
+}
+
+function renderDetailLine(label, value, rowClass) {
+  var classText = rowClass ? ' class="' + rowClass + '"' : '';
+  var valueClass = rowClass === 'header-reference-row' ? 'header-reference-field field-value' : 'field-value';
+
+  return '<div' + classText + '><span>' + escapeHtml(label) + ':</span><span class="' + valueClass + '">' + escapeHtml(value) + '</span></div>';
+}
+
+function renderFieldValueOnly(value) {
+  return '<div><span class="field-value">' + escapeHtml(value) + '</span></div>';
 }
 
 function formatReceivingFacilityAddressLine(data) {
@@ -256,7 +267,7 @@ function renderSignatureSection(data) {
     '<section class="signature-section">' +
       '<div class="signature-grid">' +
         renderSignatureColumn('Carrier', formatCarrierName(data), true) +
-        renderSignatureColumn('Receiving facility', formatReceivingFacilityName(data), false) +
+        renderSignatureColumn('Receiving Facility', formatReceivingFacilityName(data), false) +
       '</div>' +
     '</section>';
 }
@@ -267,7 +278,7 @@ function renderSignatureColumn(title, representing, includeConfirmation) {
   html += '<div class="signature-column">';
   html += '<div class="signature-party-title">' + escapeHtml(title) + '</div>';
   html += '<div class="signature-field-row"><span class="signature-label">Name</span><span class="signature-line"></span></div>';
-  html += '<div class="signature-field-row"><span class="signature-label">Representing</span><span class="signature-line signature-prefilled">' + escapeHtml(representing) + '</span></div>';
+  html += '<div class="signature-field-row"><span class="signature-label">Representing</span><span class="signature-line signature-prefilled field-value">' + escapeHtml(representing) + '</span></div>';
   html += '<div class="signature-field-row signature-row-large"><span class="signature-label">Signature</span><span class="signature-box"></span></div>';
 
   if (includeConfirmation) {
@@ -306,7 +317,7 @@ function renderSectionBar(text) {
 function renderFooter(data) {
   var strapline = getValue(data, 'footer.wasteTrackerStrapline') || getValue(data, 'footer.wastetracker_stapline') || 'POWERED BY WASTE TRACKER UK';
   var website = getValue(data, 'footer.website') || 'www.wastetracker.uk';
-  return '<footer class="document-footer"><div class="footer-logo-box">' + renderLogo(logo2DataUrl, 'Logo file 2') + '</div><div class="footer-strapline"><div class="footer-strapline-main">' + escapeHtml(strapline) + '</div><div>' + escapeHtml(website) + '</div></div></footer><div class="footer-line"><span>' + escapeHtml(getValue(data, 'document.footer_right') || 'Page 1 of 1') + '</span></div>';
+  return '<footer class="document-footer"><div class="footer-logo-box">' + renderLogo(logo2DataUrl, 'Logo file 2') + '</div><div class="footer-strapline"><div class="footer-strapline-main">' + escapeHtml(strapline) + '</div><div>' + escapeHtml(website) + '</div></div></footer><div class="footer-line"><span class="field-value">' + escapeHtml(getValue(data, 'document.footer_right') || 'Page 1 of 1') + '</span></div>';
 }
 
 function renderLogo(dataUrl, placeholderText) {
