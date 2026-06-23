@@ -313,6 +313,7 @@ button:hover {
 .data-table .col-container,
 .data-table .col-size,
 .data-table .col-qty,
+.data-table .col-weight,
 .data-table .col-ewc {
   width: 1%;
   white-space: nowrap;
@@ -328,7 +329,8 @@ button:hover {
 .data-table tbody td:nth-child(1),
 .data-table tbody td:nth-child(2),
 .data-table tbody td:nth-child(3),
-.data-table tbody td:nth-child(4) {
+.data-table tbody td:nth-child(4),
+.data-table tbody td:nth-child(5) {
   text-align: center;
   vertical-align: top;
   white-space: nowrap;
@@ -336,7 +338,7 @@ button:hover {
   padding-right: 14px;
 }
 
-.data-table tbody td:nth-child(5) {
+.data-table tbody td:nth-child(6) {
   white-space: normal;
   overflow-wrap: anywhere;
   word-break: normal;
