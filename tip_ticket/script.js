@@ -27,6 +27,7 @@ var sampleJson = {
   "carrier_trading_name": "ABC Transport",
   "carrier_office_address": "Unit 4 Industrial Estate, Somewhere, CD2 3EF",
   "carrier_waste_licence": "CBDU654321",
+  "carrier_vehicle_registration": "AB12ABC",
   "wasteItems": [
     {
       "container_type": "Skip",
@@ -184,7 +185,10 @@ function renderCarrierSection(data) {
       '<div class="carrier-grid">' +
         '<div>' + carrierNameLine + '</div>' +
         '<div>' + escapeHtml(getValue(data, "carrier_office_address")) + '</div>' +
-        '<div>WASTE LICENCE: ' + escapeHtml(getValue(data, "carrier_waste_licence")) + '</div>' +
+        '<div class="carrier-registration-row">' +
+          '<span>WASTE LICENCE: ' + escapeHtml(getValue(data, "carrier_waste_licence")) + '</span>' +
+          '<span>VEHICLE REGISTRATION: ' + escapeHtml(getValue(data, "carrier_vehicle_registration")) + '</span>' +
+        '</div>' +
       '</div>' +
     '</section>';
 }
