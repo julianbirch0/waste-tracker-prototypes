@@ -172,7 +172,7 @@ function renderDetailLine(label, value, rowClass) {
   var classText = rowClass ? ' class="' + rowClass + '"' : '';
   var valueClass = rowClass === 'header-reference-row' ? 'header-reference-field field-value' : 'field-value';
 
-  return '<div' + classText + '><span>' + escapeHtml(label) + ':</span><span class="' + valueClass + '">' + escapeHtml(value) + '</span></div>';
+  return '<div' + classText + '><span>' + escapeHtml(label) + ': </span><span class="' + valueClass + '">' + escapeHtml(value) + '</span></div>';
 }
 
 function renderFieldValueOnly(value) {
@@ -276,14 +276,14 @@ function renderSignatureColumn(partyName, representing, includeConfirmation) {
   var html = '';
 
   html += '<div class="signature-column">';
-  html += '<div class="signature-field-row"><span class="signature-label">Name</span><span class="signature-line"><span class="signature-placeholder">' + escapeHtml(partyName) + '</span></span></div>';
-  html += '<div class="signature-field-row"><span class="signature-label">Representing</span><span class="signature-line signature-prefilled field-value">' + escapeHtml(representing) + '</span></div>';
-  html += '<div class="signature-field-row signature-row-large"><span class="signature-label">Signature</span><span class="signature-box"><span class="signature-box-placeholder">' + escapeHtml(partyName) + '</span></span></div>';
+  html += '<div class="signature-field-row"><span class="signature-label">Name:</span><span class="signature-line"><span class="signature-placeholder">' + escapeHtml(partyName) + '</span></span></div>';
+  html += '<div class="signature-field-row"><span class="signature-label">Representing:</span><span class="signature-line signature-prefilled field-value">' + escapeHtml(representing) + '</span></div>';
+  html += '<div class="signature-field-row signature-row-large"><span class="signature-label">Signature:</span><span class="signature-box"><span class="signature-box-placeholder">' + escapeHtml(partyName) + '</span></span></div>';
 
   if (includeConfirmation) {
     html += '<div class="waste-hierarchy-confirmation">' +
       '<span>By signing above, I confirm that I have fulfilled my duty to apply the waste hierarchy as required by Section 12 of the Waste (England and Wales) Regulations 2011</span>' +
-      '<span class="confirmation-yes">Yes</span>' +
+      '<span class="confirmation-yes">YES</span>' +
       '<span class="empty-checkbox"></span>' +
     '</div>';
   }
@@ -316,7 +316,7 @@ function renderSectionBar(text) {
 function renderFooter(data) {
   var strapline = getValue(data, 'footer.wasteTrackerStrapline') || getValue(data, 'footer.wastetracker_stapline') || 'POWERED BY WASTE TRACKER UK';
   var website = getValue(data, 'footer.website') || 'www.wastetracker.uk';
-  return '<footer class="document-footer"><div class="footer-logo-box">' + renderLogo(logo2DataUrl, 'Logo file 2') + '</div><div class="footer-strapline"><div class="footer-strapline-main">' + escapeHtml(strapline) + '</div><div>' + escapeHtml(website) + '</div></div></footer><div class="footer-line"><span class="field-value">' + escapeHtml(getValue(data, 'document.footer_right') || 'Page 1 of 1') + '</span></div>';
+  return '<footer class="document-footer"><div class="footer-logo-box">' + renderLogo(logo2DataUrl, 'Logo file 2') + '</div><div class="footer-strapline"><div class="footer-strapline-main">' + escapeHtml(strapline) + '</div><div>' + escapeHtml(website) + '</div></div></footer><div class="footer-line"><span>' + escapeHtml(getValue(data, 'document.footer_right') || 'Page 1 of 1') + '</span></div>';
 }
 
 function renderLogo(dataUrl, placeholderText) {
