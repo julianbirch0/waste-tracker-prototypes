@@ -239,7 +239,7 @@ function renderWasteItemsTable(data) {
   }
 
   html += '</tbody></table>';
-  html += '<div class="table-key">E - For Net Weight, \'E\' indicates that the weight is estimated.</div>';
+  html += '<div class="table-key" style="margin-top: 1.5mm; font-size: 10px;">E - For Net Weight, \'E\' indicates that the weight is estimated.</div>';
 
   return html;
 }
@@ -265,7 +265,7 @@ function formatWeightValue(row, weightPath, estimatedPath) {
 
 function renderSignatureSection(data) {
   return '' +
-    '<section class="signature-section">' +
+    '<section class="signature-section" style="bottom: 20mm;">' +
       '<div class="signature-grid">' +
         renderSignatureColumn('Receiving Facility', formatReceivingFacilityName(data), false) +
         renderSignatureColumn('Carrier', formatCarrierName(data), true) +
