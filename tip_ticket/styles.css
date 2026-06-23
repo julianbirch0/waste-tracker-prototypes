@@ -160,7 +160,6 @@ button:hover {
   align-items: start;
   min-height: 20mm;
   padding-bottom: 3px;
-  border-bottom: 2px solid #222;
 }
 
 .header-logo-box {
@@ -246,6 +245,23 @@ button:hover {
   padding-right: 2.5mm;
   font-size: 13px;
   line-height: 1.22;
+}
+
+.company-details-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 10mm;
+  margin-bottom: 6mm;
+}
+
+.company-detail-column .section-bar {
+  margin-left: 0;
+  margin-right: 0;
+  margin-bottom: 3mm;
+}
+
+.company-detail-content div {
+  margin-bottom: 1.4mm;
 }
 
 .receiving-facility-summary-section {
