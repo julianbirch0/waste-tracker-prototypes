@@ -10,8 +10,7 @@ var sampleJson = {
     "intake_reference": "TT-000123",
     "defra_tracking_number": "DWT-987654321",
     "intake_datetime": "23/06/2026 10:30",
-    "footer_left": "Based on WMC2A Version 3, August 2011",
-    "footer_right": "page 1 of 1"
+    "footer_right": "Page 1 of 1"
   },
   "footer": {
     "wasteTrackerStrapline": "POWERED BY WASTE TRACKER UK",
@@ -307,7 +306,7 @@ function renderSectionBar(text) {
 function renderFooter(data) {
   var strapline = getValue(data, 'footer.wasteTrackerStrapline') || getValue(data, 'footer.wastetracker_stapline') || 'POWERED BY WASTE TRACKER UK';
   var website = getValue(data, 'footer.website') || 'www.wastetracker.uk';
-  return '<footer class="document-footer"><div class="footer-logo-box">' + renderLogo(logo2DataUrl, 'Logo file 2') + '</div><div class="footer-strapline"><div class="footer-strapline-main">' + escapeHtml(strapline) + '</div><div>' + escapeHtml(website) + '</div></div></footer><div class="footer-line"><span>' + escapeHtml(getValue(data, 'document.footer_left') || 'Based on WMC2A Version 3, August 2011') + '</span><span>' + escapeHtml(getValue(data, 'document.footer_right') || 'page 1 of 1') + '</span></div>';
+  return '<footer class="document-footer"><div class="footer-logo-box">' + renderLogo(logo2DataUrl, 'Logo file 2') + '</div><div class="footer-strapline"><div class="footer-strapline-main">' + escapeHtml(strapline) + '</div><div>' + escapeHtml(website) + '</div></div></footer><div class="footer-line"><span>' + escapeHtml(getValue(data, 'document.footer_right') || 'Page 1 of 1') + '</span></div>';
 }
 
 function renderLogo(dataUrl, placeholderText) {
