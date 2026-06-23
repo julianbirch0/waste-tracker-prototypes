@@ -30,6 +30,7 @@ var sampleJson = {
   "carrier_registered_name": "ABC Waste Transport Ltd",
   "carrier_trading_name": "ABC Transport",
   "carrier_office_address": "Unit 4 Industrial Estate, Somewhere, CD2 3EF",
+  "carrier_sic": "ABC123",
   "carrier_waste_licence": "CBDU654321",
   "carrier_vehicle_registration": "AB12ABC",
   "wasteItems": [
@@ -37,6 +38,8 @@ var sampleJson = {
       "container_type": "Skip",
       "size": "8 yd",
       "qty": "1",
+      "weight_in": "240 kg",
+      "weight_out": "140 kg",
       "weight": "100 kg",
       "weight_estimated": true,
       "ewc": "20 03 01",
@@ -46,6 +49,8 @@ var sampleJson = {
       "container_type": "Eurobin",
       "size": "1100L",
       "qty": "2",
+      "weight_in": "",
+      "weight_out": null,
       "weight": "75 kg",
       "weight_estimated": false,
       "ewc": "15 01 01",
@@ -156,6 +161,7 @@ function renderCompanyDetailsColumns(data) {
         '<div class="company-detail-content">' +
           '<div>' + escapeHtml(formatCarrierName(data)) + '</div>' +
           '<div>' + escapeHtml(getValue(data, "carrier_office_address")) + '</div>' +
+          '<div>SIC: ' + escapeHtml(getValue(data, "carrier_sic")) + '</div>' +
           '<div>WASTE LICENCE: ' + escapeHtml(getValue(data, "carrier_waste_licence")) + '</div>' +
           '<div>VEHICLE REGISTRATION: ' + escapeHtml(getValue(data, "carrier_vehicle_registration")) + '</div>' +
         '</div>' +
@@ -197,14 +203,16 @@ function renderWasteItemsTable(data) {
   html += '<th class="col-container">Container</th>';
   html += '<th class="col-size">Size</th>';
   html += '<th class="col-qty">Qty</th>';
-  html += '<th class="col-weight">Weight</th>';
+  html += '<th class="col-weight-in">Weight In</th>';
+  html += '<th class="col-weight-out">Weight Out</th>';
+  html += '<th class="col-net-weight">Net Weight</th>';
   html += '<th class="col-ewc">EWC</th>';
   html += '<th class="col-description">Description</th>';
   html += '</tr></thead>';
   html += '<tbody>';
 
   if (!rows.length) {
-    html += '<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td></tr>';
+    html += '<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>';
   }
 
   for (i = 0; i < rows.length; i++) {
@@ -212,7 +220,9 @@ function renderWasteItemsTable(data) {
     html += '<td>' + escapeHtml(getValue(rows[i], "container_type")) + '</td>';
     html += '<td>' + escapeHtml(getValue(rows[i], "size")) + '</td>';
     html += '<td>' + escapeHtml(getValue(rows[i], "qty")) + '</td>';
-    html += '<td>' + escapeHtml(formatWeight(rows[i])) + '</td>';
+    html += '<td>' + escapeHtml(formatWeightValue(rows[i], "weight_in", "weight_in_estimated")) + '</td>';
+    html += '<td>' + escapeHtml(formatWeightValue(rows[i], "weight_out", "weight_out_estimated")) + '</td>';
+    html += '<td>' + escapeHtml(formatWeightValue(rows[i], "weight", "weight_estimated")) + '</td>';
     html += '<td>' + escapeHtml(getValue(rows[i], "ewc")) + '</td>';
     html += '<td>' + escapeHtml(getValue(rows[i], "waste_description")) + '</td>';
     html += '</tr>';
@@ -223,13 +233,17 @@ function renderWasteItemsTable(data) {
   return html;
 }
 
-function formatWeight(row) {
-  var weight = getValue(row, "weight");
-  var estimated = getRawValue(row, "weight_estimated");
+function formatWeightValue(row, weightPath, estimatedPath) {
+  var rawWeight = getRawValue(row, weightPath);
+  var weight;
+  var estimated;
 
-  if (!weight) {
-    return '';
+  if (rawWeight === null || rawWeight === undefined || String(rawWeight).trim() === '') {
+    return 'N/A';
   }
+
+  weight = String(rawWeight).trim();
+  estimated = getRawValue(row, estimatedPath);
 
   if (estimated === true || estimated === 'true' || estimated === 'Yes' || estimated === 'yes' || estimated === 'Y' || estimated === 'y') {
     return weight + ' E';
