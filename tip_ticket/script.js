@@ -8,6 +8,7 @@ var sampleJson = {
     "title": "Duty of care: waste transfer note",
     "intake_reference": "TT-000123",
     "defra_tracking_number": "DWT-987654321",
+    "intake_datetime": "23/06/2026 10:30",
     "footer_left": "Based on WMC2A Version 3, August 2011",
     "footer_right": "page 1 of 1"
   },
@@ -111,10 +112,11 @@ function renderHeader(data) {
   return '' +
     '<header class="document-header">' +
       '<div class="header-logo-box">' + renderLogo(logo1DataUrl, 'Logo file 1') + '</div>' +
-      '<div class="header-title-panel">' +
-        '<div class="document-title">' + escapeHtml(getValue(data, "document.title")) + '</div>' +
+      '<div class="document-title">' + escapeHtml(getValue(data, "document.title")) + '</div>' +
+      '<div class="header-reference-panel">' +
         '<div class="header-reference-row"><span>Intake Reference:</span><span class="header-reference-field">' + escapeHtml(getValue(data, "document.intake_reference")) + '</span></div>' +
-        '<div class="header-reference-row"><span>Defra Tracking Number:</span><span class="header-reference-field">' + escapeHtml(getValue(data, "document.defra_tracking_number")) + '</span></div>' +
+        '<div class="header-reference-row"><span>DEFRA Tracking Number:</span><span class="header-reference-field">' + escapeHtml(getValue(data, "document.defra_tracking_number")) + '</span></div>' +
+        '<div class="header-reference-row"><span>Intake Date and Time:</span><span class="header-reference-field">' + escapeHtml(getValue(data, "document.intake_datetime")) + '</span></div>' +
       '</div>' +
     '</header>';
 }
@@ -486,7 +488,7 @@ function escapeHtml(value) {
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
-    .replace(/\"/g, '&quot;')
+    .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
 }
 
