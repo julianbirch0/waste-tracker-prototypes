@@ -275,6 +275,17 @@ button:hover {
   margin-bottom: 1.4mm;
 }
 
+.carrier-registration-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10mm;
+}
+
+.carrier-registration-row span:last-child {
+  text-align: right;
+  margin-left: auto;
+}
+
 .data-table {
   width: 100%;
   border: 1px solid #d9d9d9;
