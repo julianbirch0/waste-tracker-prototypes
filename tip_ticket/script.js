@@ -282,7 +282,7 @@ function renderSignatureColumn(partyName, representing, includeConfirmation) {
   html += '<div class="signature-field-row signature-row-large"><span class="signature-label">Signature:</span><span class="signature-box"><span class="signature-box-placeholder">' + escapeHtml(partyName) + '</span></span></div>';
 
   if (includeConfirmation) {
-    html += '<div class="waste-hierarchy-confirmation">' +
+    html += '<div class="waste-hierarchy-confirmation" style="margin-top: 1mm;">' +
       '<span>By signing above, I confirm that I have fulfilled my duty to apply the waste hierarchy as required by Section 12 of the Waste (England and Wales) Regulations 2011.</span>' +
     '</div>';
   }
