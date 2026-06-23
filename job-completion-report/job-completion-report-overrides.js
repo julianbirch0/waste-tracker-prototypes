@@ -18,7 +18,7 @@ sampleJson.work_order_number = "12345";
 
 function renderDocument(data, createdAt) {
   var preview = document.getElementById("documentPreview");
-  var photoPages = chunkPhotos(getAllPhotos(), 6);
+  var photoPages = paginatePhotos(getAllPhotos());
   var pageCount = photoPages.length || 1;
   var html = '';
   var i;
@@ -76,7 +76,7 @@ function renderPageBody(data, photos, continued) {
 }
 
 function renderBody(data) {
-  return renderPageBody(data, getAllPhotos().slice(0, 6), false);
+  return renderPageBody(data, getAllPhotos().slice(0, 3), false);
 }
 
 function renderServiceSection(data) {
@@ -189,6 +189,27 @@ function getPhotoItems(photos, labelPrefix) {
   }
 
   return items;
+}
+
+function paginatePhotos(photos) {
+  var pages = [];
+  var remainingPhotos;
+  var additionalPages;
+  var i;
+
+  if (!photos.length) {
+    return pages;
+  }
+
+  pages.push(photos.slice(0, 3));
+  remainingPhotos = photos.slice(3);
+  additionalPages = chunkPhotos(remainingPhotos, 6);
+
+  for (i = 0; i < additionalPages.length; i++) {
+    pages.push(additionalPages[i]);
+  }
+
+  return pages;
 }
 
 function chunkPhotos(photos, pageSize) {
