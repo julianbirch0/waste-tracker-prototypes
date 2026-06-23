@@ -32,6 +32,8 @@ var sampleJson = {
       "container_type": "Skip",
       "size": "8 yd",
       "qty": "1",
+      "weight": "100 kg",
+      "weight_estimated": true,
       "ewc": "20 03 01",
       "waste_description": "Mixed municipal waste"
     },
@@ -39,6 +41,8 @@ var sampleJson = {
       "container_type": "Eurobin",
       "size": "1100L",
       "qty": "2",
+      "weight": "75 kg",
+      "weight_estimated": false,
       "ewc": "15 01 01",
       "waste_description": "Paper and cardboard packaging"
     }
@@ -195,13 +199,14 @@ function renderWasteItemsTable(data) {
   html += '<th class="col-container">Container</th>';
   html += '<th class="col-size">Size</th>';
   html += '<th class="col-qty">Qty</th>';
+  html += '<th class="col-weight">Weight</th>';
   html += '<th class="col-ewc">EWC</th>';
   html += '<th class="col-description">Description</th>';
   html += '</tr></thead>';
   html += '<tbody>';
 
   if (!rows.length) {
-    html += '<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>';
+    html += '<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td></tr>';
   }
 
   for (i = 0; i < rows.length; i++) {
@@ -209,6 +214,7 @@ function renderWasteItemsTable(data) {
     html += '<td>' + escapeHtml(getValue(rows[i], "container_type")) + '</td>';
     html += '<td>' + escapeHtml(getValue(rows[i], "size")) + '</td>';
     html += '<td>' + escapeHtml(getValue(rows[i], "qty")) + '</td>';
+    html += '<td>' + escapeHtml(formatWeight(rows[i])) + '</td>';
     html += '<td>' + escapeHtml(getValue(rows[i], "ewc")) + '</td>';
     html += '<td>' + escapeHtml(getValue(rows[i], "waste_description")) + '</td>';
     html += '</tr>';
@@ -217,6 +223,21 @@ function renderWasteItemsTable(data) {
   html += '</tbody></table>';
 
   return html;
+}
+
+function formatWeight(row) {
+  var weight = getValue(row, "weight");
+  var estimated = getRawValue(row, "weight_estimated");
+
+  if (!weight) {
+    return '';
+  }
+
+  if (estimated === true || estimated === 'true' || estimated === 'Yes' || estimated === 'yes' || estimated === 'Y' || estimated === 'y') {
+    return weight + ' E';
+  }
+
+  return weight;
 }
 
 function renderSectionBar(text) {
@@ -402,7 +423,7 @@ function escapeHtml(value) {
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
+    .replace(/\"/g, '&quot;')
     .replace(/'/g, '&#039;');
 }
 
