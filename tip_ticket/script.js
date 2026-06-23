@@ -265,7 +265,7 @@ function formatWeightValue(row, weightPath, estimatedPath) {
 
 function renderSignatureSection(data) {
   return '' +
-    '<section class="signature-section" style="bottom: 20mm;">' +
+    '<section class="signature-section" style="bottom: 25mm;">' +
       '<div class="signature-grid">' +
         renderSignatureColumn('Receiving Facility', formatReceivingFacilityName(data), false) +
         renderSignatureColumn('Carrier', formatCarrierName(data), true) +
