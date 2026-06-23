@@ -155,7 +155,7 @@ button:hover {
 
 .document-header {
   display: grid;
-  grid-template-columns: 1fr 42mm;
+  grid-template-columns: 42mm 1fr;
   align-items: start;
   min-height: 20mm;
   padding-bottom: 3px;
@@ -169,7 +169,7 @@ button:hover {
   align-items: flex-start;
   justify-content: flex-start;
   overflow: hidden;
-  justify-self: end;
+  justify-self: start;
 }
 
 .header-logo-box img,
@@ -193,10 +193,37 @@ button:hover {
   padding: 3px;
 }
 
+.header-title-panel {
+  justify-self: end;
+  text-align: right;
+}
+
 .document-title {
   font-size: 20px;
   font-weight: 700;
   line-height: 1;
+  text-align: right;
+  margin-bottom: 3mm;
+}
+
+.header-reference-row {
+  display: grid;
+  grid-template-columns: auto 48mm;
+  column-gap: 4mm;
+  align-items: end;
+  justify-content: end;
+  font-size: 12px;
+  line-height: 1.2;
+  margin-bottom: 1.5mm;
+}
+
+.header-reference-field {
+  display: inline-block;
+  min-height: 4.5mm;
+  border-bottom: 1px solid #777;
+  padding: 0 2mm 0.5mm 2mm;
+  font-weight: 700;
+  text-align: left;
 }
 
 .document-body {
