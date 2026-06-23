@@ -6,6 +6,8 @@ var lockedMeasurement = null;
 var sampleJson = {
   "document": {
     "title": "Duty of care: waste transfer note",
+    "intake_reference": "TT-000123",
+    "defra_tracking_number": "DWT-987654321",
     "footer_left": "Based on WMC2A Version 3, August 2011",
     "footer_right": "page 1 of 1"
   },
@@ -106,7 +108,15 @@ function renderDocument(data) {
 }
 
 function renderHeader(data) {
-  return '<header class="document-header"><div class="document-title">' + escapeHtml(getValue(data, "document.title")) + '</div><div class="header-logo-box">' + renderLogo(logo1DataUrl, 'Logo file 1') + '</div></header>';
+  return '' +
+    '<header class="document-header">' +
+      '<div class="header-logo-box">' + renderLogo(logo1DataUrl, 'Logo file 1') + '</div>' +
+      '<div class="header-title-panel">' +
+        '<div class="document-title">' + escapeHtml(getValue(data, "document.title")) + '</div>' +
+        '<div class="header-reference-row"><span>Intake Reference:</span><span class="header-reference-field">' + escapeHtml(getValue(data, "document.intake_reference")) + '</span></div>' +
+        '<div class="header-reference-row"><span>Defra Tracking Number:</span><span class="header-reference-field">' + escapeHtml(getValue(data, "document.defra_tracking_number")) + '</span></div>' +
+      '</div>' +
+    '</header>';
 }
 
 function renderBody(data) {
