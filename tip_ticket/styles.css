@@ -423,7 +423,7 @@ button:hover {
   position: absolute;
   left: 10mm;
   right: 10mm;
-  bottom: 35mm;
+  bottom: 25mm;
   border-top: 2px solid #333;
   padding-top: 3mm;
   font-size: 12px;
@@ -476,15 +476,25 @@ button:hover {
 
 .signature-box {
   border: 1px solid #999;
-  min-height: 10mm;
+  min-height: 15mm;
+  display: flex;
+  align-items: flex-start;
+  padding: 2mm;
+}
+
+.signature-box-placeholder {
+  color: #bfbfbf;
+  font-weight: 400;
 }
 
 .waste-hierarchy-confirmation {
   display: grid;
-  grid-template-columns: 1fr auto auto;
+  grid-template-columns: minmax(0, 1fr) auto auto;
   column-gap: 2mm;
   align-items: start;
   margin-top: 3mm;
+  margin-left: 27mm;
+  width: calc(100% - 27mm);
   font-size: 9px;
   line-height: 1.25;
 }
