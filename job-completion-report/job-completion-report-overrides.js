@@ -16,6 +16,33 @@ window.onload = function () {
 sampleJson.document.title = "Job Completion Report";
 sampleJson.work_order_number = "12345";
 
+function renderDocument(data, createdAt) {
+  var preview = document.getElementById("documentPreview");
+  var photoPages = chunkPhotos(getAllPhotos(), 6);
+  var pageCount = photoPages.length || 1;
+  var html = '';
+  var i;
+
+  for (i = 0; i < pageCount; i++) {
+    html += renderDocumentPage(data, createdAt, i + 1, pageCount, photoPages[i] || [], i > 0);
+  }
+
+  preview.innerHTML = html;
+  attachMeasurementHandlers();
+}
+
+function renderDocumentPage(data, createdAt, pageNumber, pageCount, photos, continued) {
+  var pageBreakStyle = pageNumber < pageCount ? ' style="page-break-after: always; break-after: page;"' : '';
+
+  return '' +
+    '<div class="document-page"' + pageBreakStyle + '>' +
+      renderMeasurementRulers() +
+      renderHeader(data) +
+      renderPageBody(data, photos, continued) +
+      renderFooter(data, createdAt, pageNumber, pageCount) +
+    '</div>';
+}
+
 function renderHeader(data) {
   var title = getValue(data, "document.title") || getValue(data, "document_title") || "Job Completion Report";
   var number = getValue(data, "work_order_number");
@@ -31,14 +58,25 @@ function renderHeader(data) {
     '</header>';
 }
 
-function renderBody(data) {
+function renderPageBody(data, photos, continued) {
+  if (continued) {
+    return '' +
+      '<main class="document-body">' +
+        renderPhotosSection(photos, 'Photos continued') +
+      '</main>';
+  }
+
   return '' +
     '<main class="document-body">' +
       renderWorkOrderSummary(data) +
       renderServiceSection(data) +
       renderReceivingFacilitySection(data) +
-      renderPhotosSection() +
+      renderPhotosSection(photos, 'Photos') +
     '</main>';
+}
+
+function renderBody(data) {
+  return renderPageBody(data, getAllPhotos().slice(0, 6), false);
 }
 
 function renderServiceSection(data) {
@@ -59,6 +97,25 @@ function renderServiceSection(data) {
       '<div class="site-address">SITE ADDRESS:&nbsp; ' + escapeHtml(getValue(data, "site_name")) + ' &nbsp;' + escapeHtml(getValue(data, "site_address")) + '</div>' +
       renderWasteItemsTable(data) +
     '</section>';
+}
+
+function renderFooter(data, createdAt, pageNumber, pageCount) {
+  var strapline = getValue(data, "footer.wasteTrackerStrapline") || "POWERED BY WASTE TRACKER UK";
+  var website = getValue(data, "footer.website") || "www.wastetracker.uk";
+  var createdText = formatDisplayTimestamp(createdAt || new Date());
+
+  return '' +
+    '<footer class="document-footer">' +
+      '<div class="footer-logo-box">' + renderLogo(logo2DataUrl, 'Logo file 2') + '</div>' +
+      '<div class="footer-strapline">' +
+        '<div class="footer-strapline-main">' + escapeHtml(strapline) + '</div>' +
+        '<div>' + escapeHtml(website) + '</div>' +
+      '</div>' +
+    '</footer>' +
+    '<div class="footer-meta">' +
+      '<span>Page ' + pageNumber + ' of ' + pageCount + '</span>' +
+      '<span>Document created: ' + escapeHtml(createdText) + '</span>' +
+    '</div>';
 }
 
 function setupPhotoUploadControl(inputId, targetPhotos) {
@@ -114,24 +171,53 @@ function readPhotoFiles(files, targetPhotos, callback) {
   readNextPhoto();
 }
 
-function renderPhotosSection() {
+function getAllPhotos() {
+  return getPhotoItems(customerPhotos, 'Customer photo')
+    .concat(getPhotoItems(beforePhotos, 'Before photo'))
+    .concat(getPhotoItems(afterPhotos, 'After photo'));
+}
+
+function getPhotoItems(photos, labelPrefix) {
+  var items = [];
+  var i;
+
+  for (i = 0; i < photos.length; i++) {
+    items.push({
+      dataUrl: photos[i],
+      label: labelPrefix + ' ' + padNumber(i + 1)
+    });
+  }
+
+  return items;
+}
+
+function chunkPhotos(photos, pageSize) {
+  var chunks = [];
+  var i;
+
+  for (i = 0; i < photos.length; i += pageSize) {
+    chunks.push(photos.slice(i, i + pageSize));
+  }
+
+  return chunks;
+}
+
+function renderPhotosSection(photos, title) {
   return '' +
     '<section class="section section-tight">' +
-      renderSectionBar('Photos') +
-      '<div style="display: flex; flex-wrap: wrap; gap: 4mm; align-items: flex-start;">' +
-        renderPhotoGroup(customerPhotos, 'Customer photo') +
-        renderPhotoGroup(beforePhotos, 'Before photo') +
-        renderPhotoGroup(afterPhotos, 'After photo') +
+      renderSectionBar(title) +
+      '<div style="display: grid; grid-template-columns: 58mm 58mm 58mm; justify-content: space-between; row-gap: 4mm; align-items: flex-start;">' +
+        renderPhotoItems(photos) +
       '</div>' +
     '</section>';
 }
 
-function renderPhotoGroup(photos, labelPrefix) {
+function renderPhotoItems(photos) {
   var html = '';
   var i;
 
   for (i = 0; i < photos.length; i++) {
-    html += renderPhotoBox(photos[i], labelPrefix + ' ' + padNumber(i + 1));
+    html += renderPhotoBox(photos[i].dataUrl, photos[i].label);
   }
 
   return html;
@@ -139,10 +225,97 @@ function renderPhotoGroup(photos, labelPrefix) {
 
 function renderPhotoBox(photoDataUrl, label) {
   return '' +
-    '<div style="width: 50mm;">' +
-      '<div style="width: 50mm; height: 50mm; border: 1px solid #d9d9d9; display: flex; align-items: center; justify-content: center; overflow: hidden; background: #fff;">' +
+    '<div style="width: 58mm;">' +
+      '<div style="width: 58mm; height: 58mm; border: 1px solid #d9d9d9; display: flex; align-items: center; justify-content: center; overflow: hidden; background: #fff;">' +
         '<img src="' + photoDataUrl + '" alt="' + escapeHtml(label) + '" style="max-width: 100%; max-height: 100%; object-fit: contain; display: block;">' +
       '</div>' +
       '<div style="font-size: 10px; line-height: 1.2; margin-top: 1mm; text-align: center;">' + escapeHtml(label) + '</div>' +
     '</div>';
+}
+
+function downloadPdf() {
+  var errorElement = document.getElementById("errorMessage");
+  var previewElement;
+  var exportContainer;
+  var exportElement;
+  var documentData = currentDocumentData || {};
+  var downloadTimestamp = new Date();
+  var jobNumber = getValue(documentData, "work_order_number") || "job-completion-report";
+  var fileName;
+  var options;
+
+  errorElement.textContent = "";
+
+  if (!window.html2pdf) {
+    errorElement.textContent = "PDF download library has not loaded. Please refresh the page and try again.";
+    return;
+  }
+
+  documentCreatedAt = downloadTimestamp;
+  renderDocument(documentData, documentCreatedAt);
+  applyGridState();
+
+  previewElement = document.getElementById("documentPreview");
+
+  if (!previewElement) {
+    errorElement.textContent = "No document is available to download.";
+    return;
+  }
+
+  fileName = makeSafeFileName(jobNumber) + "-" + formatFileTimestamp(downloadTimestamp) + ".pdf";
+
+  exportContainer = document.createElement("div");
+  exportContainer.style.position = "fixed";
+  exportContainer.style.left = "-10000px";
+  exportContainer.style.top = "0";
+  exportContainer.style.background = "#ffffff";
+
+  exportElement = previewElement.cloneNode(true);
+
+  removeGridFromExport(exportElement);
+
+  exportContainer.appendChild(exportElement);
+  document.body.appendChild(exportContainer);
+
+  options = {
+    margin: 0,
+    filename: fileName,
+    image: {
+      type: "jpeg",
+      quality: 0.98
+    },
+    html2canvas: {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: "#ffffff"
+    },
+    jsPDF: {
+      unit: "mm",
+      format: "a4",
+      orientation: "portrait"
+    },
+    pagebreak: {
+      mode: ["css", "legacy"]
+    }
+  };
+
+  window.html2pdf().set(options).from(exportElement).save().then(function () {
+    document.body.removeChild(exportContainer);
+  }).catch(function (error) {
+    document.body.removeChild(exportContainer);
+    errorElement.textContent = "PDF download error:\n" + error.message;
+  });
+}
+
+function removeGridFromExport(exportElement) {
+  var pages = exportElement.querySelectorAll(".document-page");
+  var i;
+
+  for (i = 0; i < pages.length; i++) {
+    pages[i].classList.remove("grid-enabled");
+    pages[i].style.margin = "0";
+    pages[i].style.boxShadow = "none";
+    pages[i].style.width = "210mm";
+    pages[i].style.minHeight = "296mm";
+  }
 }
