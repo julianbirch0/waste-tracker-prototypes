@@ -15,3 +15,32 @@ function renderHeader(data) {
       '<div></div>' +
     '</header>';
 }
+
+function renderBody(data) {
+  return '' +
+    '<main class="document-body">' +
+      renderWorkOrderSummary(data) +
+      renderServiceSection(data) +
+      renderReceivingFacilitySection(data) +
+    '</main>';
+}
+
+function renderServiceSection(data) {
+  var waitAndLoadTime = getValue(data, "wait_and_load_time");
+  var waitAndLoadText = '';
+
+  if (waitAndLoadTime) {
+    waitAndLoadText = ' (' + escapeHtml(waitAndLoadTime) + ' minutes)';
+  }
+
+  return '' +
+    '<section class="section">' +
+      renderSectionBar('Service') +
+      '<div class="service-top-row">' +
+        '<div>' + escapeHtml(getValue(data, "activity")) + waitAndLoadText + '</div>' +
+        '<div class="service-date">' + escapeHtml(getValue(data, "service_date_and_time")) + '</div>' +
+      '</div>' +
+      '<div class="site-address">SITE ADDRESS:&nbsp; ' + escapeHtml(getValue(data, "site_name")) + ' &nbsp;' + escapeHtml(getValue(data, "site_address")) + '</div>' +
+      renderWasteItemsTable(data) +
+    '</section>';
+}
