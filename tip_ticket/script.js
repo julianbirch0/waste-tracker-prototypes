@@ -6,15 +6,15 @@ var lockedMeasurement = null;
 var sampleJson = {
   "document": {
     "title": "Duty of care: waste transfer note",
-    "subtitle": "Carrier to Receiving Facility",
+    "subtitle": "Disposal Ticket",
     "intake_reference": "TT-000123",
     "defra_tracking_number": "DWT-987654321",
     "intake_datetime": "23/06/2026 10:30",
     "footer_right": "Page 1 of 1"
   },
   "footer": {
-    "wasteTrackerStrapline": "POWERED BY WASTE TRACKER UK",
-    "website": "www.wastetracker.uk"
+    "wasteTrackerStrapline": "Powered by MyWastetracker",
+    "website": "www.mywastetracker.co.uk"
   },
   "receiving_facility_registered_name": "Example Receiving Facility Ltd",
   "receiving_facility_trading_name": "Example Facility",
@@ -119,7 +119,7 @@ function renderHeader(data) {
       '<div class="header-logo-box">' + renderLogo(logo1DataUrl, 'Logo file 1') + '</div>' +
       '<div class="header-title-block">' +
         '<div class="document-title">' + escapeHtml(getValue(data, "document.title")) + '</div>' +
-        '<div class="document-subtitle">' + escapeHtml(getValue(data, "document.subtitle") || 'Carrier to Receiving Facility') + '</div>' +
+        '<div class="document-subtitle">' + escapeHtml(getValue(data, "document.subtitle") || 'Disposal Ticket') + '</div>' +
       '</div>' +
       '<div class="header-reference-panel">' +
         renderDetailLine('Intake Reference', getValue(data, "document.intake_reference"), 'header-reference-row') +
@@ -313,8 +313,8 @@ function renderSectionBar(text) {
 }
 
 function renderFooter(data) {
-  var strapline = getValue(data, 'footer.wasteTrackerStrapline') || getValue(data, 'footer.wastetracker_stapline') || 'POWERED BY WASTE TRACKER UK';
-  var website = getValue(data, 'footer.website') || 'www.wastetracker.uk';
+  var strapline = getValue(data, 'footer.wasteTrackerStrapline') || getValue(data, 'footer.wastetracker_stapline') || 'Powered by MyWastetracker';
+  var website = getValue(data, 'footer.website') || 'www.mywastetracker.co.uk';
   return '<footer class="document-footer"><div class="footer-logo-box">' + renderLogo(logo2DataUrl, 'Logo file 2') + '</div><div class="footer-strapline"><div class="footer-strapline-main">' + escapeHtml(strapline) + '</div><div>' + escapeHtml(website) + '</div></div></footer><div class="footer-line"><span>' + escapeHtml(getValue(data, 'document.footer_right') || 'Page 1 of 1') + '</span></div>';
 }
 
