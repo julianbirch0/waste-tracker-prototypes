@@ -15,6 +15,9 @@ window.onload = function () {
 
 sampleJson.document.title = "Job Completion Report";
 sampleJson.work_order_number = "12345";
+sampleJson.activity = "Wait & Load";
+sampleJson.footer.wasteTrackerStrapline = "Powered by MyWastetracker";
+sampleJson.footer.website = "www.mywastetracker.co.uk";
 
 function renderDocument(data, createdAt) {
   var preview = document.getElementById("documentPreview");
@@ -100,8 +103,8 @@ function renderServiceSection(data) {
 }
 
 function renderFooter(data, createdAt, pageNumber, pageCount) {
-  var strapline = getValue(data, "footer.wasteTrackerStrapline") || "POWERED BY WASTE TRACKER UK";
-  var website = getValue(data, "footer.website") || "www.wastetracker.uk";
+  var strapline = getValue(data, "footer.wasteTrackerStrapline") || "Powered by MyWastetracker";
+  var website = getValue(data, "footer.website") || "www.mywastetracker.co.uk";
   var createdText = formatDisplayTimestamp(createdAt || new Date());
 
   return '' +
