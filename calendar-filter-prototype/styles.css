@@ -155,25 +155,58 @@ button {
 }
 
 .mode-options {
-  display: flex;
-  gap: 18px;
-  flex-wrap: wrap;
   padding: 0;
   margin: 0 0 10px 0;
   border: 0;
 }
 
 .mode-options legend {
-  width: 100%;
   margin-bottom: 8px;
   color: var(--muted);
   font-size: 14px;
 }
 
-.mode-options label {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+.mode-toggle {
+  display: inline-flex;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: #f3f6f9;
+}
+
+.mode-button {
+  position: relative;
+  cursor: pointer;
+}
+
+.mode-button input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.mode-button span {
+  display: block;
+  min-width: 96px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.mode-button:hover span {
+  background: var(--soft-blue);
+}
+
+.mode-button input:checked + span {
+  color: #ffffff;
+  background: var(--primary);
+}
+
+.mode-button input:focus-visible + span {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
 }
 
 .instruction {
@@ -261,7 +294,8 @@ button {
     grid-template-columns: 1fr;
   }
 
-  .tab-button {
+  .tab-button,
+  .mode-button span {
     min-width: 84px;
   }
 }
