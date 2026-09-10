@@ -236,25 +236,8 @@
   }
 
   function changeCustomMode(newMode) {
-    var retainedDate = state.selectedDate || state.rangeStart;
-
     state.mode = newMode;
-
-    if (newMode === 'range') {
-      state.selectedDate = null;
-      state.rangeStart = retainedDate;
-      state.rangeEnd = null;
-    } else {
-      state.selectedDate = retainedDate;
-      state.rangeStart = null;
-      state.rangeEnd = null;
-    }
-
-    updateInstruction();
-
-    if (newMode === 'range' && state.rangeStart) {
-      customInstruction.textContent = 'Start date selected: ' + formatDate(state.rangeStart) + '. Now select an end date.';
-    }
+    clearSelectedDates();
   }
 
   function updateInstruction() {
