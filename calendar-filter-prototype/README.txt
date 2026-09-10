@@ -11,12 +11,13 @@ What it demonstrates
   - Presets
   - Custom
 - Preset options:
-  - Today
-  - Tomorrow
-  - This week
-  - Next week
-  - This month
-- Custom options:
+  - This Week
+  - Last Week
+  - This Month
+  - Last Month
+  - This Quarter
+  - Last Quarter
+- Custom options shown in the same segmented-control style as the Presets / Custom tabs:
   - Single date
   - Date range
 - Switching from Single date to Date range keeps the existing single date as the range start
@@ -33,6 +34,7 @@ Files
 - index.html
 - styles.css
 - script.js
+- script-v2.js
 
 Notes
 
