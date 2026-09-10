@@ -91,33 +91,44 @@
   function applyPreset(presetName) {
     var today = stripTime(new Date());
     var monday = startOfWeek(today);
+    var monthStart = startOfMonth(today);
+    var quarterStart = startOfQuarter(today);
     var range;
+    var label;
 
     clearSelectedDates();
 
-    if (presetName === 'today') {
-      filterCaption.textContent = 'Today - ' + formatDate(today);
-    }
-
-    if (presetName === 'tomorrow') {
-      filterCaption.textContent = 'Tomorrow - ' + formatDate(addDays(today, 1));
-    }
-
     if (presetName === 'this-week') {
       range = { start: monday, end: addDays(monday, 6) };
-      filterCaption.textContent = 'This week - ' + formatDate(range.start) + ' to ' + formatDate(range.end);
+      label = 'This Week';
     }
 
-    if (presetName === 'next-week') {
-      range = { start: addDays(monday, 7), end: addDays(monday, 13) };
-      filterCaption.textContent = 'Next week - ' + formatDate(range.start) + ' to ' + formatDate(range.end);
+    if (presetName === 'last-week') {
+      range = { start: addDays(monday, -7), end: addDays(monday, -1) };
+      label = 'Last Week';
     }
 
     if (presetName === 'this-month') {
-      range = { start: startOfMonth(today), end: endOfMonth(today) };
-      filterCaption.textContent = 'This month - ' + formatDate(range.start) + ' to ' + formatDate(range.end);
+      range = { start: monthStart, end: endOfMonth(today) };
+      label = 'This Month';
     }
 
+    if (presetName === 'last-month') {
+      range = { start: addMonths(monthStart, -1), end: addDays(monthStart, -1) };
+      label = 'Last Month';
+    }
+
+    if (presetName === 'this-quarter') {
+      range = { start: quarterStart, end: addDays(addMonths(quarterStart, 3), -1) };
+      label = 'This Quarter';
+    }
+
+    if (presetName === 'last-quarter') {
+      range = { start: addMonths(quarterStart, -3), end: addDays(quarterStart, -1) };
+      label = 'Last Quarter';
+    }
+
+    filterCaption.textContent = label + ' - ' + formatDate(range.start) + ' to ' + formatDate(range.end);
     markFilterActive();
     hidePanel();
     renderCalendar();
@@ -302,6 +313,10 @@
 
   function endOfMonth(date) {
     return new Date(date.getFullYear(), date.getMonth() + 1, 0);
+  }
+
+  function startOfQuarter(date) {
+    return new Date(date.getFullYear(), Math.floor(date.getMonth() / 3) * 3, 1);
   }
 
   function addDays(date, days) {
