@@ -29,27 +29,28 @@
 
         <div id="presetsTab" class="tab-panel" role="tabpanel" aria-labelledby="presetsTabButton">
           <div class="preset-list">
-            <button class="preset-button" type="button" data-preset="today">Today</button>
-            <button class="preset-button" type="button" data-preset="tomorrow">Tomorrow</button>
-            <button class="preset-button" type="button" data-preset="this-week">This week</button>
-            <button class="preset-button" type="button" data-preset="next-week">Next week</button>
-            <button class="preset-button" type="button" data-preset="this-month">This month</button>
+            <button class="preset-button" type="button" data-preset="this-week">This Week</button>
+            <button class="preset-button" type="button" data-preset="last-week">Last Week</button>
+            <button class="preset-button" type="button" data-preset="this-month">This Month</button>
+            <button class="preset-button" type="button" data-preset="last-month">Last Month</button>
+            <button class="preset-button" type="button" data-preset="this-quarter">This Quarter</button>
+            <button class="preset-button" type="button" data-preset="last-quarter">Last Quarter</button>
           </div>
         </div>
 
         <div id="customTab" class="tab-panel hidden" role="tabpanel" aria-labelledby="customTabButton">
           <fieldset class="mode-options">
             <legend>Choose custom filter type</legend>
-
-            <label>
-              <input type="radio" name="customMode" value="single" checked>
-              Single date
-            </label>
-
-            <label>
-              <input type="radio" name="customMode" value="range">
-              Date range
-            </label>
+            <div class="mode-toggle">
+              <label class="mode-button">
+                <input type="radio" name="customMode" value="single" checked>
+                <span>Single date</span>
+              </label>
+              <label class="mode-button">
+                <input type="radio" name="customMode" value="range">
+                <span>Date range</span>
+              </label>
+            </div>
           </fieldset>
 
           <p id="customInstruction" class="instruction">Select a date.</p>
