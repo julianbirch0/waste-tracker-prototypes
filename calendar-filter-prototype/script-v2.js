@@ -27,6 +27,13 @@
   var modeInputs = document.querySelectorAll('input[name="customMode"]');
 
   openFilterButton.addEventListener('click', function () {
+    var openingPanel = filterPanel.classList.contains('hidden');
+
+    if (openingPanel && state.mode === 'range' && state.rangeStart && state.rangeEnd) {
+      state.visibleMonth = startOfMonth(state.rangeStart);
+      renderCalendar();
+    }
+
     filterPanel.classList.toggle('hidden');
   });
 
@@ -237,6 +244,7 @@
 
   function changeCustomMode(newMode) {
     state.mode = newMode;
+    state.visibleMonth = startOfMonth(new Date());
     clearSelectedDates();
   }
 
