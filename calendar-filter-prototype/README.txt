@@ -20,7 +20,8 @@ What it demonstrates
 - Custom options shown in the same segmented-control style as the Presets / Custom tabs:
   - Single date
   - Date range
-- Switching between Single date and Date range clears the current date selection
+- Editing a date range displays the month containing its start date
+- Switching between Single date and Date range clears the current date selection and returns the calendar to the current month
 - Calendar month navigation
 - Immediate panel collapse after selecting a preset, a single date, or the end date of a date range
 - Clear filter action
