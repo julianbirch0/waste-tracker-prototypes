@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Job Photos Prototype</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="page-shell">
+    <header class="page-header">
+      <div class="eyebrow">WasteTracker prototype</div>
+      <h1>Add job photos</h1>
+      <p class="lede">
+        Add photos to provide a clear visual record of the job before, during and after the work is completed.
+      </p>
+    </header>
+
+    <section class="panel" aria-labelledby="photos-heading">
+      <div class="panel-heading">
+        <div>
+          <h2 id="photos-heading">Job photos</h2>
+          <p>Select a photo from your device, paste one from your clipboard, or drag and drop it straight onto the control.</p>
+        </div>
+        <span class="demo-badge">Proof of concept</span>
+      </div>
+
+      <div class="demo-note">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm0 4.75a1.25 1.25 0 1 1 0 2.5 1.25 1.25 0 0 1 0-2.5ZM10.75 11h2.5v6h-2.5v-6Z"/></svg>
+        <span>Demo mode: photos are compressed and stored locally in this browser to simulate saving to WasteTracker.</span>
+      </div>
+
+      <div id="message" class="message" role="status" aria-live="polite"></div>
+
+      <div id="photoGallery" class="photo-gallery" aria-live="polite"></div>
+
+      <input id="fileInput" type="file" accept="image/*" multiple hidden>
+    </section>
+  </main>
+
+  <template id="uploadTileTemplate">
+    <article class="upload-tile" data-upload-tile>
+      <div class="processing-overlay" aria-hidden="true">
+        <div class="spinner"></div>
+        <strong data-processing-title>Preparing photo…</strong>
+        <span data-processing-detail>Compressing and saving</span>
+      </div>
+
+      <button class="upload-section select-section" type="button" data-action="select">
+        <span class="icon-wrap" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M4 4h6l2 2h8a2 2 0 0 1 2 2v9a3 3 0 0 1-3 3H5a3 3 0 0 1-3-3V6a2 2 0 0 1 2-2Zm0 4v9a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V8H4Z"/></svg>
+        </span>
+        <span class="section-copy">
+          <strong>Select</strong>
+          <small>Choose from this device</small>
+        </span>
+      </button>
+
+      <button class="upload-section paste-section" type="button" data-action="paste">
+        <span class="icon-wrap" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M9 2h6a2 2 0 0 1 2 2h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2a2 2 0 0 1 2-2Zm0 4h6V4H9v2Zm-4 0v14h14V6h-2v2H7V6H5Z"/></svg>
+        </span>
+        <span class="section-copy">
+          <strong>Paste</strong>
+          <small>From your clipboard</small>
+        </span>
+        <kbd>Ctrl+V</kbd>
+      </button>
+
+      <div class="upload-section drop-section">
+        <span class="icon-wrap" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M11 15.17 7.41 11.6 6 13l6 6 6-6-1.41-1.4L13 15.17V4h-2v11.17ZM4 20h16v2H4v-2Z"/></svg>
+        </span>
+        <span class="section-copy">
+          <strong>Drag &amp; drop</strong>
+          <small>Drop an image anywhere here</small>
+        </span>
+      </div>
+
+      <div class="drag-overlay" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M11 15.17 7.41 11.6 6 13l6 6 6-6-1.41-1.4L13 15.17V4h-2v11.17ZM4 20h16v2H4v-2Z"/></svg>
+        <strong>Drop to add photo</strong>
+      </div>
+    </article>
+  </template>
+
+  <template id="photoTileTemplate">
+    <article class="photo-tile">
+      <button class="photo-open" type="button" aria-label="View photo larger">
+        <img alt="">
+        <span class="photo-status">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9.55 17.6-4.6-4.6 1.4-1.4 3.2 3.2 8.1-8.1 1.4 1.4-9.5 9.5Z"/></svg>
+          Saved
+        </span>
+      </button>
+      <button class="delete-button" type="button" aria-label="Delete photo" title="Delete photo">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 21a2 2 0 0 1-2-2V7H4V5h5V4h6v1h5v2h-1v12a2 2 0 0 1-2 2H7Zm10-14H7v12h10V7Zm-8 2h2v8H9V9Zm4 0h2v8h-2V9Z"/></svg>
+      </button>
+      <div class="photo-meta"></div>
+    </article>
+  </template>
+
+  <dialog id="lightbox" class="lightbox">
+    <button class="lightbox-close" type="button" aria-label="Close enlarged photo">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.3 5.7 12 12l6.3 6.3-1.4 1.4-6.3-6.3-6.3 6.3-1.4-1.4L9.2 12 2.9 5.7l1.4-1.4 6.3 6.3 6.3-6.3 1.4 1.4Z"/></svg>
+    </button>
+    <img id="lightboxImage" alt="Expanded job photo">
+    <div id="lightboxCaption" class="lightbox-caption"></div>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
