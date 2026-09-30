@@ -17,9 +17,9 @@ Without a key the app runs in clearly labelled sample mode. Sample addresses are
 
 - Dedicated search box, separate editable Company, Line1–4, City, Province, PostalCode and CountryName fields.
 - Original selected response alongside current mapped values. Original response does not change when editing.
-- Single comma-separated string and postal-style block derived from current fields. County is retained separately but omitted from both formatted previews.
+- Single comma-separated string and postal-style block derived from current fields. Country and county are retained separately but omitted from both formatted previews. Post towns use title case (existing mixed case is preserved); postcodes display in uppercase. The single-line view has no comma between town and postcode.
 - Suggestion limit (1–50, default 7), result limit (1–300, default 100), and provider-bar visibility. Apply recreates the live control; it preserves address fields.
-- Manual entry, no-match/error messages and change-address action with confirmation before discarding entered details.
+- Manual entry, no-match/error messages and Start over action that immediately clears the search, all address fields, selection response and previews without confirmation, then focuses the search box. Lookup settings are preserved.
 - All data is held in memory; nothing is saved or submitted. Live searches send query text to Royal Mail's service and may consume account allowance. Sample mode sends no queries.
 
 The provider library loads only when a non-placeholder key exists. Key configuration remains browser-visible; use account URL/usage restrictions. No key from screenshots has been used.

@@ -16,9 +16,17 @@ for (const [name,label] of definitions) {
  wrapper.append(caption,input); $('fields').append(wrapper);
 }
 function values(){return Object.fromEntries(definitions.map(([name])=>[name,$(name).value.trim()]));}
+function displayTown(value){
+ // Preserve existing mixed case; normalise uniformly upper/lower-case post towns.
+ if(value !== value.toUpperCase() && value !== value.toLowerCase()) return value;
+ return value.toLowerCase().replace(/(^|[\s-])([a-z])/g,(_,separator,letter)=>separator+letter.toUpperCase());
+}
 function preview(){
- const v=values(); const lines=definitions.filter(([n])=>n!=='Province').map(([n])=>v[n]).filter(Boolean);
- $('single').textContent=lines.join(', ') || 'Select or enter an address.';
+ const v=values();
+ const town=displayTown(v.City), postcode=v.PostalCode.toUpperCase();
+ const preceding=['Company','Line1','Line2','Line3','Line4'].map(n=>v[n]).filter(Boolean);
+ const lines=[...preceding,town,postcode].filter(Boolean);
+ $('single').textContent=[...preceding,[town,postcode].filter(Boolean).join(' ')].filter(Boolean).join(', ') || 'Select or enter an address.';
  $('postal').textContent=lines.join('\n') || 'Select or enter an address.';
  $('mapped').textContent=JSON.stringify(v,null,2);
 }
@@ -66,8 +74,8 @@ async function initialise(){
 $('apply').onclick=initialise;
 $('manual').onclick=()=>{if(control)control.hide();$('source').textContent='Manual entry';$('status').textContent='Enter or amend the address below.';$('Line1').focus();};
 $('change').onclick=()=>{
- if((hasSelection || edited) && !window.confirm('Clear the current address and start again?'))return;
- for(const [name] of definitions)$(name).value='';$('search').value='';$('raw').textContent='No address selected.';hasSelection=false;edited=false;$('source').textContent='Not selected';if(control)control.reset();preview();if(!live)sampleResults();$('search').focus();
+ for(const [name] of definitions)$(name).value='';$('search').value='';$('raw').textContent='No address selected.';hasSelection=false;edited=false;$('source').textContent='Not selected';if(control){control.hide();control.reset();}
+ $('status').textContent=live?'Start typing a postcode, street or address.':'Sample mode — select a sample or enter an address manually.';preview();if(!live)sampleResults();$('search').focus();
 };
 if(!live){$('samples').hidden=false;sampleResults();$('search').addEventListener('input',sampleResults);}
 preview();initialise();
