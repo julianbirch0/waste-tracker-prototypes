@@ -26,7 +26,7 @@
     <div class="work-area">
       <div class="top-bar">
         <div class="breadcrumbs">Disposal <span>/</span> Customers / Carriers <span>/</span> <strong id="breadcrumbCustomer">New customer</strong></div>
-        <div class="top-meta"><span class="live-dot"></span> Local prototype <span class="top-divider"></span> V1 · October 2026</div>
+        <div class="top-meta"><span class="live-dot"></span> Local prototype <span class="top-divider"></span> V2 · October 2026</div>
       </div>
       <main class="main-content">
         <header class="page-heading">
@@ -37,14 +37,6 @@
         <div class="demo-banner"><div class="banner-symbol">i</div><div><strong>Interactive concept · not connected to WasteTracker</strong><p>All example records are fictional. Changes are held in this browser for the demo; no DEFRA calls or real Intake Loads are created.</p></div></div>
 
         <div class="workspace-grid">
-          <section class="browse-panel" aria-label="Example customers">
-            <div class="browse-heading"><div><h2>Customers</h2><p>Try an existing record or start afresh.</p></div><span class="count-pill" id="customerCount">0</span></div>
-            <button type="button" class="button button-primary new-button" id="newCustomer">+ Add new customer / carrier</button>
-            <label class="search-box"><span aria-hidden="true">⌕</span><input id="customerSearch" type="search" placeholder="Find a demo customer…" autocomplete="off" aria-label="Search customers"></label>
-            <div class="customer-list" id="customerList"></div>
-            <div class="browse-tip"><strong>Try this</strong><p>Open ABC Haulage and Westbrook Recycling: both have vehicle B16 SKP. That's allowed because they are different carriers.</p></div>
-          </section>
-
           <section class="editor-panel" aria-label="Customer details">
             <div class="editor-top"><div><p class="eyebrow" id="editorMode">NEW RECORD</p><h2 id="editorTitle">Who are we adding?</h2></div><span id="recordStatus" class="status-pill">Unsaved</span></div>
             <div id="notification" class="notification hidden" role="status" aria-live="polite"></div>
@@ -125,6 +117,18 @@
             </form>
           </section>
         </div>
+        <div class="demo-records-divider" role="separator" aria-label="End of customer form; prototype-only examples below">
+          <strong>▼ END OF CUSTOMER FORM ▼</strong>
+          <span>PROTOTYPE TEST AREA BELOW — NOT PART OF THE CUSTOMER SCREEN</span>
+        </div>
+        <section class="browse-panel" aria-label="Separate prototype test records">
+            <div class="browse-heading"><div><h2 id="demoRecordsHeading">Sample customers</h2><p>Test editing an existing fictional record, or start afresh.</p></div><span class="count-pill" id="customerCount">0</span></div>
+            <button type="button" class="button button-primary new-button" id="newCustomer">+ Start a new customer form</button>
+            <label class="search-box"><span aria-hidden="true">⌕</span><input id="customerSearch" type="search" placeholder="Find a demo customer…" autocomplete="off" aria-label="Search customers"></label>
+            <div class="customer-list" id="customerList"></div>
+            <div class="browse-tip"><strong>Try this</strong><p>Open ABC Haulage and Westbrook Recycling: both have vehicle B16 SKP. That's allowed because they are different carriers.</p></div>
+          </section>
+
         <footer class="page-footer">WasteTracker · Disposal Customer prototype · Design exploration, not production software</footer>
       </main>
     </div>
