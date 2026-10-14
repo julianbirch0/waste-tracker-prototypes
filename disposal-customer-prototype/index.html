@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Disposal customers | WasteTracker prototype</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="main-nav" aria-label="Main navigation">
+      <div class="brand"><span class="brand-mark">W<span class="brand-mark-accent">T</span></span><span class="brand-label">Waste<span>Tracker</span><small>INTERACTIVE PROTOTYPE</small></span></div>
+      <nav class="nav-links" aria-label="Demo navigation">
+        <span class="nav-label">OPERATIONS</span>
+        <div class="nav-item muted"><span class="nav-icon">▦</span> Dashboard</div>
+        <div class="nav-item muted"><span class="nav-icon">▤</span> Intake Loads</div>
+        <div class="nav-item active"><span class="nav-icon">♧</span> Customers / Carriers</div>
+        <div class="nav-item muted"><span class="nav-icon">▥</span> Reports</div>
+        <span class="nav-label second">SETTINGS</span>
+        <div class="nav-item muted"><span class="nav-icon">⚙</span> Organisation</div>
+      </nav>
+      <div class="nav-footer"><span class="avatar">JB</span><div><strong>Demo operator</strong><small>Demo Receiving Facility</small></div></div>
+    </aside>
+
+    <div class="work-area">
+      <div class="top-bar">
+        <div class="breadcrumbs">Disposal <span>/</span> Customers / Carriers <span>/</span> <strong id="breadcrumbCustomer">New customer</strong></div>
+        <div class="top-meta"><span class="live-dot"></span> Local prototype <span class="top-divider"></span> V1 · October 2026</div>
+      </div>
+      <main class="main-content">
+        <header class="page-heading">
+          <div><p class="eyebrow">CUSTOMER MAINTENANCE</p><h1 id="pageTitle">Add customer or carrier</h1><p class="heading-description">Set up a customer once, then use their details across Disposal transactions.</p></div>
+          <button type="button" class="button button-outline" id="resetDemo">↻ Reset demo data</button>
+        </header>
+
+        <div class="demo-banner"><div class="banner-symbol">i</div><div><strong>Interactive concept · not connected to WasteTracker</strong><p>All example records are fictional. Changes are held in this browser for the demo; no DEFRA calls or real Intake Loads are created.</p></div></div>
+
+        <div class="workspace-grid">
+          <section class="browse-panel" aria-label="Example customers">
+            <div class="browse-heading"><div><h2>Customers</h2><p>Try an existing record or start afresh.</p></div><span class="count-pill" id="customerCount">0</span></div>
+            <button type="button" class="button button-primary new-button" id="newCustomer">+ Add new customer / carrier</button>
+            <label class="search-box"><span aria-hidden="true">⌕</span><input id="customerSearch" type="search" placeholder="Find a demo customer…" autocomplete="off" aria-label="Search customers"></label>
+            <div class="customer-list" id="customerList"></div>
+            <div class="browse-tip"><strong>Try this</strong><p>Open ABC Haulage and Westbrook Recycling: both have vehicle B16 SKP. That's allowed because they are different carriers.</p></div>
+          </section>
+
+          <section class="editor-panel" aria-label="Customer details">
+            <div class="editor-top"><div><p class="eyebrow" id="editorMode">NEW RECORD</p><h2 id="editorTitle">Who are we adding?</h2></div><span id="recordStatus" class="status-pill">Unsaved</span></div>
+            <div id="notification" class="notification hidden" role="status" aria-live="polite"></div>
+
+            <form id="customerForm" novalidate>
+              <section class="form-section" aria-labelledby="class-heading">
+                <div class="section-heading"><span class="step-number">1</span><div><h3 id="class-heading">Customer classification</h3><p>Is this a domestic customer or a commercial customer?</p></div></div>
+                <div class="choice-grid two" id="typeChoices" role="group" aria-label="Customer classification">
+                  <button type="button" class="choice-card" data-type="domestic" aria-pressed="false"><span class="choice-icon" aria-hidden="true">⌂</span><span><strong>Domestic</strong><small>A private individual bringing household waste</small></span><span class="choice-check">✓</span></button>
+                  <button type="button" class="choice-card" data-type="commercial" aria-pressed="false"><span class="choice-icon" aria-hidden="true">▣</span><span><strong>Commercial</strong><small>A business or other organisation</small></span><span class="choice-check">✓</span></button>
+                </div>
+              </section>
+
+              <section class="form-section hidden" id="roleSection" aria-labelledby="role-heading">
+                <div class="section-heading"><span class="step-number">2</span><div><h3 id="role-heading">Commercial relationship</h3><p>What role does this organisation have in Disposal?</p></div></div>
+                <div class="choice-grid three" id="roleChoices" role="group" aria-label="Commercial role">
+                  <button type="button" class="choice-card vertical" data-role="carrier" aria-pressed="false"><span class="choice-icon" aria-hidden="true">▰</span><strong>Carrier only</strong><small>Brings waste to the facility</small><span class="choice-check">✓</span></button>
+                  <button type="button" class="choice-card vertical" data-role="originator" aria-pressed="false"><span class="choice-icon" aria-hidden="true">▥</span><strong>Originator only</strong><small>Commercial relationship, not the carrier</small><span class="choice-check">✓</span></button>
+                  <button type="button" class="choice-card vertical" data-role="both" aria-pressed="false"><span class="choice-icon" aria-hidden="true">⇆</span><strong>Both</strong><small>Acts as carrier and originator</small><span class="choice-check">✓</span></button>
+                </div>
+                <div class="helper-block" id="roleHelper"></div>
+              </section>
+
+              <section class="form-section hidden" id="originatorSection" aria-labelledby="originator-heading">
+                <div class="section-heading"><span class="step-number" id="originatorStep">3</span><div><h3 id="originator-heading">Originator details</h3><p>Distinguish an ordinary commercial customer from a registered broker or dealer.</p></div></div>
+                <fieldset class="plain-fieldset">
+                  <legend>Originator type</legend>
+                  <div class="radio-options">
+                    <label class="radio-choice"><input type="radio" name="originatorKind" value="ordinary"><span><strong>Ordinary commercial originator</strong><small>Needs waste moved; not acting as a registered broker/dealer</small></span></label>
+                    <label class="radio-choice"><input type="radio" name="originatorKind" value="registered"><span><strong>Registered broker or dealer</strong><small>Registration details may be needed for DEFRA reporting</small></span></label>
+                  </div>
+                </fieldset>
+              </section>
+
+              <section class="form-section hidden" id="detailsSection" aria-labelledby="details-heading">
+                <div class="section-heading"><span class="step-number" id="detailsStep">3</span><div><h3 id="details-heading">Customer details</h3><p>Contact and postal details for this customer.</p></div></div>
+                <div class="form-grid">
+                  <div class="field full"><label for="customerName" id="nameLabel">Customer name <span class="required">*</span></label><input id="customerName" name="customerName" type="text" autocomplete="organization" maxlength="140" placeholder="Enter name"><span class="field-error" data-error-for="customerName"></span></div>
+                  <div class="field full"><label for="address1">Address line 1</label><input id="address1" name="address1" type="text" autocomplete="address-line1" placeholder="Building and street"></div>
+                  <div class="field full"><label for="address2">Address line 2 <span class="optional">(optional)</span></label><input id="address2" name="address2" type="text" autocomplete="address-line2" placeholder="Additional address information"></div>
+                  <div class="field"><label for="town">Post town</label><input id="town" name="town" type="text" autocomplete="address-level2" placeholder="e.g. Swindon"></div>
+                  <div class="field"><label for="postcode">Postcode <span class="required" id="postcodeRequired">*</span></label><input id="postcode" name="postcode" type="text" autocomplete="postal-code" placeholder="e.g. SN1 1AA" maxlength="12"><span class="field-error" data-error-for="postcode"></span></div>
+                  <div class="field"><label for="email">Contact email</label><input id="email" name="email" type="email" autocomplete="email" placeholder="name@example.co.uk"><span class="field-error" data-error-for="email"></span></div>
+                  <div class="field"><label for="telephone">Telephone</label><input id="telephone" name="telephone" type="tel" autocomplete="tel" placeholder="01793 123456"></div>
+                </div>
+                <p class="field-note" id="detailsHint">Fields marked * are required in this prototype.</p>
+              </section>
+
+              <section class="form-section hidden" id="licenceSection" aria-labelledby="licence-heading">
+                <div class="section-heading"><span class="step-number" id="licenceStep">4</span><div><h3 id="licence-heading">Waste carrier / broker registration</h3><p id="licenceDescription">Record registration details and an optional expiry date.</p></div></div>
+                <div class="form-grid">
+                  <div class="field"><label for="licenceNumber">Registration number <span class="required" id="licenceRequired" hidden>*</span></label><input id="licenceNumber" name="licenceNumber" type="text" placeholder="e.g. CBDU123456"><span class="field-error" data-error-for="licenceNumber"></span></div>
+                  <div class="field"><label for="licenceExpiry">Expiry date <span class="optional">(optional)</span></label><input id="licenceExpiry" name="licenceExpiry" type="date"></div>
+                </div>
+                <div class="helper-block neutral">An expiry date is for reference only. An expired date does not prevent this carrier being selected on an Intake Load.</div>
+              </section>
+
+              <section class="form-section hidden" id="vehicleSection" aria-labelledby="vehicles-heading">
+                <div class="section-heading"><span class="step-number" id="vehiclesStep">5</span><div><h3 id="vehicles-heading">Associated vehicles</h3><p>Vehicles belong to this carrier relationship, not to a shared global register.</p></div></div>
+                <div class="vehicle-header"><span class="subtle-text" id="vehicleCount">0 vehicles</span><button class="button button-outline button-small" type="button" id="addVehicle">+ Add vehicle</button></div>
+                <div id="vehicleList" class="vehicle-list"></div>
+                <div id="vehicleEmpty" class="empty-vehicles">No vehicles associated yet. Add a vehicle or continue without one.</div>
+                <div class="helper-block">The same registration may appear against other carriers and in other WasteTracker organisations. Duplicate registrations for <em>this same carrier</em> are prevented, ignoring spaces and case.</div>
+              </section>
+
+              <section class="form-section hidden" id="preferencesSection" aria-labelledby="preferences-heading">
+                <div class="section-heading"><span class="step-number" id="preferencesStep">6</span><div><h3 id="preferences-heading">Ticket preferences</h3><p>Defaults for displaying customer information on Disposal tickets.</p></div></div>
+                <div class="pref-line"><div><strong>Show prices</strong><p id="pricePreferenceHint">Price visibility for tickets issued to this customer.</p></div><label class="toggle" aria-label="Show prices"><input id="showPrice" type="checkbox"><span class="toggle-slider"></span></label></div>
+                <div class="pref-line"><div><strong>Show notes</strong><p>Show Intake Load notes on this customer's ticket.</p></div><label class="toggle" aria-label="Show notes"><input id="showNotes" type="checkbox"><span class="toggle-slider"></span></label></div>
+                <div class="helper-block neutral">When a commercial carrier differs from the originator, the carrier's ticket never shows a price, regardless of preferences. This rule is applied during ticket generation.</div>
+              </section>
+
+              <div class="form-footer hidden" id="formFooter">
+                <button type="button" class="button button-subtle" id="cancelEdit">Cancel</button>
+                <span class="save-help">Demo saves are local only.</span>
+                <button type="submit" class="button button-primary" id="saveCustomer">Save customer</button>
+              </div>
+            </form>
+          </section>
+        </div>
+        <footer class="page-footer">WasteTracker · Disposal Customer prototype · Design exploration, not production software</footer>
+      </main>
+    </div>
+  </div>
+
+  <dialog id="vehicleDialog" aria-labelledby="vehicleDialogTitle">
+    <form id="vehicleForm" novalidate>
+      <div class="modal-head"><div><p class="eyebrow">CARRIER VEHICLE</p><h2 id="vehicleDialogTitle">Add vehicle</h2></div><button type="button" class="icon-button" id="closeVehicleDialog" aria-label="Close">×</button></div>
+      <p class="modal-intro">Add a registration for this carrier. Original spacing is preserved.</p>
+      <div class="field"><label for="vehicleRegistration">Registration <span class="required">*</span></label><input id="vehicleRegistration" type="text" autocomplete="off" spellcheck="false" maxlength="16" placeholder="e.g. B16 SKP"><span class="field-error" id="vehicleRegError"></span></div>
+      <div class="field"><label for="vehicleType">Vehicle type <span class="required">*</span></label><select id="vehicleType"><option value="">Choose a vehicle type…</option><option>Skip lorry</option><option>Tipper</option><option>Transit caged tipper</option><option>Grab lorry</option><option>Rigid HGV</option><option>Articulated HGV</option><option>Van</option><option>Other</option></select><span class="field-error" id="vehicleTypeError"></span></div>
+      <label class="checkbox-row"><input id="vehicleFavourite" type="checkbox"><span><strong>Favourite vehicle</strong><small>Show this vehicle–carrier pair among the organisation's Intake Load favourites.</small></span></label>
+      <div class="dialog-actions"><button type="button" class="button button-outline" id="cancelVehicle">Cancel</button><button class="button button-primary" type="submit">Save vehicle</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="intakeDialog" aria-labelledby="intakeDialogTitle">
+    <div class="modal-head"><div><p class="eyebrow">WORKFLOW PREVIEW</p><h2 id="intakeDialogTitle">Create Intake Load</h2></div><button class="icon-button" type="button" id="closeIntakeDialog" aria-label="Close">×</button></div>
+    <p class="modal-intro">In WasteTracker this would save the customer and open a new Intake Load with the selections below already populated.</p>
+    <div class="handoff-summary" id="intakeSummary"></div>
+    <div class="helper-block neutral">This prototype deliberately stops here. The Intake Load form will be our second prototype.</div>
+    <div class="dialog-actions"><button class="button button-primary" type="button" id="doneIntake">Got it</button></div>
+  </dialog>
+</body>
+</html>
