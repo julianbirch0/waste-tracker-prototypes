@@ -1,4 +1,4 @@
-# Disposal Customer prototype (V2)
+# Disposal Customer prototype (V3)
 
 A clickable WasteTracker **Disposal Customer / Carrier** maintenance screen.
 
@@ -17,6 +17,18 @@ No npm, no localhost, no server, no framework, no third-party libraries, no inte
 - Choosing **Domestic** never displays any carrier registration, waste carrier licence expiry, or registered broker/dealer fields. Domestic still supports associated vehicles, as agreed.
 - Choosing a sample customer scrolls back to the form so the selected record is immediately visible.
 
+## V3 changes (address lookup and keyboard focus)
+
+- Clicking **Domestic** immediately places keyboard focus in the Customer Name field.
+- The address area starts with a free-text **Find address** box, **Search**, and **Enter address manually**.
+- Typing **SN1 1AA** and searching yields **one** fictional result, filling the four address fields.
+- Typing **Castlefields Shrewsbury** yields **multiple** fictional matches; select one or choose **None of the above**. That dismisses the choices without selecting an address.
+- Typing text not in the sample data yields **no matches**, with an option to retry or enter manually.
+- **Enter address manually** shows all four address fields **empty**, including when changing an existing record.
+- The **Postcode is mandatory** even if lookup fails or is bypassed. Trying to save without it reveals the address fields and focuses Postcode for correction.
+- Existing example customers display their stored address automatically when opened for editing.
+- This is an **offline address-lookup simulation**, not a live PAF/AddressNow provider integration. It is intended to demonstrate interaction and conditional display on `file://` without localhost or any server.
+
 ## What to try
 
 - Choose **Domestic** or **Commercial** in the form. To start again, use **Start a new customer form** in the separate sample-records area below.
@@ -33,7 +45,7 @@ No npm, no localhost, no server, no framework, no third-party libraries, no inte
 
 - Records are **entirely fictional**, using the reserved .example domain for sample email addresses.
 - Data lives **only in browser memory**. It resets on refresh or closing the tab, or via the reset button. It never touches WasteTracker's database.
-- No DEFRA calls, geocoding, address lookup, printing, real permissions or real Intake Loads.
+- No DEFRA calls, live geocoding or address-lookup provider, printing, real permissions or real Intake Loads. Address results are deliberately fictional and stored in app.js.
 - The sidebar is non-functional scenery. Only customer maintenance and the mock Intake hand-off are intended to work.
 - The original spacing and case of vehicle registrations are preserved. Duplicate comparisons remove spaces and ignore case; there is no partial-match search.
 - Demo vehicle types are illustrative and do **not** assert which vehicle types the live organisation has configured.
