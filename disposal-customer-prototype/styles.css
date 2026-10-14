@@ -8,3 +8,23 @@
 .demo-records-divider strong{font-size:18px;font-weight:900;letter-spacing:1px}
 .demo-records-divider span{font-size:11px;font-weight:800;letter-spacing:1.1px}
 @media(max-width:650px){.browse-panel .customer-list{grid-template-columns:1fr}.demo-records-divider strong{font-size:14px}.browse-panel .new-button{width:100%}}
+
+/* V3: address lookup intentionally precedes conditional address fields. */
+.address-lookup-block{margin:20px 0 18px;padding:19px;border:1px solid #dfe8eb;background:#fafcfd;border-radius:10px}
+.address-lookup-label{display:block;font-size:12px;font-weight:750;color:#36525f;margin-bottom:9px}
+.address-search-row{display:flex;gap:9px;align-items:stretch}
+.address-search-row input{min-width:160px;flex:1;border:1px solid #d3e0e5;border-radius:8px;padding:10px 12px;min-height:43px;color:#293c48;background:#fff}
+.address-search-row .button{flex-shrink:0}
+.address-hint{font-size:11px;color:#7d909c;line-height:1.5;margin:10px 0 0}
+.address-hint strong{color:#456a77}
+.address-feedback{border-radius:8px;padding:11px 13px;margin-top:13px;background:#e9f6f0;color:#236950;font-size:12px}
+.address-feedback.warning{background:#fff4e5;color:#885d23}
+.address-matches{margin-top:13px;border:1px solid #cadfe4;border-radius:9px;background:#fff;padding:14px}
+.address-matches h4{margin:0 0 10px;font-size:13px;color:#355361}
+.address-matches-list{display:flex;flex-direction:column;gap:7px}
+.address-result{display:block;width:100%;text-align:left;border:1px solid #d9e6e9;border-radius:7px;background:#f7fafb;padding:11px 13px;color:#2c5362;font-size:12px}
+.address-result:hover,.address-result:focus-visible{background:#e8f5f2;border-color:#83bbaf}
+.address-matches .button-subtle{margin-top:9px}
+.address-fields{margin-top:16px;padding-top:17px;border-top:1px solid #dce8eb}
+.contact-fields{margin-top:14px}
+@media(max-width:730px){.address-search-row{flex-wrap:wrap}.address-search-row input{flex-basis:100%}.address-search-row .button{flex:1;white-space:normal}}
