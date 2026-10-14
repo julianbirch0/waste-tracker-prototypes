@@ -1,4 +1,4 @@
-# Disposal Customer prototype (V1)
+# Disposal Customer prototype (V2)
 
 A clickable WasteTracker **Disposal Customer / Carrier** maintenance screen.
 
@@ -10,9 +10,16 @@ A clickable WasteTracker **Disposal Customer / Carrier** maintenance screen.
 
 No npm, no localhost, no server, no framework, no third-party libraries, no internet connectivity. The three files (index.html, styles.css, app.js) sit together.
 
+## V2 changes (following snagging)
+
+- The Customer/Carrier **form is now the main page**, not a split-screen editor and customer list.
+- Fictional sample customers remain accessible **below the form**, after a deliberately unmistakable **End of Customer Form / Prototype Test Area** separator. This is a test harness, not proposed functionality on the production customer screen.
+- Choosing **Domestic** never displays any carrier registration, waste carrier licence expiry, or registered broker/dealer fields. Domestic still supports associated vehicles, as agreed.
+- Choosing a sample customer scrolls back to the form so the selected record is immediately visible.
+
 ## What to try
 
-- Click **Add new customer / carrier**; choose **Domestic** or **Commercial**.
+- Choose **Domestic** or **Commercial** in the form. To start again, use **Start a new customer form** in the separate sample-records area below.
 - For **Commercial**, choose **Carrier only**, **Originator only** or **Both**.
 - For commercial originators, switch between **Ordinary commercial originator** and **Registered broker or dealer** to reveal registration requirements.
 - Try ticket preferences. **Show prices** is fixed on for Domestic, fixed off for Carrier only, and editable for Originator only / Both. **Show notes** is editable.
