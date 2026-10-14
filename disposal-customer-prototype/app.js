@@ -472,7 +472,9 @@
       button.addEventListener("click", function () {
         if (working.role === button.dataset.role) return;
         pullFields();
+        var priorRole = working.role;
         working.role = button.dataset.role;
+        if (priorRole === "carrier" && working.role !== "carrier") working.showPrice = true;
         setDirty();
         render();
       });
