@@ -26,7 +26,7 @@
     <div class="work-area">
       <div class="top-bar">
         <div class="breadcrumbs">Disposal <span>/</span> Customers / Carriers <span>/</span> <strong id="breadcrumbCustomer">New customer</strong></div>
-        <div class="top-meta"><span class="live-dot"></span> Local prototype <span class="top-divider"></span> V2 · October 2026</div>
+        <div class="top-meta"><span class="live-dot"></span> Local prototype <span class="top-divider"></span> V3 · October 2026</div>
       </div>
       <main class="main-content">
         <header class="page-heading">
@@ -75,10 +75,29 @@
                 <div class="section-heading"><span class="step-number" id="detailsStep">3</span><div><h3 id="details-heading">Customer details</h3><p>Contact and postal details for this customer.</p></div></div>
                 <div class="form-grid">
                   <div class="field full"><label for="customerName" id="nameLabel">Customer name <span class="required">*</span></label><input id="customerName" name="customerName" type="text" autocomplete="organization" maxlength="140" placeholder="Enter name"><span class="field-error" data-error-for="customerName"></span></div>
-                  <div class="field full"><label for="address1">Address line 1</label><input id="address1" name="address1" type="text" autocomplete="address-line1" placeholder="Building and street"></div>
-                  <div class="field full"><label for="address2">Address line 2 <span class="optional">(optional)</span></label><input id="address2" name="address2" type="text" autocomplete="address-line2" placeholder="Additional address information"></div>
-                  <div class="field"><label for="town">Post town</label><input id="town" name="town" type="text" autocomplete="address-level2" placeholder="e.g. Swindon"></div>
-                  <div class="field"><label for="postcode">Postcode <span class="required" id="postcodeRequired">*</span></label><input id="postcode" name="postcode" type="text" autocomplete="postal-code" placeholder="e.g. SN1 1AA" maxlength="12"><span class="field-error" data-error-for="postcode"></span></div>
+                </div>
+                <div class="address-lookup-block">
+                  <label class="address-lookup-label" for="addressSearch">Find address</label>
+                  <div class="address-search-row">
+                    <input id="addressSearch" type="search" autocomplete="off" placeholder="Postcode, street, town or anything you know" aria-describedby="addressSearchHint">
+                    <button id="searchAddress" type="button" class="button button-primary">Search</button>
+                    <button id="manualAddress" type="button" class="button button-outline">Enter address manually</button>
+                  </div>
+                  <p class="address-hint" id="addressSearchHint">Offline demonstration: try <strong>SN1 1AA</strong> for one result, <strong>Castlefields Shrewsbury</strong> for several, or any unmatched text for none. Results are fictional, not live address data.</p>
+                  <div id="addressFeedback" class="address-feedback hidden" role="status" aria-live="polite"></div>
+                  <div id="addressMatches" class="address-matches hidden">
+                    <h4>Choose an address</h4>
+                    <div id="addressMatchesList" class="address-matches-list"></div>
+                    <button id="addressNone" type="button" class="button button-subtle button-small">None of the above</button>
+                  </div>
+                  <div id="addressFields" class="form-grid address-fields hidden">
+                    <div class="field full"><label for="address1">Address line 1</label><input id="address1" name="address1" type="text" autocomplete="address-line1" placeholder="Building and street"></div>
+                    <div class="field full"><label for="address2">Address line 2 <span class="optional">(optional)</span></label><input id="address2" name="address2" type="text" autocomplete="address-line2" placeholder="Additional address information"></div>
+                    <div class="field"><label for="town">Post town / city</label><input id="town" name="town" type="text" autocomplete="address-level2" placeholder="e.g. Swindon"></div>
+                    <div class="field"><label for="postcode">Postcode <span class="required" id="postcodeRequired">*</span></label><input id="postcode" name="postcode" type="text" autocomplete="postal-code" placeholder="e.g. SN1 1AA" maxlength="12"><span class="field-error" data-error-for="postcode"></span></div>
+                  </div>
+                </div>
+                <div class="form-grid contact-fields">
                   <div class="field"><label for="email">Contact email</label><input id="email" name="email" type="email" autocomplete="email" placeholder="name@example.co.uk"><span class="field-error" data-error-for="email"></span></div>
                   <div class="field"><label for="telephone">Telephone</label><input id="telephone" name="telephone" type="tel" autocomplete="tel" placeholder="01793 123456"></div>
                 </div>
