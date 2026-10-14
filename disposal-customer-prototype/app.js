@@ -147,6 +147,7 @@
     populateForm();
     render();
     markSaved();
+    document.querySelector(".page-heading").scrollIntoView({ behavior: "smooth", block: "start" });
   }
   function startNew() {
     if (!confirmDiscard()) return;
@@ -158,6 +159,7 @@
     render();
     $("recordStatus").textContent = "Unsaved";
     $("recordStatus").classList.remove("saved");
+    document.querySelector(".page-heading").scrollIntoView({ behavior: "smooth", block: "start" });
   }
   function populateForm() {
     ["customerName", "address1", "address2", "town", "postcode", "email", "telephone",
@@ -210,8 +212,8 @@
     if (originator) step++;
     showStep("detailsSection", configured, step);
     if (configured) step++;
-    showStep("licenceSection", configured && (carrier || registered), step);
-    if (configured && (carrier || registered)) step++;
+    showStep("licenceSection", configured && (registered || (working.type === "commercial" && carrier)), step);
+    if (configured && (registered || (working.type === "commercial" && carrier))) step++;
     showStep("vehicleSection", configured && carrier, step);
     if (configured && carrier) step++;
     showStep("preferencesSection", configured, step);
