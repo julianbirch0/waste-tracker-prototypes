@@ -33,6 +33,16 @@
       licenceExpiry: "", showPrice: true, showNotes: true, vehicles: [] }
   ];
 
+  // Fictional, self-contained samples: this file:// prototype never calls an address provider.
+  // Search returns zero, one, or several matches depending on the entered text.
+  var demoAddresses = [
+    { address1: "1 Example Street", address2: "", town: "Swindon", postcode: "SN1 1AA" },
+    { address1: "12 Test Road", address2: "Castlefields", town: "Shrewsbury", postcode: "SY1 2ZZ" },
+    { address1: "3 Sample Mews", address2: "Castlefields", town: "Shrewsbury", postcode: "SY1 2XY" },
+    { address1: "24 Demonstration Lane", address2: "Castlefields", town: "Shrewsbury", postcode: "SY1 2XX" },
+    { address1: "8 Placeholder Avenue", address2: "", town: "Marlborough", postcode: "SN8 1AD" }
+  ];
+
   var customers = copy(seed);
   var nextCustomerId = 106;
   var nextVehicleId = 6;
@@ -40,6 +50,8 @@
   var working = blank();
   var dirty = false;
   var editingVehicleId = null;
+  var addressMode = "none";
+  var addressMatches = [];
   var elements = {};
 
   function $(id) { return document.getElementById(id); }
@@ -64,6 +76,99 @@
   }
   function isConfigured() { return working.type === "domestic" || (working.type === "commercial" && !!working.role); }
   function normaliseRegistration(reg) { return String(reg || "").replace(/\s+/g, "").toUpperCase(); }
+  function hasAddressValue() {
+    return ["address1", "address2", "town", "postcode"].some(function (key) {
+      return !!working[key];
+    });
+  }
+  function renderAddressUI() {
+    setVisible("addressFields", addressMode !== "none" || hasAddressValue());
+    setVisible("addressMatches", addressMatches.length > 0);
+  }
+  function addressFeedback(message, warning) {
+    var element = $("addressFeedback");
+    element.textContent = message || "";
+    element.classList.toggle("warning", !!warning);
+    setVisible("addressFeedback", !!message);
+  }
+  function resetAddressLookup() {
+    addressMode = hasAddressValue() ? "selected" : "none";
+    addressMatches = [];
+    $("addressSearch").value = "";
+    $("addressMatchesList").replaceChildren();
+    addressFeedback("");
+    renderAddressUI();
+  }
+  function clearMatches() {
+    addressMatches = [];
+    $("addressMatchesList").replaceChildren();
+    renderAddressUI();
+  }
+  function populateAddress(address) {
+    ["address1", "address2", "town", "postcode"].forEach(function (key) {
+      $(key).value = address[key] || "";
+      working[key] = $(key).value;
+    });
+    addressMode = "selected";
+    clearMatches();
+    clearErrors();
+    setDirty();
+    addressFeedback("Address selected. You can amend any field below.", false);
+    renderAddressUI();
+    $("address1").focus();
+  }
+  function enterAddressManually() {
+    ["address1", "address2", "town", "postcode"].forEach(function (key) {
+      $(key).value = "";
+      working[key] = "";
+    });
+    addressMode = "manual";
+    clearMatches();
+    clearErrors();
+    setDirty();
+    addressFeedback("Manual address entry selected. Enter the address below; postcode is required.", false);
+    renderAddressUI();
+    $("address1").focus();
+  }
+  function searchAddress() {
+    var query = $("addressSearch").value.trim().toLowerCase();
+    clearMatches();
+    if (!query) {
+      addressFeedback("Enter a postcode, street, town or other address details to search.", true);
+      $("addressSearch").focus();
+      return;
+    }
+    var terms = query.replace(/[,.;]+/g, " ").split(/\s+/).filter(Boolean);
+    var matches = demoAddresses.filter(function (address) {
+      var source = [address.address1, address.address2, address.town, address.postcode].join(" ").toLowerCase();
+      var compact = source.replace(/\s+/g, "");
+      return terms.every(function (term) {
+        return source.includes(term) || compact.includes(term.replace(/\s+/g, ""));
+      });
+    });
+    if (!matches.length) {
+      addressFeedback("No addresses found. Try another search or choose Enter address manually.", true);
+      return;
+    }
+    if (matches.length === 1) {
+      populateAddress(matches[0]);
+      return;
+    }
+    addressMatches = matches;
+    var list = $("addressMatchesList");
+    matches.forEach(function (address) {
+      var button = document.createElement("button");
+      button.type = "button";
+      button.className = "address-result";
+      button.textContent = [address.address1, address.address2, address.town, address.postcode]
+        .filter(Boolean).join(", ");
+      button.addEventListener("click", function () { populateAddress(address); });
+      list.append(button);
+    });
+    addressFeedback(matches.length + " possible addresses found. Select one, or choose None of the above.", false);
+    renderAddressUI();
+    list.querySelector("button").focus();
+  }
   function htmlText(value) { return String(value == null ? "" : value); }
   function setVisible(id, visible) { $(id).classList.toggle("hidden", !visible); }
   function notify(message, isError) {
@@ -172,6 +277,7 @@
     $("showPrice").checked = !!working.showPrice;
     $("showNotes").checked = !!working.showNotes;
     clearErrors();
+    resetAddressLookup();
   }
   function pullFields() {
     ["customerName", "address1", "address2", "town", "postcode", "email", "telephone",
@@ -245,6 +351,7 @@
       "Choose the role that describes this business's relationship with the receiving facility.";
     renderVehicles();
     renderCustomerList();
+    renderAddressUI();
   }
   function vehicleElement(v) {
     var row = document.createElement("div");
@@ -336,7 +443,12 @@
     var firstError = null;
     function fail(id, message) { fieldError(id, message); if (!firstError) firstError = id; }
     if (!working.name.trim()) fail("customerName", "A customer name is required.");
-    if (!working.postcode.trim()) fail("postcode", "Enter a postcode.");
+    if (!working.postcode.trim()) {
+      // Reveal manual fields before applying errors and focus, even if lookup was never used.
+      addressMode = "manual";
+      renderAddressUI();
+      fail("postcode", "Enter a postcode.");
+    }
     if (working.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(working.email))
       fail("email", "Enter a valid email address or leave it blank.");
     if (isRegisteredOriginator() && !working.licenceNumber.trim())
@@ -453,9 +565,25 @@
       notify("Sample records restored. Nothing was changed in WasteTracker.", false);
     });
     $("customerSearch").addEventListener("input", renderCustomerList);
+    $("searchAddress").addEventListener("click", searchAddress);
+    $("manualAddress").addEventListener("click", enterAddressManually);
+    $("addressNone").addEventListener("click", function () {
+      clearMatches();
+      addressFeedback("No address selected. Try another search or choose Enter address manually.", true);
+      $("addressSearch").focus();
+    });
+    $("addressSearch").addEventListener("keydown", function (event) {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        searchAddress();
+      }
+    });
     document.querySelectorAll("[data-type]").forEach(function (button) {
       button.addEventListener("click", function () {
-        if (working.type === button.dataset.type) return;
+        if (working.type === button.dataset.type) {
+          if (working.type === "domestic") $("customerName").focus();
+          return;
+        }
         pullFields();
         working.type = button.dataset.type;
         if (working.type === "domestic") {
@@ -468,6 +596,7 @@
         }
         setDirty();
         render();
+        if (working.type === "domestic") $("customerName").focus();
       });
     });
     document.querySelectorAll("[data-role]").forEach(function (button) {
