@@ -8,3 +8,4 @@ Prototype workspace for early WasteTracker UI experiments.
 - `calendar-filter-prototype/` - reporting date filter interaction prototype.
 - `image-upload-prototype/` - job photo select, clipboard paste and drag/drop proof of concept with client-side compression and simulated persistence.
 - `addressnow-prototype/` - Royal Mail AddressNow lookup lab with editable fields, formatted previews, raw response inspection and local key configuration.
+- `disposal-customer-prototype/` - interactive offline Disposal Customer / Carrier maintenance form, roles, vehicles, favourites and ticket preferences.
