@@ -11,11 +11,11 @@ window.RateCardPrototypeData = {
     "Waste": [
       "General Waste", "Mixed Recycling", "Wood", "Plasterboard",
       "Hardcore / Rubble", "Green Waste", "Scrap Metal",
-      "Cardboard", "Soil", "Mixed Construction Waste"
+      "Cardboard", "Soil", "Mixed Construction Waste", "Tyres"
     ],
     "Non-waste": ["Gravel", "Sand", "Boxes", "Hanging Garments", "Furniture"]
   },
-  weightUnits: ["gram", "kg", "tonne"],
+  weightUnits: ["gram", "kg", "tonne", "Item"],
   rentalFrequencies: ["Daily", "Weekly", "Monthly"],
   waitUnits: ["Minute", "Hour"],
   rows: [
