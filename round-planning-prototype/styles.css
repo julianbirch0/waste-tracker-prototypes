@@ -132,9 +132,14 @@ select.field { cursor: pointer; }
   letter-spacing: -4px;
   text-indent: -4px;
 }
-.drag-handle:hover, .drag-handle:focus-visible {
+.drag-handle:hover, .drag-handle:focus {
   color: #597b9a;
   background: #edf3f8;
+}
+/* Unlike :focus-visible, :focus also shows the ring after a mouse click. */
+.drag-handle:focus {
+  outline: 2px solid #4e94c7;
+  outline-offset: 2px;
 }
 .drag-handle:active { cursor: grabbing; }
 tr.dragging td { opacity: .48; }
