@@ -16,9 +16,11 @@ Keep all four files together. The fifth file, this README, is optional.
 
 ## Behaviour
 
-- **Add Round** inserts a new, editable row.
-- **Group** options are Group 1–5 and Subcontractors. Choosing Subcontractors does **not** yet trigger any special behaviour; that can be added when the rules are defined.
+- **Add Round** inserts a new, editable row, focuses Round Name and defaults Group to **Group 1**.
+- Columns are ordered: Round Name, Day of Week, Default Vehicle, Default Material, Default Facility, Group, Action.
+- **Group** options are Group 1–5 and Subcontractors. All three Default dropdowns remain enabled for Subcontractors.
 - **Day of Week** allows multiple weekdays. **Monday to Friday** and **Monday to Sunday** are quick selections, stored as individual day selections. You can then untick individual days (e.g., Wednesday).
+- **Round count** shows the total number of individual selected days across all rows. A blank new row does not count until a day is selected. In the production data model, selecting three days creates three distinct Round records; the prototype deliberately keeps them together as one editable row, without modelling this persistence behaviour.
 - **Delete** removes a row from the draft; **Cancel** restores it if not yet saved.
 - **Save** validates required Round Name and at least one Day of Week, then saves the full list in the browser's `localStorage`.
 - **Cancel** rolls back all unsaved changes to the last saved version.
@@ -32,7 +34,7 @@ Changes persist across page reloads in the **same browser and local file locatio
 
 ## Scope consciously deferred
 
-- Special behaviour for Group = Subcontractors.
+- Splitting a multi-day row into separate per-day records in production persistence (only the count is demonstrated here).
 - Scheduling/Trip generation, Agreements, Jobs, and operational rules.
 - Any further business logic around default material or facility.
 - Backend integration and actual application navigation.
