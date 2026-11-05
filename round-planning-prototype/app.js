@@ -52,17 +52,9 @@
     return data.agreements.find((agreement) => agreement.id === id);
   }
 
-  function formatDays(days) {
-    if (!Array.isArray(days) || !days.length) return 'No days selected';
-    const weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
-    const week = weekdays.concat(['Saturday', 'Sunday']);
-    if (days.length === 5 && weekdays.every((day) => days.includes(day))) return 'Monday to Friday';
-    if (days.length === 7 && week.every((day) => days.includes(day))) return 'Monday to Sunday';
-    return days.join(', ');
-  }
-
   function roundLabel(round) {
-    return round.name + ' (' + formatDays(round.days) + ')';
+    // Each record in data.js represents one day-specific round.
+    return round.name + ' - ' + round.days[0];
   }
 
   function readOrders() {
@@ -172,7 +164,7 @@
     const persisted = persistOrders();
     renderRows();
     showMessage(persisted
-      ? 'Sequence saved for ' + getRound(currentRoundId).name + '.'
+      ? 'Sequence saved for ' + roundLabel(getRound(currentRoundId)) + '.'
       : 'Sequence saved for this open page only. Browser storage is unavailable.',
       persisted ? 'success' : 'warning');
   }
@@ -272,7 +264,7 @@
       : 'viewing the agreement';
     const current = getRound(currentRoundId);
     const html = '<p>You have unsaved sequencing changes for <strong>' +
-      escapeHTML(current ? current.name : 'this round') + '</strong>.</p>' +
+      escapeHTML(current ? roundLabel(current) : 'this round') + '</strong>.</p>' +
       '<p class="modal-help">Would you like to save the sequence before ' +
       escapeHTML(nextThing) + '?</p>';
     openModal('Unsaved changes', html, [
