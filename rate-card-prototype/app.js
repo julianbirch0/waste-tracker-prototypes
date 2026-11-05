@@ -198,12 +198,13 @@
   }
 
   function selectHTML(row, field, choices, placeholder) {
-    // Show "Select ..." until a real choice is made; it is never a
-    // selectable option, so an existing selection cannot be cleared this way.
-    // If a parent dropdown changes, the dependent field is reset and will
-    // show this prompt again until the user chooses a new value.
-    const options = ['<option value="" disabled' +
-      (row[field] === '' ? ' selected' : '') + '>' + escapeHTML(placeholder) + '</option>'];
+    // Show an initial prompt only while the value is empty. After selection,
+    // remove the prompt from the options entirely, rather than showing
+    // a disabled item in the opened list.
+    // Dependent fields show the prompt again if their parent is changed.
+    const options = row[field] === ''
+      ? ['<option value="" disabled selected>' + escapeHTML(placeholder) + '</option>']
+      : [];
     choices.forEach(function (item) { options.push(optionHTML(item, item, row[field])); });
     return '<select class="field" data-field="' + field + '"' +
       ' aria-label="' + escapeHTML(FIELD_LABELS[field]) + '">' +
