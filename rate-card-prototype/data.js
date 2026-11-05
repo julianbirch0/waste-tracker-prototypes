@@ -52,7 +52,7 @@ window.RateCardPrototypeData = {
     {
       id: "sample-7", activity: "Wait and Load", containerType: "Loose", containerSize: "Items",
       materialType: "Non-waste", material: "Furniture", serviceCharge: "40.00",
-      weightUnit: "kg", weightUnitPrice: "0.30", weightAllowance: "0",
+      weightUnit: "Item", weightUnitPrice: "0.30", weightAllowance: "0",
       waitCharge: "90.00", waitUnit: "Hour"
     }
   ]
