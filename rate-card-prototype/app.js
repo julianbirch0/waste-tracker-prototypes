@@ -13,11 +13,13 @@
   }
 
   const STORAGE_KEY = 'wastetracker.rate-card.prototype.v1';
-  const MONEY_FIELDS = ['serviceCharge', 'weightUnitPrice', 'rentalCharge', 'waitCharge'];
+  // The prototype persists display preferences separately from rate card prices.
+  const PREFERENCES_KEY = 'wastetracker.rate-card.prototype.display-groups.v1';
+  const MONEY_FIELDS = ['perContainerCharge', 'attendanceCharge', 'weightUnitPrice', 'rentalCharge', 'waitCharge'];
   const NUMBER_FIELDS = ['weightAllowance'];
   const ALL_FIELDS = [
     'activity', 'containerType', 'containerSize', 'materialType', 'material',
-    'serviceCharge', 'weightUnit', 'weightUnitPrice', 'weightAllowance',
+    'perContainerCharge', 'attendanceCharge', 'weightUnit', 'weightUnitPrice', 'weightAllowance',
     'rentalCharge', 'rentalFrequency', 'waitCharge', 'waitUnit'
   ];
   const FIELD_LABELS = {
@@ -26,7 +28,8 @@
     containerSize: 'Container Size',
     materialType: 'Material Type',
     material: 'Material',
-    serviceCharge: 'Service Charge',
+    perContainerCharge: 'Transport Charges – Per Container',
+    attendanceCharge: 'Transport Charges – Attendance',
     weightUnit: 'Weight Unit',
     weightUnitPrice: 'Weight Unit Price',
     weightAllowance: 'Weight Allowance',
@@ -35,17 +38,32 @@
     waitCharge: 'Wait and Load Charge',
     waitUnit: 'Wait and Load Charge Unit'
   };
-  const DISABLED_FIELDS = {
-    'Deliver': [
-      'materialType', 'material',
-      'weightUnit', 'weightUnitPrice', 'weightAllowance',
-      'waitCharge', 'waitUnit'
-    ],
-    'Collect': ['rentalCharge', 'rentalFrequency', 'waitCharge', 'waitUnit'],
-    'Exchange': ['rentalCharge', 'rentalFrequency', 'waitCharge', 'waitUnit'],
-    'Wait and Load': ['rentalCharge', 'rentalFrequency'],
-    'Empty': ['rentalCharge', 'rentalFrequency']
-  };
+  const GROUPS = [
+    { key: 'service', title: 'Service', always: true, fields: [
+      ['activity', 'Activity', 146],
+      ['containerType', 'Container Type', 123],
+      ['containerSize', 'Container Size', 119],
+      ['materialType', 'Material Type', 124],
+      ['material', 'Material', 170]
+    ] },
+    { key: 'transport', title: 'Transport Charges', always: true, fields: [
+      ['perContainerCharge', 'Per Container', 126],
+      ['attendanceCharge', 'Attendance', 112]
+    ] },
+    { key: 'disposal', title: 'Disposal Charges', fields: [
+      ['weightUnit', 'Unit', 95],
+      ['weightUnitPrice', 'Unit Price', 115],
+      ['weightAllowance', 'Allowance', 100]
+    ] },
+    { key: 'rental', title: 'Container Rental', fields: [
+      ['rentalCharge', 'Charge', 112],
+      ['rentalFrequency', 'Charge Frequency', 137]
+    ] },
+    { key: 'wait', title: 'Wait and Load', fields: [
+      ['waitCharge', 'Charge', 112],
+      ['waitUnit', 'Charge Unit', 114]
+    ] }
+  ];
 
   const $ = (id) => document.getElementById(id);
   const body = $('rate-rows');
@@ -58,6 +76,7 @@
   let nextId = 1;
   let saved = loadSavedRows();
   let draft = clone(saved);
+  let visibleGroups = loadDisplayPreferences();
 
   function clone(value) {
     return JSON.parse(JSON.stringify(value));
@@ -66,20 +85,33 @@
   function emptyRow(id) {
     const row = { id: id };
     ALL_FIELDS.forEach(function (field) { row[field] = ''; });
+    row.weightUnit = 'kg';
+    row.rentalFrequency = 'Weekly';
+    row.waitUnit = 'Minute';
     return row;
   }
 
-  function isDisabled(row, field) {
-    if (field === 'activity') return false;
-    // First choose an activity; only then can the applicable fields be edited.
-    if (!row.activity) return true;
-    return (DISABLED_FIELDS[row.activity] || []).includes(field);
+  function loadDisplayPreferences() {
+    const defaults = { disposal: false, rental: false, wait: false };
+    try {
+      const stored = JSON.parse(window.localStorage.getItem(PREFERENCES_KEY));
+      if (stored && typeof stored === 'object') {
+        Object.keys(defaults).forEach(function (key) {
+          if (typeof stored[key] === 'boolean') defaults[key] = stored[key];
+        });
+      }
+    } catch (error) {
+      // Missing/unavailable browser storage means use the default hidden groups.
+    }
+    return defaults;
   }
 
-  function clearDisabled(row) {
-    ALL_FIELDS.forEach(function (field) {
-      if (isDisabled(row, field)) row[field] = '';
-    });
+  function persistDisplayPreferences() {
+    try {
+      window.localStorage.setItem(PREFERENCES_KEY, JSON.stringify(visibleGroups));
+    } catch (error) {
+      // Controls remain usable for the session, even without storage.
+    }
   }
 
   function normaliseRow(input, fallbackId) {
@@ -89,6 +121,11 @@
         row[field] = String(input[field]);
       }
     });
+    // Migrate existing browser-saved Service Charge into Per Container.
+    if (!Object.prototype.hasOwnProperty.call(input, 'perContainerCharge') &&
+        (typeof input.serviceCharge === 'string' || typeof input.serviceCharge === 'number')) {
+      row.perContainerCharge = String(input.serviceCharge);
+    }
     if (!data.activities.includes(row.activity)) row.activity = '';
     if (!Object.prototype.hasOwnProperty.call(data.containerSizes, row.containerType)) {
       row.containerType = '';
@@ -101,7 +138,10 @@
     if (!data.materials[row.materialType] || !data.materials[row.materialType].includes(row.material)) {
       row.material = '';
     }
-    clearDisabled(row);
+    if (!row.weightUnit) row.weightUnit =
+      row.containerType === 'Loose' && row.containerSize === 'Items' ? 'Item' : 'kg';
+    if (!row.rentalFrequency) row.rentalFrequency = 'Weekly';
+    if (!row.waitUnit) row.waitUnit = 'Minute';
     return row;
   }
 
@@ -158,12 +198,11 @@
   }
 
   function selectHTML(row, field, choices, placeholder) {
-    const disabled = isDisabled(row, field);
-    const options = [optionHTML('', disabled ? '' : placeholder, row[field])];
+    const options = [optionHTML('', placeholder, row[field])];
     choices.forEach(function (item) { options.push(optionHTML(item, item, row[field])); });
     return '<select class="field" data-field="' + field + '"' +
-      ' aria-label="' + escapeHTML(FIELD_LABELS[field]) + '"' +
-      (disabled ? ' disabled' : '') + '>' + options.join('') + '</select>';
+      ' aria-label="' + escapeHTML(FIELD_LABELS[field]) + '">' +
+      options.join('') + '</select>';
   }
 
   function parseNonnegative(value, isMoney) {
@@ -191,52 +230,81 @@
   }
 
   function amountHTML(row, field, isMoney) {
-    const disabled = isDisabled(row, field);
     const label = FIELD_LABELS[field];
     const value = isMoney ? displayMoney(row[field]) : row[field];
     return '<input type="text" inputmode="decimal" autocomplete="off" class="field ' +
       (isMoney ? 'money-input' : 'numeric-input') + '" data-field="' + field +
-      '" aria-label="' + escapeHTML(label) + '" value="' + escapeHTML(value) + '"' +
-      (disabled ? ' disabled' : '') + '>';
+      '" aria-label="' + escapeHTML(label) + '" value="' + escapeHTML(value) + '">';
   }
 
-  function cell(html, field, extraClass) {
-    const name = extraClass || '';
-    const start = ['weightUnit', 'rentalCharge', 'waitCharge'].includes(field) ? ' group-start' : '';
-    return '<td class="' + name + start + '">' + html + '</td>';
+  function fieldHTML(row, field) {
+    const options = {
+      activity: [data.activities, 'Select activity'],
+      containerType: [Object.keys(data.containerSizes), 'Select type'],
+      containerSize: [data.containerSizes[row.containerType] || [], 'Select size'],
+      materialType: [data.materialTypes, 'Select type'],
+      material: [data.materials[row.materialType] || [], 'Select material'],
+      weightUnit: [data.weightUnits, 'Select unit'],
+      rentalFrequency: [data.rentalFrequencies, 'Select frequency'],
+      waitUnit: [data.waitUnits, 'Select unit']
+    };
+    if (Object.prototype.hasOwnProperty.call(options, field)) {
+      return selectHTML(row, field, options[field][0], options[field][1]);
+    }
+    return amountHTML(row, field, MONEY_FIELDS.includes(field));
   }
 
   function renderRows() {
+    const groups = GROUPS.filter(function (group) {
+      return group.always || visibleGroups[group.key];
+    });
+    const columns = groups.flatMap(function (group) { return group.fields; });
+    const width = columns.reduce(function (total, column) {
+      return total + column[2];
+    }, 169);
+    $('rates-table').style.setProperty('--table-width', width + 'px');
+
+    $('rate-cols').innerHTML = columns.map(function (column) {
+      return '<col style="width:' + column[2] + 'px">';
+    }).join('') + '<col style="width:169px">';
+
+    const groupHeadings = groups.map(function (group, groupIndex) {
+      return '<th scope="colgroup" colspan="' + group.fields.length +
+        '" class="group-' + group.key + (groupIndex ? ' group-start' : '') +
+        '">' + escapeHTML(group.title) + '</th>';
+    }).join('');
+    const columnHeadings = groups.map(function (group, groupIndex) {
+      return group.fields.map(function (column, fieldIndex) {
+        return '<th scope="col"' + (groupIndex && fieldIndex === 0 ?
+          ' class="group-start"' : '') + '>' + escapeHTML(column[1]) + '</th>';
+      }).join('');
+    }).join('');
+    $('rate-head').innerHTML = '<tr class="group-row">' + groupHeadings +
+      '<th scope="col" rowspan="2" class="actions-heading">Actions</th></tr>' +
+      '<tr class="column-row">' + columnHeadings + '</tr>';
+
     if (!draft.length) {
-      body.innerHTML = '<tr><td colspan="14" class="empty-row">No rate card items. Select Add Rate Card Item to create one.</td></tr>';
+      body.innerHTML = '<tr><td colspan="' + (columns.length + 1) +
+        '" class="empty-row">No rate card items. Select Add Rate Card Item to create one.</td></tr>';
     } else {
       body.innerHTML = draft.map(function (row) {
         const id = escapeHTML(row.id);
-        const containerTypes = Object.keys(data.containerSizes);
-        const sizeChoices = data.containerSizes[row.containerType] || [];
-        const materialChoices = data.materials[row.materialType] || [];
-        const fields = [
-          cell(selectHTML(row, 'activity', data.activities, 'Select activity'), 'activity'),
-          cell(selectHTML(row, 'containerType', containerTypes, 'Select type'), 'containerType'),
-          cell(selectHTML(row, 'containerSize', sizeChoices, 'Select size'), 'containerSize'),
-          cell(selectHTML(row, 'materialType', data.materialTypes, 'Select type'), 'materialType'),
-          cell(selectHTML(row, 'material', materialChoices, 'Select material'), 'material'),
-          cell(amountHTML(row, 'serviceCharge', true), 'serviceCharge'),
-          cell(selectHTML(row, 'weightUnit', data.weightUnits, 'Select unit'), 'weightUnit'),
-          cell(amountHTML(row, 'weightUnitPrice', true), 'weightUnitPrice'),
-          cell(amountHTML(row, 'weightAllowance', false), 'weightAllowance'),
-          cell(amountHTML(row, 'rentalCharge', true), 'rentalCharge'),
-          cell(selectHTML(row, 'rentalFrequency', data.rentalFrequencies, 'Select frequency'), 'rentalFrequency'),
-          cell(amountHTML(row, 'waitCharge', true), 'waitCharge'),
-          cell(selectHTML(row, 'waitUnit', data.waitUnits, 'Select unit'), 'waitUnit'),
+        const fields = groups.map(function (group, groupIndex) {
+          return group.fields.map(function (column, fieldIndex) {
+            const border = groupIndex && fieldIndex === 0 ? ' class="group-start"' : '';
+            return '<td' + border + '>' + fieldHTML(row, column[0]) + '</td>';
+          }).join('');
+        }).join('');
+        return '<tr data-row-id="' + id + '">' + fields +
           '<td class="actions-cell"><div class="action-buttons">' +
-            '<button type="button" class="row-button" data-action="reset" title="Restore this row to its last saved state">Reset</button>' +
-            '<button type="button" class="row-button danger" data-action="delete" title="Delete rate card item">Delete</button>' +
-            '</div></td>'
-        ];
-        return '<tr data-row-id="' + id + '">' + fields.join('') + '</tr>';
+          '<button type="button" class="row-button" data-action="reset" title="Restore this row to its last saved state">Reset</button>' +
+          '<button type="button" class="row-button danger" data-action="delete" title="Delete rate card item">Delete</button>' +
+          '</div></td></tr>';
       }).join('');
     }
+    document.querySelectorAll('[data-group-toggle]').forEach(function (checkbox) {
+      checkbox.checked = Boolean(visibleGroups[checkbox.dataset.groupToggle]);
+    });
     $('row-count').textContent = draft.length + (draft.length === 1 ? ' item' : ' items');
     updateDirtyIndicator();
   }
@@ -291,28 +359,11 @@
     const field = element.dataset.field;
     row[field] = element.value;
 
-    if (field === 'activity') {
-      clearDisabled(row);
-      // Wait and Load normally uses a loose load. Set the default on
-      // activity selection, without restricting later manual changes.
-      if (row.activity === 'Wait and Load' && row.containerType !== 'Loose') {
-        row.containerType = 'Loose';
-        row.containerSize = '';
-      }
-      if (row.activity) {
-        // Set defaults whenever a group becomes applicable and the unit is blank.
-        // Previously entered prices, allowances and charges are never restored.
-        if (!isDisabled(row, 'weightUnit') && !row.weightUnit) {
-          row.weightUnit = row.containerSize === 'Items' ? 'Item' : 'kg';
-        }
-        if (!isDisabled(row, 'rentalFrequency') && !row.rentalFrequency) row.rentalFrequency = 'Weekly';
-        if (!isDisabled(row, 'waitUnit') && !row.waitUnit) row.waitUnit = 'Minute';
-      }
-    } else if (field === 'containerType') {
+    if (field === 'containerType') {
       row.containerSize = '';
     } else if (field === 'containerSize') {
-      // Selecting Items sets the weight unit, but users can still override it.
-      if (row.containerSize === 'Items' && !isDisabled(row, 'weightUnit')) {
+      // Item-based disposal is the default specifically for Loose / Items.
+      if (row.containerType === 'Loose' && row.containerSize === 'Items') {
         row.weightUnit = 'Item';
       }
     } else if (field === 'materialType') {
@@ -329,7 +380,6 @@
   function validateAndNormaliseAmounts() {
     for (const row of draft) {
       for (const field of MONEY_FIELDS.concat(NUMBER_FIELDS)) {
-        if (isDisabled(row, field)) continue;
         const parsed = parseNonnegative(row[field], MONEY_FIELDS.includes(field));
         if (!parsed.valid) return { rowId: row.id, field: field };
         row[field] = parsed.value;
@@ -341,6 +391,14 @@
   function save() {
     const invalid = validateAndNormaliseAmounts();
     if (invalid) {
+      // Reveal a hidden pricing group if an invalid value was entered there.
+      const invalidGroup = GROUPS.find(function (group) {
+        return group.fields.some(function (column) { return column[0] === invalid.field; });
+      });
+      if (invalidGroup && !invalidGroup.always && !visibleGroups[invalidGroup.key]) {
+        visibleGroups[invalidGroup.key] = true;
+        persistDisplayPreferences();
+      }
       renderRows();
       const control = getRowElement(invalid.rowId)?.querySelector('[data-field="' + invalid.field + '"]');
       if (control) {
@@ -458,6 +516,13 @@
   $('save').addEventListener('click', save);
   $('cancel').addEventListener('click', cancel);
   $('reset-data').addEventListener('click', restoreSamples);
+  document.querySelectorAll('[data-group-toggle]').forEach(function (checkbox) {
+    checkbox.addEventListener('change', function () {
+      visibleGroups[checkbox.dataset.groupToggle] = checkbox.checked;
+      persistDisplayPreferences();
+      renderRows();
+    });
+  });
 
   renderRows();
   if (!storageAvailable) {
