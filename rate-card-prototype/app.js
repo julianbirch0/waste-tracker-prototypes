@@ -302,12 +302,19 @@
       if (row.activity) {
         // Set defaults whenever a group becomes applicable and the unit is blank.
         // Previously entered prices, allowances and charges are never restored.
-        if (!isDisabled(row, 'weightUnit') && !row.weightUnit) row.weightUnit = 'kg';
+        if (!isDisabled(row, 'weightUnit') && !row.weightUnit) {
+          row.weightUnit = row.containerSize === 'Items' ? 'Item' : 'kg';
+        }
         if (!isDisabled(row, 'rentalFrequency') && !row.rentalFrequency) row.rentalFrequency = 'Weekly';
         if (!isDisabled(row, 'waitUnit') && !row.waitUnit) row.waitUnit = 'Minute';
       }
     } else if (field === 'containerType') {
       row.containerSize = '';
+    } else if (field === 'containerSize') {
+      // Selecting Items sets the weight unit, but users can still override it.
+      if (row.containerSize === 'Items' && !isDisabled(row, 'weightUnit')) {
+        row.weightUnit = 'Item';
+      }
     } else if (field === 'materialType') {
       row.material = '';
     }
