@@ -321,6 +321,13 @@
     if (row) guardNavigation({ type: 'agreement', agreementId: row.dataset.agreementId });
   });
 
+  // Give the drag handle visible keyboard focus as soon as it is clicked.
+  // Do not prevent the pointer event: native drag-and-drop still needs it.
+  rows.addEventListener('pointerdown', (event) => {
+    const handle = event.target.closest('[data-action="drag"]');
+    if (handle) handle.focus();
+  });
+
   rows.addEventListener('keydown', (event) => {
     const handle = event.target.closest('[data-action="drag"]');
     if (!handle || (event.key !== 'ArrowUp' && event.key !== 'ArrowDown')) return;
