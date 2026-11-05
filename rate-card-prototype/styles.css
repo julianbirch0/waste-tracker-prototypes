@@ -54,12 +54,28 @@ button:focus-visible, select:focus-visible, input:focus-visible, .table-scroll:f
 .btn-secondary { background: #fff; color: var(--text); border-color: var(--line); }
 .btn-secondary:hover { background: var(--field); }
 .plus-icon { font-size: 17px; font-weight: 500; line-height: 1; }
+.group-visibility {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 8px 15px;
+  margin: 0 0 12px; padding: 9px 12px;
+  border: 1px solid var(--line); border-radius: 6px; background: #f7f8fa;
+}
+.group-visibility legend {
+  padding: 0 5px; font-size: 12px; color: var(--text); font-weight: 600;
+}
+.visibility-toggle {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 3px 8px; border: 1px solid #d3dbe3; border-radius: 5px;
+  color: var(--text); background: #fff; cursor: pointer;
+  font-size: 12px; white-space: nowrap;
+}
+.visibility-toggle:has(input:checked) { border-color: #99a6b5; background: #eceff2; }
+.visibility-toggle input { accent-color: #64748b; margin: 0; cursor: pointer; }
 .table-scroll {
   width: 100%; max-width: 100%; overflow-x: auto; overflow-y: visible;
   border: 1px solid var(--line); border-radius: 7px;
 }
 .rates-table {
-  width: 1748px; min-width: 1748px;
+  width: var(--table-width, 1080px); min-width: var(--table-width, 1080px);
   border-collapse: separate; border-spacing: 0; table-layout: fixed;
   text-align: left;
 }
@@ -68,7 +84,8 @@ button:focus-visible, select:focus-visible, input:focus-visible, .table-scroll:f
 .col-size { width: 119px; }
 .col-material-type { width: 124px; }
 .col-material { width: 170px; }
-.col-charge { width: 112px; }
+.col-per-container { width: 126px; }
+.col-attendance { width: 112px; }
 .col-unit { width: 95px; }
 .col-unit-price { width: 115px; }
 .col-allowance { width: 100px; }
@@ -88,7 +105,8 @@ button:focus-visible, select:focus-visible, input:focus-visible, .table-scroll:f
   border-bottom: 1px solid #d1dce7;
 }
 .group-row .group-service,
-.group-row .group-weight,
+.group-row .group-transport,
+.group-row .group-disposal,
 .group-row .group-rental,
 .group-row .group-wait { background: var(--header); }
 .group-row .actions-heading { background: var(--header); text-align: center; vertical-align: bottom; padding-bottom: 13px; }
@@ -105,7 +123,7 @@ button:focus-visible, select:focus-visible, input:focus-visible, .table-scroll:f
 }
 .rates-table tbody tr:first-child td { border-top-color: var(--line); }
 .rates-table tbody tr:hover td { background: #fafcfe; }
-.rates-table tbody tr:hover .field:not(:disabled) { background-color: #fff; }
+.rates-table tbody tr:hover .field { background-color: #fff; }
 .rates-table tbody tr:hover td:first-child,
 .rates-table tbody tr:hover td:last-child { background: #fafcfe; }
 .rates-table td:first-child, .column-row th:first-child {
@@ -126,10 +144,6 @@ button:focus-visible, select:focus-visible, input:focus-visible, .table-scroll:f
   color: var(--text); font-size: 12px;
 }
 .field::placeholder { color: #98a8bb; }
-.field:disabled, .field:disabled:hover {
-  background: #edf2f7 !important; color: transparent;
-  border-color: #e0e7ef; cursor: not-allowed; opacity: .67;
-}
 select.field {
   appearance: none; cursor: pointer;
   padding-right: 24px;
@@ -137,7 +151,6 @@ select.field {
   background-repeat: no-repeat;
   background-position: right 7px center;
 }
-select.field:disabled { background-image: none; }
 .money-input { text-align: right; font-variant-numeric: tabular-nums; }
 .numeric-input { text-align: right; font-variant-numeric: tabular-nums; }
 .field.invalid { border-color: var(--error); background: #fff7f7; }
