@@ -96,7 +96,7 @@
   }
 
   function selectHTML(field, value, items, placeholder, disabled = false) {
-    const options = [optionHTML('', placeholder, value)].concat(items.map(item => {
+    const options = [optionHTML('', disabled ? '' : placeholder, value)].concat(items.map(item => {
       return typeof item === 'string'
         ? optionHTML(item, item, value)
         : optionHTML(item.value, item.label, value);
@@ -358,7 +358,12 @@
       const disableDefaults = row.group === 'Subcontractors';
       for (const field of ['material', 'vehicle', 'facility']) {
         const control = select.closest('tr').querySelector(`select[data-field="${field}"]`);
-        if (control) control.disabled = disableDefaults;
+        if (control) {
+          control.disabled = disableDefaults;
+          // Hide the placeholder text while disabled; retain the underlying value.
+          const placeholders = { material: 'Select material', vehicle: 'Select vehicle', facility: 'Select facility' };
+          control.options[0].textContent = disableDefaults ? '' : placeholders[field];
+        }
       }
     }
     clearMessage();
