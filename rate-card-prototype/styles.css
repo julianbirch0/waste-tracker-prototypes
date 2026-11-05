@@ -87,10 +87,10 @@ button:focus-visible, select:focus-visible, input:focus-visible, .table-scroll:f
   font-size: 12px; letter-spacing: .02em;
   border-bottom: 1px solid #d1dce7;
 }
-.group-row .group-service { background: #e3eef3; }
-.group-row .group-weight { background: #ebeff8; }
-.group-row .group-rental { background: #e6f3f0; }
-.group-row .group-wait { background: #f1edfa; }
+.group-row .group-service,
+.group-row .group-weight,
+.group-row .group-rental,
+.group-row .group-wait { background: var(--header); }
 .group-row .actions-heading { background: var(--header); text-align: center; vertical-align: bottom; padding-bottom: 13px; }
 .column-row th {
   height: 40px; padding: 9px 8px;
