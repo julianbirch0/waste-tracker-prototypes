@@ -27,7 +27,7 @@ The three optional groups are independently shown/hidden using checkboxes above 
 - **Attendance** is a fixed charge for the job/visit, regardless of container quantity.
 - Both are monetary fields, accept ordinary numeric entry and display as GBP to two decimal places on blur.
 - **Disposal Charges** retain Unit, Unit Price and Allowance; Unit defaults to **kg** for new rows and to **Item** when Container Type is **Loose** and Container Size is **Items**.
-- Container Rental Charge Frequency defaults to **Weekly**; Wait and Load Charge Unit defaults to **Minute**.
+- Container Rental Charge Frequency defaults to **Weekly**; Wait and Load Charge Unit defaults to **Hour** (the explicit Minute setting on existing saved rows is preserved).
 
 ## Behaviour
 
@@ -35,6 +35,7 @@ The three optional groups are independently shown/hidden using checkboxes above 
 - **No fields are disabled by Activity**. Any visible input is enabled even if no activity has been selected.
 - Activity selection no longer automatically changes the container type. The user chooses Container Type independently.
 - Container Size depends on Container Type; Material depends on Material Type. Changing a parent clears its dependent selection.
+- All dropdowns use a non-selectable `Select ...` initial prompt: once a real value is chosen, the user cannot select the placeholder again. Dependent dropdowns can return to the initial prompt when their parent changes, but cannot be deliberately reset to it.
 - Hiding a group does not erase its values, and changing groups does not alter the rate card's dirty/saved state.
 - Reset on a row restores that row's last saved values; for a newly added row, it clears the row with standard unit defaults.
 - Save writes the rate card to browser localStorage (when available), Cancel discards unsaved edits, and Reset sample data restores example rows without touching display preferences.
