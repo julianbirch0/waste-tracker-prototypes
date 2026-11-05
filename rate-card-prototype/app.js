@@ -293,6 +293,12 @@
 
     if (field === 'activity') {
       clearDisabled(row);
+      // Wait and Load normally uses a loose load. Set the default on
+      // activity selection, without restricting later manual changes.
+      if (row.activity === 'Wait and Load' && row.containerType !== 'Loose') {
+        row.containerType = 'Loose';
+        row.containerSize = '';
+      }
       if (row.activity) {
         // Set defaults whenever a group becomes applicable and the unit is blank.
         // Previously entered prices, allowances and charges are never restored.
