@@ -35,7 +35,7 @@ The three optional groups are independently shown/hidden using checkboxes above 
 - **No fields are disabled by Activity**. Any visible input is enabled even if no activity has been selected.
 - Activity selection no longer automatically changes the container type. The user chooses Container Type independently.
 - Container Size depends on Container Type; Material depends on Material Type. Changing a parent clears its dependent selection.
-- All dropdowns use a non-selectable `Select ...` initial prompt: once a real value is chosen, the user cannot select the placeholder again. Dependent dropdowns can return to the initial prompt when their parent changes, but cannot be deliberately reset to it.
+- All dropdowns show a non-selectable `Select ...` prompt only while unselected. Once a real value is chosen, the prompt is **removed from the option list entirely**. If a parent selection changes, its dependent dropdown resets to a blank value and temporarily shows its prompt again.
 - Hiding a group does not erase its values, and changing groups does not alter the rate card's dirty/saved state.
 - Reset on a row restores that row's last saved values; for a newly added row, it clears the row with standard unit defaults.
 - Save writes the rate card to browser localStorage (when available), Cancel discards unsaved edits, and Reset sample data restores example rows without touching display preferences.
