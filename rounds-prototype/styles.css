@@ -148,12 +148,6 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   font-size: 12px;
 }
 .field::placeholder { color: #98a8bb; }
-.field:disabled {
-  background-color: #edf2f7;
-  color: #8d9bad;
-  cursor: not-allowed;
-  opacity: .7;
-}
 .field:hover, .days-trigger:hover { border-color: #b7c8d9; }
 select.field {
   cursor: pointer;
