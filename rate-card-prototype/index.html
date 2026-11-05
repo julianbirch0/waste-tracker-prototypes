@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Rate Card | WasteTracker Prototype</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="page">
+    <header class="page-header">
+      <h1>Rate Card</h1>
+    </header>
+
+    <section class="content" aria-label="Standard Rate Card">
+      <div class="toolbar">
+        <div class="toolbar-heading">
+          <h2>Standard Rates</h2>
+          <span id="row-count" class="row-count"></span>
+        </div>
+        <button type="button" id="add-row" class="btn btn-primary">
+          <span class="plus-icon" aria-hidden="true">+</span> Add Rate Card Item
+        </button>
+      </div>
+
+      <div id="message" class="message" role="status" aria-live="polite" hidden></div>
+
+      <div class="table-scroll" tabindex="0" role="region" aria-label="Rate card table, scroll horizontally to see all columns">
+        <table class="rates-table">
+          <colgroup>
+            <col class="col-activity"><col class="col-container"><col class="col-size">
+            <col class="col-material-type"><col class="col-material"><col class="col-charge">
+            <col class="col-unit"><col class="col-unit-price"><col class="col-allowance">
+            <col class="col-rental-charge"><col class="col-frequency">
+            <col class="col-wait-charge"><col class="col-wait-unit">
+            <col class="col-actions">
+          </colgroup>
+          <thead>
+            <tr class="group-row">
+              <th scope="colgroup" colspan="6" class="group-service">Service</th>
+              <th scope="colgroup" colspan="3" class="group-weight group-start">Weight</th>
+              <th scope="colgroup" colspan="2" class="group-rental group-start">Container Rental</th>
+              <th scope="colgroup" colspan="2" class="group-wait group-start">Wait and Load</th>
+              <th scope="col" rowspan="2" class="actions-heading">Actions</th>
+            </tr>
+            <tr class="column-row">
+              <th scope="col">Activity</th>
+              <th scope="col">Container Type</th>
+              <th scope="col">Container Size</th>
+              <th scope="col">Material Type</th>
+              <th scope="col">Material</th>
+              <th scope="col">Charge</th>
+              <th scope="col" class="group-start">Unit</th>
+              <th scope="col">Unit Price</th>
+              <th scope="col">Allowance</th>
+              <th scope="col" class="group-start">Charge</th>
+              <th scope="col">Charge Frequency</th>
+              <th scope="col" class="group-start">Charge</th>
+              <th scope="col">Charge Unit</th>
+            </tr>
+          </thead>
+          <tbody id="rate-rows"></tbody>
+        </table>
+      </div>
+
+      <div class="footer-bar">
+        <div class="footer-left">
+          <button type="button" id="reset-data" class="link-button">Reset sample data</button>
+          <span class="footer-note">Changes are saved in this browser</span>
+        </div>
+        <div class="footer-right">
+          <span id="dirty-indicator" class="dirty-indicator" aria-live="polite"></span>
+          <button type="button" id="cancel" class="btn btn-secondary">Cancel</button>
+          <button type="button" id="save" class="btn btn-primary">Save</button>
+        </div>
+      </div>
+      <p class="storage-note">Prototype only. Scroll horizontally to see all pricing groups. Disabled fields do not hold values.</p>
+    </section>
+  </main>
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
