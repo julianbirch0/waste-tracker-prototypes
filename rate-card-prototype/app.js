@@ -87,7 +87,7 @@
     ALL_FIELDS.forEach(function (field) { row[field] = ''; });
     row.weightUnit = 'kg';
     row.rentalFrequency = 'Weekly';
-    row.waitUnit = 'Minute';
+    row.waitUnit = 'Hour';
     return row;
   }
 
@@ -141,7 +141,7 @@
     if (!row.weightUnit) row.weightUnit =
       row.containerType === 'Loose' && row.containerSize === 'Items' ? 'Item' : 'kg';
     if (!row.rentalFrequency) row.rentalFrequency = 'Weekly';
-    if (!row.waitUnit) row.waitUnit = 'Minute';
+    if (!row.waitUnit) row.waitUnit = 'Hour';
     return row;
   }
 
@@ -198,7 +198,12 @@
   }
 
   function selectHTML(row, field, choices, placeholder) {
-    const options = [optionHTML('', placeholder, row[field])];
+    // Show "Select ..." until a real choice is made; it is never a
+    // selectable option, so an existing selection cannot be cleared this way.
+    // If a parent dropdown changes, the dependent field is reset and will
+    // show this prompt again until the user chooses a new value.
+    const options = ['<option value="" disabled' +
+      (row[field] === '' ? ' selected' : '') + '>' + escapeHTML(placeholder) + '</option>'];
     choices.forEach(function (item) { options.push(optionHTML(item, item, row[field])); });
     return '<select class="field" data-field="' + field + '"' +
       ' aria-label="' + escapeHTML(FIELD_LABELS[field]) + '">' +
