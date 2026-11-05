@@ -95,13 +95,13 @@
     return `<option value="${escapeHTML(value)}"${value === selected ? ' selected' : ''}>${escapeHTML(label)}</option>`;
   }
 
-  function selectHTML(field, value, items, placeholder) {
+  function selectHTML(field, value, items, placeholder, disabled = false) {
     const options = [optionHTML('', placeholder, value)].concat(items.map(item => {
       return typeof item === 'string'
         ? optionHTML(item, item, value)
         : optionHTML(item.value, item.label, value);
     }));
-    return `<select class="field" data-field="${field}" aria-label="${escapeHTML(fieldName(field))}">${options.join('')}</select>`;
+    return `<select class="field" data-field="${field}" aria-label="${escapeHTML(fieldName(field))}"${disabled ? ' disabled' : ''}>${options.join('')}</select>`;
   }
 
   function fieldName(field) {
@@ -128,6 +128,7 @@
     } else {
       body.innerHTML = draft.map(row => {
         const invalid = invalidById.get(row.id) || new Set();
+        const disableDefaults = row.group === 'Subcontractors';
         return `
           <tr data-row-id="${escapeHTML(row.id)}">
             <td>${selectHTML('group', row.group, data.groups, 'Select group')}</td>
@@ -138,9 +139,9 @@
                 ${icon('chevron-down')}
               </button>
             </td>
-            <td>${selectHTML('vehicle', row.vehicle, data.vehicles, 'Select vehicle')}</td>
-            <td>${selectHTML('material', row.material, data.materials, 'Select material')}</td>
-            <td>${selectHTML('facility', row.facility, data.facilities, 'Select facility')}</td>
+            <td>${selectHTML('material', row.material, data.materials, 'Select material', disableDefaults)}</td>
+            <td>${selectHTML('vehicle', row.vehicle, data.vehicles, 'Select vehicle', disableDefaults)}</td>
+            <td>${selectHTML('facility', row.facility, data.facilities, 'Select facility', disableDefaults)}</td>
             <td><button type="button" class="delete-button" data-action="delete" title="Delete round" aria-label="Delete ${escapeHTML(row.name || 'new round')}">${icon('trash')}</button></td>
           </tr>`;
       }).join('');
@@ -185,7 +186,7 @@
     const element = getRowElement(id);
     if (element) {
       element.scrollIntoView({ behavior: 'auto', block: 'nearest' });
-      element.querySelector('[data-field="name"]').focus();
+      element.querySelector('[data-field="group"]').focus();
     }
   }
 
@@ -353,6 +354,13 @@
     const row = getRow(select.closest('tr').dataset.rowId);
     if (!row) return;
     row[select.dataset.field] = select.value;
+    if (select.dataset.field === 'group') {
+      const disableDefaults = row.group === 'Subcontractors';
+      for (const field of ['material', 'vehicle', 'facility']) {
+        const control = select.closest('tr').querySelector(`select[data-field="${field}"]`);
+        if (control) control.disabled = disableDefaults;
+      }
+    }
     clearMessage();
     updateDirtyIndicator();
   });
