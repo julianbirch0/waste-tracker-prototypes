@@ -9,7 +9,7 @@ There is no build step, web server, framework, external library or internet depe
 
 ## Behaviour
 
-- **Select Round** changes the round whose agreement sequence is displayed.
+- **Select Round** lists each scheduled day as its own round (for example, `Skips 1 - Monday`, `Skips 1 - Tuesday`) and shows that round's agreement sequence.
 - Only agreements with that round's ID in their `roundIds` appear. **You cannot add/remove agreement associations on this screen.** That belongs to the future Agreements screen.
 - **Sequence** is generated from row order (1, 2, 3 …); it isn't directly editable.
 - **Reorder** by dragging the left-hand handle. Keyboard alternative: focus a handle and press **Up** or **Down**.
@@ -23,10 +23,10 @@ There is no build step, web server, framework, external library or internet depe
 
 The self-contained `data.js` lists:
 
-- `rounds`: ID, name, scheduled days.
+- `rounds`: a separate ID for each round/day combination, with the round name and its single scheduled day.
 - `agreements`: ID, agreement number, customer/site details, timing, material, container, quantity, and a list of associated `roundIds`.
 
-Associations are read-only in this prototype. The only persisted data is a mapping of `roundId` to an ordered list of agreement IDs. When the associations in `data.js` change, any newly assigned agreement appears at the end and any no-longer-assigned agreement disappears. That leaves agreement ownership in one place.
+Multi-day round definitions are represented as separate day-specific rounds, and agreements can be assigned to each such round. The initial sample associations have been carried across to all of the former combined days. Associations are read-only in this prototype. The only persisted data is a mapping of `roundId` to an ordered list of agreement IDs. When the associations in `data.js` change, any newly assigned agreement appears at the end and any no-longer-assigned agreement disappears. That leaves agreement ownership in one place.
 
 Note: Round Planning uses **its own sample data** and browser storage, rather than directly reading/writing Round Definitions' saved browser records. The prototypes can therefore run independently until we explicitly decide how to connect them.
 
