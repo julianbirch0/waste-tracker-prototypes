@@ -36,7 +36,7 @@
   function normaliseRow(input, fallbackId) {
     return {
       id: typeof input.id === 'string' ? input.id : fallbackId,
-      group: typeof input.group === 'string' ? input.group : '',
+      group: typeof input.group === 'string' && input.group ? input.group : 'Group 1',
       name: typeof input.name === 'string' ? input.name : '',
       days: Array.isArray(input.days) ? WEEKDAYS.filter(day => input.days.includes(day)) : [],
       vehicle: typeof input.vehicle === 'string' ? input.vehicle : '',
@@ -95,13 +95,13 @@
     return `<option value="${escapeHTML(value)}"${value === selected ? ' selected' : ''}>${escapeHTML(label)}</option>`;
   }
 
-  function selectHTML(field, value, items, placeholder, disabled = false) {
-    const options = [optionHTML('', disabled ? '' : placeholder, value)].concat(items.map(item => {
+  function selectHTML(field, value, items, placeholder) {
+    const options = [optionHTML('', placeholder, value)].concat(items.map(item => {
       return typeof item === 'string'
         ? optionHTML(item, item, value)
         : optionHTML(item.value, item.label, value);
     }));
-    return `<select class="field" data-field="${field}" aria-label="${escapeHTML(fieldName(field))}"${disabled ? ' disabled' : ''}>${options.join('')}</select>`;
+    return `<select class="field" data-field="${field}" aria-label="${escapeHTML(fieldName(field))}">${options.join('')}</select>`;
   }
 
   function fieldName(field) {
@@ -121,6 +121,13 @@
     return ordered.map(day => WEEKDAY_ABBREVIATIONS[day]).join(', ');
   }
 
+  // Each selected day represents a separate Round in the production data model.
+  // The prototype intentionally keeps selections grouped into a single editable row.
+  function updateRoundCount() {
+    const count = draft.reduce((sum, row) => sum + row.days.length, 0);
+    $('round-count').textContent = `${count} ${count === 1 ? 'round' : 'rounds'}`;
+  }
+
   function renderRows() {
     closeDayPicker();
     if (!draft.length) {
@@ -128,10 +135,8 @@
     } else {
       body.innerHTML = draft.map(row => {
         const invalid = invalidById.get(row.id) || new Set();
-        const disableDefaults = row.group === 'Subcontractors';
         return `
           <tr data-row-id="${escapeHTML(row.id)}">
-            <td>${selectHTML('group', row.group, data.groups, 'Select group')}</td>
             <td><input class="field${invalid.has('name') ? ' invalid' : ''}" data-field="name" type="text" maxlength="120" aria-label="Round Name" aria-invalid="${invalid.has('name')}" placeholder="Round name" value="${escapeHTML(row.name)}"></td>
             <td>
               <button type="button" class="days-trigger${invalid.has('days') ? ' invalid' : ''}" data-action="days" aria-label="Choose days for ${escapeHTML(row.name || 'new round')}" aria-haspopup="dialog" aria-expanded="false" aria-invalid="${invalid.has('days')}" data-empty="${!row.days.length}" title="${escapeHTML(row.days.join(', '))}">
@@ -139,14 +144,15 @@
                 ${icon('chevron-down')}
               </button>
             </td>
-            <td>${selectHTML('material', row.material, data.materials, 'Select material', disableDefaults)}</td>
-            <td>${selectHTML('vehicle', row.vehicle, data.vehicles, 'Select vehicle', disableDefaults)}</td>
-            <td>${selectHTML('facility', row.facility, data.facilities, 'Select facility', disableDefaults)}</td>
+            <td>${selectHTML('vehicle', row.vehicle, data.vehicles, 'Select vehicle')}</td>
+            <td>${selectHTML('material', row.material, data.materials, 'Select material')}</td>
+            <td>${selectHTML('facility', row.facility, data.facilities, 'Select facility')}</td>
+            <td>${selectHTML('group', row.group, data.groups, 'Select group')}</td>
             <td><button type="button" class="delete-button" data-action="delete" title="Delete round" aria-label="Delete ${escapeHTML(row.name || 'new round')}">${icon('trash')}</button></td>
           </tr>`;
       }).join('');
     }
-    $('round-count').textContent = `${draft.length} ${draft.length === 1 ? 'round' : 'rounds'}`;
+    updateRoundCount();
     updateDirtyIndicator();
   }
 
@@ -181,12 +187,12 @@
     clearMessage();
     invalidById.clear();
     const id = `new-${Date.now()}-${nextNewId++}`;
-    draft.push({ id, group: '', name: '', days: [], vehicle: '', material: '', facility: '' });
+    draft.push({ id, group: 'Group 1', name: '', days: [], vehicle: '', material: '', facility: '' });
     renderRows();
     const element = getRowElement(id);
     if (element) {
       element.scrollIntoView({ behavior: 'auto', block: 'nearest' });
-      element.querySelector('[data-field="group"]').focus();
+      element.querySelector('[data-field="name"]').focus();
     }
   }
 
@@ -333,6 +339,7 @@
       btn.classList.toggle('active-preset', equalDays(row.days, preset));
     });
     clearMessage();
+    updateRoundCount();
     updateDirtyIndicator();
   }
 
@@ -354,18 +361,6 @@
     const row = getRow(select.closest('tr').dataset.rowId);
     if (!row) return;
     row[select.dataset.field] = select.value;
-    if (select.dataset.field === 'group') {
-      const disableDefaults = row.group === 'Subcontractors';
-      for (const field of ['material', 'vehicle', 'facility']) {
-        const control = select.closest('tr').querySelector(`select[data-field="${field}"]`);
-        if (control) {
-          control.disabled = disableDefaults;
-          // Hide the placeholder text while disabled; retain the underlying value.
-          const placeholders = { material: 'Select material', vehicle: 'Select vehicle', facility: 'Select facility' };
-          control.options[0].textContent = disableDefaults ? '' : placeholders[field];
-        }
-      }
-    }
     clearMessage();
     updateDirtyIndicator();
   });
