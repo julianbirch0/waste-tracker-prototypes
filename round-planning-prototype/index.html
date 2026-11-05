@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Round Planning | WasteTracker Prototype</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="page">
+    <header class="page-header">
+      <h1>Round Planning</h1>
+    </header>
+
+    <section class="content" aria-label="Round Planning">
+      <div class="round-toolbar">
+        <label for="round-select">Select Round</label>
+        <select id="round-select" class="field" aria-label="Select Round"></select>
+      </div>
+
+      <div id="message" class="message" role="status" aria-live="polite" hidden></div>
+
+      <div class="table-scroll">
+        <table class="planning-table">
+          <colgroup>
+            <col class="col-drag">
+            <col class="col-seq">
+            <col class="col-agreement">
+            <col class="col-timing">
+            <col class="col-customer">
+            <col class="col-site">
+            <col class="col-material">
+            <col class="col-container">
+            <col class="col-qty">
+            <col class="col-action">
+          </colgroup>
+          <thead>
+            <tr>
+              <th scope="col"><span class="sr-only">Reorder</span></th>
+              <th scope="col">Seq.</th>
+              <th scope="col">Agreement</th>
+              <th scope="col">Timing</th>
+              <th scope="col">Customer</th>
+              <th scope="col">Site</th>
+              <th scope="col">Material</th>
+              <th scope="col">Container</th>
+              <th scope="col">Qty.</th>
+              <th scope="col"><span class="sr-only">Actions</span></th>
+            </tr>
+          </thead>
+          <tbody id="agreement-rows"></tbody>
+        </table>
+      </div>
+
+      <div class="footer-bar">
+        <div class="footer-left">
+          <button type="button" id="reset-data" class="link-button">Reset sample sequences</button>
+          <span class="footer-note">Drag the handles to reorder, or use ↑ / ↓ when a handle has focus.</span>
+        </div>
+        <div class="footer-right">
+          <span id="dirty-indicator" class="dirty-indicator" aria-live="polite"></span>
+          <button type="button" id="save" class="btn btn-primary">Save</button>
+          <button type="button" id="cancel" class="btn btn-secondary">Cancel</button>
+        </div>
+      </div>
+      <p class="storage-note">Prototype only: saved sequences are stored in this browser. Agreement–Round associations are maintained on the Agreements screen, not here.</p>
+    </section>
+  </main>
+
+  <div id="modal-backdrop" class="modal-backdrop" hidden>
+    <div id="modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" tabindex="-1">
+      <div class="modal-heading">
+        <h2 id="modal-title"></h2>
+        <button type="button" id="modal-close" class="icon-button" aria-label="Close dialog">×</button>
+      </div>
+      <div id="modal-body" class="modal-body"></div>
+      <div id="modal-actions" class="modal-actions"></div>
+    </div>
+  </div>
+
+  <!-- Deliberately no modules, framework, fetch, build step or web server. -->
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
