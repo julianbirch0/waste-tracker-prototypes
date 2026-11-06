@@ -90,6 +90,7 @@ window.RoundPlanningData = {
     a.notes=e.notes;
     a.coordinates={lat:e.lat,lng:e.lng};
     a.initiallyUnsequenced=!!e.initiallyUnsequenced;
+    a.initiallySequenced=!e.initiallyUnsequenced;
     a.activities=[{type:"regular",roundIds:a.roundIds.slice(),everyWeeks:e.everyWeeks,startDate:e.startDate}];
   });
   source.agreements.push(
@@ -120,7 +121,7 @@ window.RoundPlanningData = {
       id:"agreement-10672", number:"10672", customer:"Riverside Offices",
       site:"Business Centre",location:"Stroud",postcode:"GL5 1AU",
       timing:"07:00 to 12:00",material:"15 01 06 – DMR",container:"660 L Wheelie Bin",quantity:"3",
-      notes:"Every fourth week.",coordinates:{lat:51.745,lng:-2.217},
+      notes:"Every fourth week.",coordinates:{lat:51.745,lng:-2.217},initiallySequenced:true,
       activities:[{type:"regular",roundIds:["round-001"],everyWeeks:4,startDate:"2026-11-02"}]
     }
   );
