@@ -9,14 +9,15 @@ There is no build step, web server, framework, external library or internet depe
 
 ## Behaviour
 
-- **Select Round** lists each scheduled day as its own round (for example, `Skips 1 - Monday`, `Skips 1 - Tuesday`) and shows that round's agreement sequence.
+- **Select Round** lists distinct round names (for example, `Skips 1`), and **Select Day** lists only days defined for that name (for example, Monday–Friday). Both controls appear on the same line. The selected name/day combination identifies one day-specific round and its independent agreement sequence.
+- On opening, the screen defaults to the first round name and its first available day. Changing a round name selects that name's first available weekday.
 - Only agreements with that round's ID in their `roundIds` appear. **You cannot add/remove agreement associations on this screen.** That belongs to the future Agreements screen.
 - **Sequence** is generated from row order (1, 2, 3 …); it isn't directly editable.
 - **Reorder** by dragging the left-hand handle. Keyboard alternative: focus a handle and press **Up** or **Down**.
 - **View Agreement** shows a small modal with agreement number, customer, site and location. It intentionally doesn't navigate to the unbuilt Agreements page.
 - **Save** saves the selected round's sequence in the browser's `localStorage`.
 - **Cancel** discards this round's unsaved sequence (with confirmation).
-- **Unsaved changes:** changing rounds or selecting View Agreement prompts **Keep Editing**, **Discard & Continue** or **Save & Continue**. Closing/reloading a dirty browser page invokes the browser's normal unsaved-changes confirmation.
+- **Unsaved changes:** changing either the selected round name or day, or selecting View Agreement, prompts **Keep Editing**, **Discard & Continue** or **Save & Continue**. Closing/reloading a dirty browser page invokes the browser's normal unsaved-changes confirmation.
 - **Reset sample sequences** discards *all* browser-stored sequences and restores the order supplied in `data.js`.
 
 ## Data model
