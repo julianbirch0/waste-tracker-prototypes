@@ -17,7 +17,8 @@
   const STORAGE_KEY = 'wastetracker.round-planning.prototype.v1';
   const $ = (id) => document.getElementById(id);
   const rows = $('agreement-rows');
-  const select = $('round-select');
+  const roundSelect = $('round-select');
+  const daySelect = $('day-select');
   const backdrop = $('modal-backdrop');
   const modal = $('modal');
   const modalActions = $('modal-actions');
@@ -25,9 +26,8 @@
 
   let storageAvailable = true;
   let savedOrders = readOrders();
+  // First round name and its first available day, in the source's defined order.
   let currentRoundId = data.rounds.length ? data.rounds[0].id : '';
-  // Start on the round featured in the supplied wireframe.
-  if (data.rounds.some((round) => round.id === 'round-002')) currentRoundId = 'round-002';
   let draftIds = orderedAgreementIds(currentRoundId);
   let draggingId = null;
   let dropTarget = null;
@@ -116,11 +116,23 @@
     message.textContent = '';
   }
 
-  function renderRoundSelect() {
-    select.innerHTML = data.rounds.map((round) =>
+  function renderRoundControls() {
+    const current = getRound(currentRoundId);
+    const names = [...new Set(data.rounds.map((round) => round.name))];
+    roundSelect.innerHTML = names.map((name) =>
+      '<option value="' + escapeHTML(name) + '">' + escapeHTML(name) + '</option>').join('');
+    roundSelect.value = current ? current.name : '';
+
+    const selectedRounds = data.rounds.filter((round) =>
+      current && round.name === current.name);
+    const dayOrder = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    selectedRounds.sort((left, right) =>
+      dayOrder.indexOf(left.days[0]) - dayOrder.indexOf(right.days[0]));
+    daySelect.innerHTML = selectedRounds.map((round) =>
       '<option value="' + escapeHTML(round.id) + '">' +
-      escapeHTML(roundLabel(round)) + '</option>').join('');
-    select.value = currentRoundId;
+      escapeHTML(round.days[0]) + '</option>').join('');
+    daySelect.value = currentRoundId;
+    daySelect.disabled = selectedRounds.length === 0;
   }
 
   function renderRows(focusAgreementId) {
@@ -179,7 +191,7 @@
     if (!getRound(nextRoundId) || nextRoundId === currentRoundId) return;
     currentRoundId = nextRoundId;
     draftIds = orderedAgreementIds(currentRoundId);
-    select.value = currentRoundId;
+    renderRoundControls();
     clearMessage();
     renderRows();
   }
@@ -299,10 +311,22 @@
       ], 'cancel');
   }
 
-  select.addEventListener('change', () => {
-    const nextRoundId = select.value;
-    // The original option stays selected until the user resolves the guard.
-    select.value = currentRoundId;
+  roundSelect.addEventListener('change', () => {
+    // Changing the name selects the first available weekday for that name.
+    const nextName = roundSelect.value;
+    const weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    const nextRound = data.rounds
+      .filter((round) => round.name === nextName)
+      .sort((a, b) => weekdays.indexOf(a.days[0]) - weekdays.indexOf(b.days[0]))[0];
+    // Keep both controls on the original selection until navigation is confirmed.
+    renderRoundControls();
+    if (nextRound) guardNavigation({ type: 'round', roundId: nextRound.id });
+  });
+
+  daySelect.addEventListener('change', () => {
+    const nextRoundId = daySelect.value;
+    // Changing the day also needs the same unsaved-changes protection.
+    daySelect.value = currentRoundId;
     guardNavigation({ type: 'round', roundId: nextRoundId });
   });
 
@@ -425,7 +449,7 @@
     event.returnValue = '';
   });
 
-  renderRoundSelect();
+  renderRoundControls();
   renderRows();
   if (!storageAvailable) {
     showMessage('Browser storage is unavailable for this local file. Changes cannot survive a reload.', 'warning');
