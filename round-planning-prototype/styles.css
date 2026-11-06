@@ -49,11 +49,25 @@ button:focus-visible, select:focus-visible {
 .content { width: 100%; }
 .round-toolbar {
   display: flex;
+  flex-wrap: nowrap;
   align-items: center;
-  gap: 18px;
+  gap: 26px;
   padding: 17px 11px 22px;
+  overflow-x: auto;
 }
-.round-toolbar label { color: var(--text); min-width: 102px; font-weight: 600; }
+.toolbar-control {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 12px;
+}
+.round-toolbar label {
+  color: var(--text);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.round-name-field { width: 310px; min-width: 190px; }
+.day-field { width: 160px; min-width: 130px; }
 .field {
   height: 36px;
   width: min(410px, 100%);
@@ -274,9 +288,10 @@ tr.drop-after td { border-bottom: 3px solid var(--teal) !important; }
   flex-wrap: wrap;
 }
 @media (max-width: 760px) {
-  .round-toolbar { padding: 15px 3px 18px; gap: 9px; align-items: flex-start; flex-direction: column; }
-  .round-toolbar label { min-width: 0; }
-  .field { width: 100%; }
+  .round-toolbar { padding: 15px 3px 18px; gap: 16px; }
+  .toolbar-control { gap: 8px; }
+  .round-name-field { width: 195px; }
+  .day-field { width: 135px; }
   .footer-left { flex-direction: column; align-items: flex-start; gap: 3px; }
   .footer-right { margin-left: auto; }
 }
