@@ -38,3 +38,9 @@ Changes persist across page reloads in the **same browser and local file locatio
 - Scheduling/Trip generation, Agreements, Jobs, and operational rules.
 - Any further business logic around default material or facility.
 - Backend integration and actual application navigation.
+
+## 6 November 2026 clarification
+
+The **Group** heading now includes contextual help; the same explanation appears below the table: each Group corresponds to a Day Board tab, and its name is maintained through Dictionaries. **Group 1** remains the default and all Default controls remain enabled for Subcontractors.
+
+**Production requirement (not simulated here):** A day-specific Round with active associated Regular Activities/Agreements must not be deleted. Historical relationships must remain intact, but closed/historical Agreements should not prevent removing an inactive Round. The prototype has no live Agreements data, so its existing local draft Delete button cannot enforce this backend rule. Do not infer production deletion permissions from the sample UI.
