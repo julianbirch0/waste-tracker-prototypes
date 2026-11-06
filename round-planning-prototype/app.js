@@ -106,7 +106,7 @@
     } else {
       all.forEach(x => {
         const a = agreement(x);
-        (a && a.initiallyUnsequenced ? unsequenced : sequenced).push(x);
+        (a && a.initiallySequenced && [1,2,3,4].some(n => dueInWeek(a,id,n)) ? sequenced : unsequenced).push(x);
       });
     }
     return { sequenced, unsequenced };
