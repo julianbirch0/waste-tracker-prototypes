@@ -67,3 +67,61 @@ window.RoundPlanningData = {
     }
   ]
 };
+
+
+/*
+ * Review-build test fixtures: Regular Activities own their Round assignments.
+ * All dates and coordinates below are illustrative. A single Activity may point
+ * to several DAY-SPECIFIC Round IDs that share the same Round name.
+ */
+(function () {
+  var source = window.RoundPlanningData;
+  var examples = {
+    "agreement-10421": { everyWeeks:1, startDate:"2026-10-26", lat:51.559, lng:-1.779, notes:"Call site contact before arrival." },
+    "agreement-10436": { everyWeeks:2, startDate:"2026-11-02", lat:51.461, lng:-2.125, notes:"Access via industrial estate gate.", initiallyUnsequenced:true },
+    "agreement-10502": { everyWeeks:2, startDate:"2026-11-09", lat:51.421, lng:-1.728, notes:"Restricted access before 09:00." },
+    "agreement-10527": { everyWeeks:4, startDate:"2026-11-16", lat:51.598, lng:-1.733, notes:"Check security arrangements." },
+    "agreement-10311": { everyWeeks:1, startDate:"2026-10-26", lat:51.718, lng:-1.970, notes:"Use side entrance." },
+    "agreement-10364": { everyWeeks:2, startDate:"2026-11-02", lat:51.572, lng:-1.804, notes:"Collection behind Building B.", initiallyUnsequenced:true },
+    "agreement-10601": { everyWeeks:1, startDate:"2026-10-26", lat:51.866, lng:-2.238, notes:"Notify depot on arrival." }
+  };
+  source.agreements.forEach(function (a) {
+    var e=examples[a.id]; if(!e)return;
+    a.notes=e.notes;
+    a.coordinates={lat:e.lat,lng:e.lng};
+    a.initiallyUnsequenced=!!e.initiallyUnsequenced;
+    a.activities=[{type:"regular",roundIds:a.roundIds.slice(),everyWeeks:e.everyWeeks,startDate:e.startDate}];
+  });
+  source.agreements.push(
+    {
+      id:"agreement-10618", number:"10618", customer:"Wessex Building Contractors",
+      site:"Canal Road Refurbishment", location:"Devizes", postcode:"SN10 1EB",
+      timing:"07:30 to 15:30", material:"17 09 04 – Mixed C&D", container:"8 yd Skip", quantity:"1",
+      notes:"Site entrance adjacent to canal bridge.", coordinates:{lat:51.349,lng:-1.996},
+      initiallyUnsequenced:true,
+      activities:[{type:"regular",roundIds:["round-002"],everyWeeks:1,startDate:"2026-10-26"}]
+    },
+    {
+      id:"agreement-10633", number:"10633", customer:"Pewsey Developments",
+      site:"New Build Site", location:"Pewsey", postcode:"SN9 5EQ",
+      timing:"08:00 to 16:00", material:"17 09 04 – Mixed C&D", container:"8 yd Skip", quantity:"1",
+      notes:"Fortnightly; keep clear of school entrance.",coordinates:{lat:51.340,lng:-1.765},
+      activities:[{type:"regular",roundIds:["round-002"],everyWeeks:2,startDate:"2026-11-09"}]
+    },
+    {
+      id:"agreement-10661", number:"10661", customer:"North Wiltshire Retail",
+      site:"Market Street",location:"Calne",postcode:"SN11 0EH",
+      timing:"09:00 to 17:00", material:"20 03 01 – General Waste",container:"1100 L Wheelie Bin", quantity:"2",
+      notes:"Service yard, rear of premises.",coordinates:{lat:51.438,lng:-2.006},
+      initiallyUnsequenced:true,
+      activities:[{type:"regular",roundIds:["round-001"],everyWeeks:1,startDate:"2026-10-26"}]
+    },
+    {
+      id:"agreement-10672", number:"10672", customer:"Riverside Offices",
+      site:"Business Centre",location:"Stroud",postcode:"GL5 1AU",
+      timing:"07:00 to 12:00",material:"15 01 06 – DMR",container:"660 L Wheelie Bin",quantity:"3",
+      notes:"Every fourth week.",coordinates:{lat:51.745,lng:-2.217},
+      activities:[{type:"regular",roundIds:["round-001"],everyWeeks:4,startDate:"2026-11-02"}]
+    }
+  );
+})();
