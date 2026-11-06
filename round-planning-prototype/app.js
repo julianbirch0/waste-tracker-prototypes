@@ -170,6 +170,7 @@
     $('unsequence-drop').hidden = true;
     setDirty();
     renderMap();
+    applyColumnVisibility();
     if (focusId) {
       const handle = [...rows.querySelectorAll('[data-action="drag"]')].find(
         e => e.closest('tr').dataset.agreementId === focusId);
@@ -434,6 +435,29 @@
   window.addEventListener('beforeunload',event=>{
     if(!dirty())return;event.preventDefault();event.returnValue='';
   });
+
+  // Column visibility is a display preference, not a change to Agreement data.
+  const columnIndexes = {timing:4,material:7,container:8,quantity:9,notes:10};
+  const visibleColumns = {timing:true,material:true,container:true,quantity:true,notes:true};
+  function applyColumnVisibility() {
+    Object.keys(columnIndexes).forEach(key => {
+      const n=columnIndexes[key];
+      document.querySelectorAll('.planning-table col:nth-child('+n+'), .planning-table tr > :nth-child('+n+')')
+        .forEach(el => {el.hidden=!visibleColumns[key];});
+    });
+  }
+  $('columns-toggle').addEventListener('click',()=>{
+    const panel=$('columns-panel');
+    panel.hidden=!panel.hidden;
+    $('columns-toggle').setAttribute('aria-expanded',String(!panel.hidden));
+  });
+  $('columns-panel').addEventListener('change',event=>{
+    const checkbox=event.target.closest('input[data-column]');
+    if(!checkbox)return;
+    visibleColumns[checkbox.dataset.column]=checkbox.checked;
+    applyColumnVisibility();
+  });
+
   renderControls();renderRows();setMapVisibility(true);
   if(!storageAvailable)showMessage('Browser storage is unavailable for this local file. Saves will not survive a reload.','warning');
 })();
