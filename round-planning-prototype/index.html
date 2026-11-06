@@ -14,9 +14,15 @@
     </header>
 
     <section class="content" aria-label="Round Planning">
-      <div class="round-toolbar">
-        <label for="round-select">Select Round</label>
-        <select id="round-select" class="field" aria-label="Select Round"></select>
+      <div class="round-toolbar" aria-label="Choose round and day">
+        <div class="toolbar-control">
+          <label for="round-select">Select Round</label>
+          <select id="round-select" class="field round-name-field" aria-label="Select Round"></select>
+        </div>
+        <div class="toolbar-control">
+          <label for="day-select">Select Day</label>
+          <select id="day-select" class="field day-field" aria-label="Select Day"></select>
+        </div>
       </div>
 
       <div id="message" class="message" role="status" aria-live="polite" hidden></div>
