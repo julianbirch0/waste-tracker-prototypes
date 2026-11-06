@@ -295,3 +295,46 @@ tr.drop-after td { border-bottom: 3px solid var(--teal) !important; }
   .footer-left { flex-direction: column; align-items: flex-start; gap: 3px; }
   .footer-right { margin-left: auto; }
 }
+
+
+/* 6 November review: week controls, inline location map and sequenced sections */
+.week-field { width: 225px; min-width: 190px; }
+.round-toolbar { gap: 20px; padding: 13px 11px 16px; }
+.round-toolbar label { font-size: 12px; }
+.map-topbar { display: flex; align-items: center; justify-content: space-between;
+  padding: 0 11px 8px; color: #30445b; }
+.map-topbar strong { font-size: 13px; }
+.map-panel { margin: 0 10px 9px; border: 1px solid var(--line); border-radius: 7px; overflow: hidden; }
+.map-stage { position: relative; background: #f6faf8; }
+#planning-map { display: block; width: 100%; height: 310px; cursor: grab; user-select: none; touch-action: none; }
+#planning-map:active { cursor: grabbing; }
+.map-tools { position: absolute; right: 12px; top: 12px; display: grid; gap: 5px; }
+.map-tools button { min-width: 32px; height: 30px; padding: 0 7px; background: #fff; border: 1px solid #d4e0e8;
+  color: #40556c; border-radius: 4px; box-shadow: 0 1px 3px #0001; font-size: 15px; }
+.map-tools button:hover { background: #f0f5f7; }
+.map-caption { border-top: 1px solid #e4ecef; color: #708399; font-size: 11px; padding: 8px 12px; }
+.map-label { paint-order: stroke; stroke: #fff; stroke-width: 3px; stroke-linejoin: round;
+  fill: #486378; font-size: 12px; font-weight: 600; }
+.map-empty { fill: #8897a7; font-size: 17px; }
+.col-drag { width: 3%; } .col-seq { width: 4%; } .col-agreement { width: 7%; }
+.col-timing { width: 9%; } .col-customer { width: 14%; } .col-site { width: 16%; }
+.col-material { width: 14%; } .col-container { width: 9%; } .col-qty { width: 4%; }
+.col-notes { width: 10%; } .col-action { width: 10%; }
+.planning-table { min-width: 1320px; }
+.planning-table td.notes-cell { color: #637993; font-size: 11.5px; }
+.section-heading td { height: 38px; padding: 0 8px !important; background: #fff !important; border: none !important;
+  color: #6c8096; font-size: 11px !important; font-weight: 650; text-transform: none; white-space: nowrap; }
+.section-heading td::before, .section-heading td::after { content: ""; display: inline-block; width: 30px;
+  height: 3px; vertical-align: middle; background: #c6d2dd; margin: 0 8px; border-radius: 3px; }
+.section-heading.drop-zone td { background: #e9f8f4 !important; outline: 2px dashed #32a99a; outline-offset: -3px; }
+.planning-table tr.unsequenced-row td { background: #fff3e3; }
+.planning-table tr.unsequenced-row:hover td { background: #fcebd3; }
+.planning-table tr.unsequenced-row td.seq { color: #b17b39; }
+.unsequence-drop { margin: 6px 10px; padding: 12px; text-align: center; color: #96662b; font-weight: 650;
+  background: #fff3e3; border: 2px dashed #d5a46c; border-radius: 6px; }
+@media (max-width: 950px) {
+  .round-toolbar { flex-wrap: wrap; gap: 12px; }
+  .round-name-field { width: 230px; }
+  .week-field { width: 210px; }
+  #planning-map { height: 270px; }
+}
