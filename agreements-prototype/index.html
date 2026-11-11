@@ -87,6 +87,8 @@
                 <th scope="col">Job date</th>
                 <th scope="col">Quantity</th>
                 <th scope="col">Timing</th>
+                <th scope="col">Round</th>
+                <th scope="col">Job notes</th>
                 <th scope="col">Price</th>
                 <th scope="col">Rate</th>
                 <th scope="col" class="service-action-heading">Action</th>
@@ -167,6 +169,16 @@
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+          <div class="dialog-grid dialog-job-fields">
+            <div class="input-field">
+              <label for="service-round" class="field-label">Round</label>
+              <select id="service-round" class="field" required disabled></select>
+            </div>
+            <div class="input-field">
+              <label for="job-notes" class="field-label">Job notes</label>
+              <input id="job-notes" class="field" type="text" maxlength="500" placeholder="Optional notes for this job">
             </div>
           </div>
           <div class="dialog-divider"></div>
