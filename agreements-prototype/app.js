@@ -191,6 +191,8 @@
       const cells = [
         service.service, service.serviceType, formatISODate(service.jobDate),
         service.quantity, displayTiming(service),
+        service.roundName || (service.roundId === "unallocated" ? "Unallocated" : ""),
+        service.jobNotes || "",
         moneyFormatter.format(Number(service.price || 0)),
         service.rateSource
       ];
@@ -311,7 +313,10 @@
     prompt.hidden = true;
   }
 
-  function setClockOptions(element, kind) {
+  function setClockOptions(element, kind, minimum, preserve) {
+    // The To selectors are rebuilt whenever the From time changes.
+    // They retain the current choice only while it is still valid.
+    const current = preserve ? element.value : "";
     element.replaceChildren();
     const prompt = document.createElement("option");
     prompt.value = "";
@@ -322,13 +327,66 @@
     const max = kind === "hour" ? 24 : 60;
     const step = kind === "hour" ? 1 : 10;
     for (let number = 0; number < max; number += step) {
+      if (minimum !== null && minimum !== undefined && number < minimum) continue;
       const value = String(number).padStart(2, "0");
       const option = document.createElement("option");
       option.value = value;
       option.textContent = value;
       element.appendChild(option);
     }
-    element.value = "";
+    element.value = Array.from(element.options).some(function (option) {
+      return option.value === current && !option.disabled;
+    }) ? current : "";
+  }
+
+  function refreshToMinutes() {
+    const fromHour = $("from-hour").value;
+    const fromMinute = $("from-minute").value;
+    const toHour = $("to-hour").value;
+    // If both hours match, the end minutes must be strictly later.
+    const minimum = fromHour && fromMinute && toHour === fromHour
+      ? Number(fromMinute) + 10 : 0;
+    setClockOptions($("to-minute"), "minute", minimum, true);
+  }
+
+  function refreshToHours() {
+    const fromHour = $("from-hour").value;
+    setClockOptions($("to-hour"), "hour", fromHour ? Number(fromHour) : 0, true);
+    refreshToMinutes();
+  }
+
+  function setRoundOptions() {
+    const select = $("service-round");
+    select.replaceChildren();
+    const isoDate = $("job-date").value;
+    const dateParts = /^\d{4}-\d{2}-\d{2}$/.test(isoDate) ? isoDate.split("-").map(Number) : null;
+    const weekday = dateParts
+      ? ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][
+          new Date(dateParts[0], dateParts[1] - 1, dateParts[2], 12).getDay()
+        ] : null;
+
+    const prompt = document.createElement("option");
+    prompt.value = "";
+    prompt.textContent = weekday ? "Select round" : "Select job date first";
+    prompt.disabled = true;
+    prompt.hidden = true;
+    select.appendChild(prompt);
+    select.disabled = !weekday;
+    if (weekday) {
+      const unallocated = document.createElement("option");
+      unallocated.value = "unallocated";
+      unallocated.textContent = "Unallocated";
+      select.appendChild(unallocated);
+      data.rounds.filter(function (round) { return round.day === weekday; })
+        .forEach(function (round) {
+          const option = document.createElement("option");
+          option.value = round.id;
+          option.textContent = round.name + " – " + round.day;
+          select.appendChild(option);
+        });
+    }
+    select.value = "";
+    select.classList.remove("invalid");
   }
 
   function toggleSpecificTime() {
@@ -344,12 +402,14 @@
     setServiceOptions();
     setServiceType("");
     selectOptions($("service-timing"), data.timingOptions, "Select timing", "Any time");
-    setClockOptions($("from-hour"), "hour");
-    setClockOptions($("from-minute"), "minute");
-    setClockOptions($("to-hour"), "hour");
-    setClockOptions($("to-minute"), "minute");
+    setClockOptions($("from-hour"), "hour", 0, false);
+    setClockOptions($("from-minute"), "minute", 0, false);
+    setClockOptions($("to-hour"), "hour", 0, false);
+    setClockOptions($("to-minute"), "minute", 0, false);
     $("service-quantity").value = "1";
     $("job-date").value = "";
+    $("job-notes").value = "";
+    setRoundOptions();
     dialogForm.querySelectorAll(".invalid").forEach(function (input) {
       input.classList.remove("invalid");
     });
@@ -396,6 +456,11 @@
         return dialogError("To time must be later than From time.", "to-hour");
       }
     }
+    const roundId = $("service-round").value;
+    if (!roundId) return dialogError("Please select a Round or Unallocated.", "service-round");
+    const round = data.rounds.find(function (item) { return item.id === roundId; });
+    const roundName = round ? round.name + " – " + round.day : "Unallocated";
+    const jobNotes = $("job-notes").value.trim();
     const parsedPrice = parseMoney($("service-price").value);
     if (parsedPrice === null) {
       return dialogError("Please enter a valid, non-negative price in pounds and pence.", "service-price");
@@ -412,6 +477,9 @@
       timing: timing,
       fromTime: timing === "Specific time" ? fromTime : "",
       toTime: timing === "Specific time" ? toTime : "",
+      roundId: roundId,
+      roundName: roundName,
+      jobNotes: jobNotes,
       price: parsedPrice,
       rateSource: manuallyPriced ? "Agreement rate" : priceSuggestion.source
     });
@@ -457,6 +525,13 @@
   });
   $("service-type").addEventListener("change", toggleServiceType);
   $("service-timing").addEventListener("change", toggleSpecificTime);
+  $("from-hour").addEventListener("change", refreshToHours);
+  $("from-minute").addEventListener("change", refreshToMinutes);
+  $("to-hour").addEventListener("change", refreshToMinutes);
+  $("job-date").addEventListener("change", setRoundOptions);
+  $("service-round").addEventListener("change", function () {
+    this.classList.remove("invalid");
+  });
   $("service-price").addEventListener("focus", function () {
     const parsed = parseMoney(this.value);
     if (parsed !== null) this.value = parsed;
