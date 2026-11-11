@@ -311,22 +311,22 @@
     prompt.hidden = true;
   }
 
-  function setTimeOptions(element) {
+  function setClockOptions(element, kind) {
     element.replaceChildren();
     const prompt = document.createElement("option");
     prompt.value = "";
-    prompt.textContent = "Select time";
+    prompt.textContent = kind === "hour" ? "HH" : "MM";
     prompt.disabled = true;
     prompt.hidden = true;
     element.appendChild(prompt);
-    for (let hour = 0; hour < 24; hour++) {
-      for (let minute = 0; minute < 60; minute += 10) {
-        const time = String(hour).padStart(2, "0") + ":" + String(minute).padStart(2, "0");
-        const option = document.createElement("option");
-        option.value = time;
-        option.textContent = time;
-        element.appendChild(option);
-      }
+    const max = kind === "hour" ? 24 : 60;
+    const step = kind === "hour" ? 1 : 10;
+    for (let number = 0; number < max; number += step) {
+      const value = String(number).padStart(2, "0");
+      const option = document.createElement("option");
+      option.value = value;
+      option.textContent = value;
+      element.appendChild(option);
     }
     element.value = "";
   }
@@ -334,8 +334,9 @@
   function toggleSpecificTime() {
     const selected = $("service-timing").value === "Specific time";
     $("specific-time-wrap").hidden = !selected;
-    $("from-time").required = selected;
-    $("to-time").required = selected;
+    ["from-hour", "from-minute", "to-hour", "to-minute"].forEach(function (id) {
+      $(id).required = selected;
+    });
   }
 
   function openAddService() {
@@ -343,8 +344,10 @@
     setServiceOptions();
     setServiceType("");
     selectOptions($("service-timing"), data.timingOptions, "Select timing", "Any time");
-    setTimeOptions($("from-time"));
-    setTimeOptions($("to-time"));
+    setClockOptions($("from-hour"), "hour");
+    setClockOptions($("from-minute"), "minute");
+    setClockOptions($("to-hour"), "hour");
+    setClockOptions($("to-minute"), "minute");
     $("service-quantity").value = "1";
     $("job-date").value = "";
     dialogForm.querySelectorAll(".invalid").forEach(function (input) {
@@ -375,13 +378,22 @@
       return dialogError("Please enter a whole-number quantity of at least 1.", "service-quantity");
     }
     const timing = $("service-timing").value;
-    const fromTime = $("from-time").value;
-    const toTime = $("to-time").value;
+    let fromTime = "";
+    let toTime = "";
     if (timing === "Specific time") {
-      if (!fromTime) return dialogError("Please select a From time.", "from-time");
-      if (!toTime) return dialogError("Please select a To time.", "to-time");
+      const fields = [
+        ["from-hour", "Please select the From hour."],
+        ["from-minute", "Please select the From minute."],
+        ["to-hour", "Please select the To hour."],
+        ["to-minute", "Please select the To minute."]
+      ];
+      for (const [id, errorText] of fields) {
+        if (!$(id).value) return dialogError(errorText, id);
+      }
+      fromTime = $("from-hour").value + ":" + $("from-minute").value;
+      toTime = $("to-hour").value + ":" + $("to-minute").value;
       if (toTime <= fromTime) {
-        return dialogError("To time must be later than From time.", "to-time");
+        return dialogError("To time must be later than From time.", "to-hour");
       }
     }
     const parsedPrice = parseMoney($("service-price").value);
