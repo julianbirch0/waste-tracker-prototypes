@@ -224,6 +224,12 @@
         (field === 'waitCharge' || field === 'waitUnit')) {
       return '';
     }
+    // Loose loads are not rented containers. Leave both rental cells
+    // visually empty rather than rendering disabled fields.
+    if (row.containerType === 'Loose' &&
+        (field === 'rentalCharge' || field === 'rentalFrequency')) {
+      return '';
+    }
 
     const options = {
       activity: [data.activities, 'Select activity'],
