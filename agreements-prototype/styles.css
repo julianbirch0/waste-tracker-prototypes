@@ -18,10 +18,10 @@ body {
   color: var(--text);
   font: 13px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
 }
-button, select { font: inherit; }
+button, select, input { font: inherit; }
 button { cursor: pointer; }
 [hidden] { display: none !important; }
-button:focus-visible, select:focus-visible {
+button:focus-visible, select:focus-visible, input:focus-visible {
   outline: 2px solid #4e94c7;
   outline-offset: 2px;
 }
@@ -210,4 +210,128 @@ select.field {
   .field-grid, .customer-summary { grid-template-columns: 1fr; }
   .field-grid { max-width: 300px; }
   .customer-summary .readonly-field:last-child { grid-column: auto; }
+}
+
+/* Add Service modal — deliberately compact, not full-width. */
+.service-dialog {
+  width: min(760px, calc(100vw - 36px));
+  max-width: none;
+  max-height: min(90vh, 820px);
+  margin: auto;
+  padding: 0;
+  overflow-y: auto;
+  color: var(--text);
+  border: 1px solid #cbd7e3;
+  border-radius: 9px;
+  background: var(--surface);
+  box-shadow: 0 18px 60px rgba(25, 43, 65, .20);
+}
+.service-dialog::backdrop { background: rgba(24, 40, 59, .36); }
+.service-dialog form { margin: 0; }
+.dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 24px 15px;
+  border-bottom: 1px solid var(--line);
+}
+.dialog-header h2 { margin: 0; font-size: 17px; font-weight: 600; }
+.dialog-close {
+  border: 0;
+  background: none;
+  color: #6b8099;
+  font-size: 24px;
+  line-height: 1;
+  padding: 0 4px;
+}
+.dialog-close:hover { color: #293b55; }
+.dialog-content { padding: 22px 24px 24px; }
+.dialog-grid { display: grid; gap: 18px; }
+.dialog-primary-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.dialog-schedule-fields { grid-template-columns: 1.1fr .7fr 1.2fr; }
+.dialog-divider { height: 1px; background: var(--line-soft); margin: 23px 0; }
+.dialog-content .field { height: 37px; }
+.dialog-content input.field { padding-right: 10px; }
+.dialog-content input[type="date"], .dialog-content input[type="time"] { cursor: pointer; }
+.specific-time-wrap { margin-top: 12px; }
+.price-row { display: flex; align-items: flex-end; flex-wrap: wrap; gap: 14px 18px; }
+.price-input-field { width: 175px; flex: 0 0 175px; }
+.price-field { font-weight: 600; font-variant-numeric: tabular-nums; }
+.rate-source-wrap { display: inline-flex; align-items: center; gap: 12px; min-height: 37px; }
+.rate-source { font-size: 13px; color: #60748e; font-weight: 600; }
+.reset-price-button {
+  padding: 4px 8px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: #fff;
+  color: #476986;
+  font-size: 12px;
+  font-weight: 600;
+}
+.reset-price-button:hover { background: var(--field); }
+.rate-hint { margin: 9px 0 0; font-size: 11.5px; color: var(--muted); }
+.dialog-notice {
+  padding: 14px 16px;
+  margin: 22px 0 0;
+  background: #f8fafc;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: #60748e;
+}
+.dialog-error { margin: 14px 0 0; color: #a32f38; font-size: 12px; }
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 24px;
+  border-top: 1px solid var(--line);
+  background: #fbfcfe;
+}
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.dialog-content .field:invalid.invalid { border-color: #c8646b; background-color: #fffafa; }
+.services-body { overflow: hidden; }
+.service-table-scroll { width: 100%; overflow-x: auto; }
+.services-table {
+  width: 100%;
+  min-width: 880px;
+  border-collapse: collapse;
+  table-layout: auto;
+  text-align: left;
+}
+.services-table thead { background: var(--header); }
+.services-table th {
+  padding: 10px 12px;
+  color: #29374d;
+  text-transform: uppercase;
+  font-size: 11px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+.services-table td {
+  border-top: 1px solid var(--line-soft);
+  padding: 12px;
+  font-size: 12px;
+  vertical-align: middle;
+}
+.services-table .service-action-heading { width: 74px; }
+.service-delete {
+  background: none;
+  border: 0;
+  padding: 4px;
+  color: #526e8a;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.service-delete:hover { color: #ad4147; }
+@media (max-width: 600px) {
+  .dialog-content { padding: 18px; }
+  .dialog-header { padding: 15px 18px; }
+  .dialog-actions { padding: 14px 18px; }
+  .dialog-primary-fields { grid-template-columns: 1fr; }
+  .dialog-schedule-fields { grid-template-columns: 1fr 1fr; }
+  .dialog-schedule-fields > :last-child { grid-column: 1 / -1; }
+}
+@media (max-width: 380px) {
+  .dialog-schedule-fields { grid-template-columns: 1fr; }
+  .dialog-schedule-fields > :last-child { grid-column: auto; }
 }
