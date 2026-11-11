@@ -35,6 +35,7 @@ Open `index.html` directly in a desktop browser, including from a locally cloned
 - No fields are disabled by Activity. All standard Rate Card inputs are enabled.
 - **Wait and Load → Charge and Charge Unit** controls are only rendered when the row's Activity is **Wait and Load**. All other rows have completely empty cells in these two columns (no disabled or hidden form controls).
 - Switching Activity only changes whether those controls are shown; it does not silently erase previously entered values.
+- **Container Rental → Charge and Charge Frequency** cells contain no controls when Container Type is **Loose**. They reappear for other types (or where no type is selected). As with Wait and Load, changing the type does not silently delete existing saved values.
 - Activity selection no longer automatically changes the container type. The user chooses Container Type independently.
 - Container Size depends on Container Type; Material depends on Material Type. Changing a parent clears its dependent selection.
 - All dropdowns show a non-selectable `Select ...` prompt only while unselected. Once a real value is chosen, the prompt is **removed from the option list entirely**. If a parent selection changes, its dependent dropdown resets to a blank value and temporarily shows its prompt again.
