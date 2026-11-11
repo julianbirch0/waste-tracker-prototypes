@@ -19,19 +19,14 @@ window.AgreementPrototypeData = {
   services: ["Deliver", "Collect", "Exchange", "Wait and Load", "Empty", "Other"],
   serviceTypes: ["Regular, recurring", "Ad hoc and one-off"],
   timingOptions: ["Any time", "Morning", "Afternoon", "Specific time"],
-  // Matching day-specific Round IDs/names from round-planning-prototype/data.js.
-  // One-off services can also be intentionally left Unallocated.
+  // Parent Round names only: day-specific instances are deliberately not
+  // displayed in the Agreement selector. Production will validate whether a
+  // selected Round operates on the Job date; left for the Jira requirements.
   rounds: [
-    { id: "round-001", name: "Small Bins", day: "Monday" },
-    { id: "round-002", name: "Skips 1", day: "Monday" },
-    { id: "round-002-tuesday", name: "Skips 1", day: "Tuesday" },
-    { id: "round-002-wednesday", name: "Skips 1", day: "Wednesday" },
-    { id: "round-002-thursday", name: "Skips 1", day: "Thursday" },
-    { id: "round-002-friday", name: "Skips 1", day: "Friday" },
-    { id: "round-003", name: "Skips 2", day: "Tuesday" },
-    { id: "round-004", name: "Subcontractor North", day: "Monday" },
-    { id: "round-004-wednesday", name: "Subcontractor North", day: "Wednesday" },
-    { id: "round-004-friday", name: "Subcontractor North", day: "Friday" }
+    { id: "parent-round-001", name: "Small Bins" },
+    { id: "parent-round-002", name: "Skips 1" },
+    { id: "parent-round-003", name: "Skips 2" },
+    { id: "parent-round-004", name: "Subcontractor North" }
   ],
 
   // Illustrative rate fixtures. Single Price represents the Rate Card's
