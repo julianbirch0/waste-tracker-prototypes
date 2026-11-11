@@ -11,18 +11,34 @@
     materialType: "material-type",
     material: "material"
   };
-
   const elements = {};
   fieldNames.forEach(function (name) {
     elements[name] = document.getElementById(fieldIds[name]);
   });
-  const message = document.getElementById("message");
-  const serviceMessage = document.getElementById("service-placeholder-message");
+
+  const $ = function (id) { return document.getElementById(id); };
+  const message = $("message");
+  const dialog = $("service-dialog");
+  const dialogForm = $("service-form");
+  const moneyFormatter = new Intl.NumberFormat("en-GB", {
+    style: "currency", currency: "GBP", minimumFractionDigits: 2, maximumFractionDigits: 2
+  });
+
+  let priceSuggestion = { value: "0.00", source: "Agreement rate" };
+  let manuallyPriced = false;
+  let idSequence = 1;
+
+  function clone(value) {
+    return JSON.parse(JSON.stringify(value));
+  }
 
   function initialAgreement() {
-    return isNew
-      ? { containerType: "", containerSize: "", materialType: "", material: "" }
-      : Object.assign({}, data.existingAgreement);
+    return Object.assign(
+      isNew
+        ? { containerType: "", containerSize: "", materialType: "", material: "" }
+        : data.existingAgreement,
+      { services: [] }
+    );
   }
 
   function normaliseAgreement(raw) {
@@ -39,6 +55,9 @@
     if (!(data.materials[value.materialType] || []).includes(value.material)) {
       value.material = "";
     }
+    value.services = Array.isArray(value.services) ? value.services.filter(function (item) {
+      return item && typeof item === "object" && typeof item.service === "string";
+    }) : [];
     return value;
   }
 
@@ -52,6 +71,7 @@
   }
 
   let savedAgreement = readSaved();
+  let draftServices = clone(savedAgreement.services);
 
   function selectOptions(element, options, placeholder, currentValue) {
     element.replaceChildren();
@@ -78,9 +98,7 @@
 
   function readForm() {
     const result = {};
-    fieldNames.forEach(function (name) {
-      result[name] = elements[name].value;
-    });
+    fieldNames.forEach(function (name) { result[name] = elements[name].value; });
     return result;
   }
 
@@ -99,15 +117,45 @@
     const date = new Date();
     date.setHours(12, 0, 0, 0);
     date.setDate(date.getDate() + offset);
+    return formatDate(date);
+  }
+
+  function formatDate(date) {
     return new Intl.DateTimeFormat("en-GB", {
       day: "2-digit", month: "short", year: "numeric"
     }).format(date);
   }
 
+  function formatISODate(isoDate) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(isoDate || "")) return "";
+    const parts = isoDate.split("-").map(Number);
+    return formatDate(new Date(parts[0], parts[1] - 1, parts[2]));
+  }
+
+  function displayTiming(service) {
+    return service.timing === "Specific time" && service.specificTime
+      ? service.specificTime : service.timing || "—";
+  }
+
   function renderJobs() {
-    const body = document.getElementById("jobs-body");
+    const body = $("jobs-body");
     body.replaceChildren();
-    if (isNew || !data.jobs.length) {
+    const staticJobs = isNew ? [] : data.jobs.map(function (job) {
+      return {
+        status: job.status, id: job.id, service: job.service,
+        displayDate: formatJobDate(job.daysFromToday)
+      };
+    });
+    const addedJobs = draftServices.filter(function (item) {
+      return item.serviceType === "Ad hoc and one-off";
+    }).map(function (item) {
+      return {
+        status: "Planned", id: item.jobId || "JOB-PROTOTYPE",
+        service: item.service, displayDate: formatISODate(item.jobDate)
+      };
+    });
+    const allJobs = addedJobs.concat(staticJobs);
+    if (!allJobs.length) {
       const row = document.createElement("tr");
       const cell = document.createElement("td");
       cell.colSpan = 4;
@@ -117,62 +165,268 @@
       body.appendChild(row);
       return;
     }
-    data.jobs.forEach(function (job) {
+    allJobs.forEach(function (job) {
       const row = document.createElement("tr");
-      const values = [job.status, job.id, job.service, formatJobDate(job.daysFromToday)];
-      values.forEach(function (value, index) {
+      [job.status, job.id, job.service, job.displayDate].forEach(function (value, index) {
         const cell = document.createElement("td");
         cell.textContent = value;
-        if (index === 0) {
-          cell.className = "job-status " + job.status.toLowerCase();
-        }
+        if (index === 0) cell.className = "job-status " + job.status.toLowerCase();
         row.appendChild(cell);
       });
       body.appendChild(row);
     });
   }
 
-  document.getElementById("page-subtitle").textContent = isNew ? "Add agreement" : "Edit agreement";
-  document.getElementById("customer-type").textContent = data.customer.type;
-  document.getElementById("customer-name").textContent = data.customer.name;
-  document.getElementById("site-name").textContent = data.customer.site;
-  document.getElementById("customer-notes").textContent = data.customer.notes;
-  document.getElementById("site-notes").textContent = data.customer.siteNotes;
+  function renderServices() {
+    const body = $("services-body");
+    body.replaceChildren();
+    $("services-list").hidden = draftServices.length === 0;
+    draftServices.forEach(function (service) {
+      const row = document.createElement("tr");
+      const cells = [
+        service.service, service.serviceType, formatISODate(service.jobDate),
+        service.quantity, displayTiming(service),
+        moneyFormatter.format(Number(service.price || 0)),
+        service.rateSource
+      ];
+      cells.forEach(function (value) {
+        const cell = document.createElement("td");
+        cell.textContent = value || "—";
+        row.appendChild(cell);
+      });
+      const action = document.createElement("td");
+      const remove = document.createElement("button");
+      remove.type = "button";
+      remove.className = "service-delete";
+      remove.textContent = "Remove";
+      remove.dataset.serviceId = service.id;
+      remove.setAttribute("aria-label", "Remove " + service.service + " service");
+      action.appendChild(remove);
+      row.appendChild(action);
+      body.appendChild(row);
+    });
+  }
+
+  function parseMoney(raw) {
+    const cleaned = String(raw == null ? "" : raw).replace(/[£,\s]/g, "");
+    if (!/^(?:\d+(?:\.\d{0,2})?|\.\d{1,2})$/.test(cleaned)) return null;
+    const value = Number(cleaned);
+    return Number.isFinite(value) && value <= 999999999.99 ? value.toFixed(2) : null;
+  }
+
+  function matchingRate(rates, serviceName, agreement) {
+    return (rates || []).find(function (rate) {
+      if (rate.service !== serviceName ||
+          rate.containerType !== agreement.containerType ||
+          rate.containerSize !== agreement.containerSize) return false;
+      // Deliver is not tied to a material in the existing Rate Card.
+      if (serviceName === "Deliver") return true;
+      return rate.materialType === agreement.materialType && rate.material === agreement.material;
+    });
+  }
+
+  function suggestedPrice() {
+    const agreement = readForm();
+    const service = $("service-kind").value;
+    const customer = matchingRate(data.customerRates, service, agreement);
+    if (customer) return { value: Number(customer.price).toFixed(2), source: "Customer rate" };
+    const standard = matchingRate(data.standardRates, service, agreement);
+    if (standard) return { value: Number(standard.price).toFixed(2), source: "Standard rate" };
+    return { value: "0.00", source: "Agreement rate" };
+  }
+
+  function restoreSuggestedPrice() {
+    priceSuggestion = suggestedPrice();
+    manuallyPriced = false;
+    $("service-price").value = moneyFormatter.format(Number(priceSuggestion.value));
+    $("rate-source").textContent = priceSuggestion.source;
+    $("reset-service-price").hidden = true;
+    $("service-price").classList.remove("invalid");
+    clearDialogError();
+  }
+
+  function onPriceEdit() {
+    manuallyPriced = true;
+    $("rate-source").textContent = "Agreement rate";
+    $("reset-service-price").hidden = priceSuggestion.source === "Agreement rate";
+    $("service-price").classList.remove("invalid");
+    clearDialogError();
+  }
+
+  function clearDialogError() {
+    $("service-dialog-error").hidden = true;
+    $("service-dialog-error").textContent = "";
+  }
+
+  function dialogError(text, field) {
+    $("service-dialog-error").textContent = text;
+    $("service-dialog-error").hidden = false;
+    if (field) {
+      $(field).classList.add("invalid");
+      $(field).focus();
+    }
+  }
+
+  function toggleServiceType() {
+    const adHoc = $("service-type").value === "Ad hoc and one-off";
+    $("ad-hoc-fields").hidden = !adHoc;
+    $("regular-service-notice").hidden = adHoc;
+    $("confirm-service").disabled = !adHoc || !$("service-kind").value;
+    clearDialogError();
+  }
+
+  function toggleSpecificTime() {
+    const selected = $("service-timing").value === "Specific time";
+    $("specific-time-wrap").hidden = !selected;
+    $("specific-time").required = selected;
+  }
+
+  function openAddService() {
+    dialogForm.reset();
+    selectOptions($("service-kind"), data.services, "Select service", "");
+    selectOptions($("service-type"), data.serviceTypes, "Select service type", "Regular, recurring");
+    selectOptions($("service-timing"), data.timingOptions, "Select timing", "Any time");
+    $("service-quantity").value = "1";
+    $("job-date").value = "";
+    $("specific-time").value = "";
+    dialogForm.querySelectorAll(".invalid").forEach(function (input) {
+      input.classList.remove("invalid");
+    });
+    toggleSpecificTime();
+    toggleServiceType();
+    restoreSuggestedPrice();
+    if (typeof dialog.showModal === "function") dialog.showModal();
+    else dialog.setAttribute("open", "");
+    $("service-kind").focus();
+  }
+
+  function closeAddService() {
+    if (typeof dialog.close === "function") dialog.close();
+    else dialog.removeAttribute("open");
+  }
+
+  function addService(event) {
+    event.preventDefault();
+    clearDialogError();
+    const service = $("service-kind").value;
+    const serviceType = $("service-type").value;
+    if (!service) return dialogError("Please select a service.", "service-kind");
+    if (serviceType !== "Ad hoc and one-off") return;
+    const jobDate = $("job-date").value;
+    if (!jobDate) return dialogError("Please select a job date.", "job-date");
+    const quantity = Number($("service-quantity").value);
+    if (!Number.isSafeInteger(quantity) || quantity < 1) {
+      return dialogError("Please enter a whole-number quantity of at least 1.", "service-quantity");
+    }
+    const timing = $("service-timing").value;
+    const specificTime = $("specific-time").value;
+    if (timing === "Specific time" && !specificTime) {
+      return dialogError("Please choose a specific time.", "specific-time");
+    }
+    const parsedPrice = parseMoney($("service-price").value);
+    if (parsedPrice === null) {
+      return dialogError("Please enter a valid, non-negative price in pounds and pence.", "service-price");
+    }
+
+    const uniqueId = String(Date.now()) + "-" + (idSequence++);
+    draftServices.push({
+      id: "service-" + uniqueId,
+      jobId: "JOB-P" + String(Date.now()).slice(-7) + String(idSequence),
+      service: service,
+      serviceType: serviceType,
+      jobDate: jobDate,
+      quantity: quantity,
+      timing: timing,
+      specificTime: timing === "Specific time" ? specificTime : "",
+      price: parsedPrice,
+      rateSource: manuallyPriced ? "Agreement rate" : priceSuggestion.source
+    });
+    renderServices();
+    renderJobs();
+    hideMessage();
+    closeAddService();
+  }
+
+  // Existing customer details remain read-only on the Agreement screen.
+  $("page-subtitle").textContent = isNew ? "Add agreement" : "Edit agreement";
+  $("customer-type").textContent = data.customer.type;
+  $("customer-name").textContent = data.customer.name;
+  $("site-name").textContent = data.customer.site;
+  $("customer-notes").textContent = data.customer.notes;
+  $("site-notes").textContent = data.customer.siteNotes;
 
   elements.containerType.addEventListener("change", function () {
-    const type = elements.containerType.value;
-    selectOptions(elements.containerSize, data.containerSizes[type] || [], "Select container size", "");
+    selectOptions(elements.containerSize, data.containerSizes[elements.containerType.value] || [], "Select container size", "");
     hideMessage();
   });
   elements.materialType.addEventListener("change", function () {
-    const type = elements.materialType.value;
-    selectOptions(elements.material, data.materials[type] || [], "Select material", "");
+    selectOptions(elements.material, data.materials[elements.materialType.value] || [], "Select material", "");
     hideMessage();
   });
   elements.containerSize.addEventListener("change", hideMessage);
   elements.material.addEventListener("change", hideMessage);
 
-  document.getElementById("add-service").addEventListener("click", function () {
-    serviceMessage.hidden = false;
+  $("add-service").addEventListener("click", openAddService);
+  $("close-service-dialog").addEventListener("click", closeAddService);
+  $("cancel-service-dialog").addEventListener("click", closeAddService);
+  dialog.addEventListener("click", function (event) {
+    // Native backdrop clicks target the dialog, rather than its contents.
+    if (event.target === dialog) closeAddService();
+  });
+  $("service-kind").addEventListener("change", function () {
+    const adHocServices = ["Deliver", "Collect", "Other"];
+    $("service-type").value = adHocServices.includes(this.value)
+      ? "Ad hoc and one-off" : "Regular, recurring";
+    toggleServiceType();
+    restoreSuggestedPrice();
+  });
+  $("service-type").addEventListener("change", toggleServiceType);
+  $("service-timing").addEventListener("change", toggleSpecificTime);
+  $("service-price").addEventListener("focus", function () {
+    const parsed = parseMoney(this.value);
+    if (parsed !== null) this.value = parsed;
+    this.select();
+  });
+  $("service-price").addEventListener("input", onPriceEdit);
+  $("service-price").addEventListener("blur", function () {
+    const parsed = parseMoney(this.value);
+    if (parsed !== null) {
+      this.value = moneyFormatter.format(Number(parsed));
+      this.classList.remove("invalid");
+    }
+  });
+  $("reset-service-price").addEventListener("click", restoreSuggestedPrice);
+  dialogForm.addEventListener("submit", addService);
+
+  $("services-body").addEventListener("click", function (event) {
+    const button = event.target.closest("button[data-service-id]");
+    if (!button) return;
+    draftServices = draftServices.filter(function (item) { return item.id !== button.dataset.serviceId; });
+    renderServices();
+    renderJobs();
+    hideMessage();
   });
 
-  document.getElementById("save").addEventListener("click", function () {
-    const current = normaliseAgreement(readForm());
+  $("save").addEventListener("click", function () {
+    const current = normaliseAgreement(Object.assign(readForm(), { services: clone(draftServices) }));
     try {
       window.localStorage.setItem(storageKey, JSON.stringify(current));
-      savedAgreement = current;
+      savedAgreement = clone(current);
       showMessage("Agreement changes saved in this browser.");
     } catch (error) {
       showMessage("Browser storage is unavailable. Changes remain on screen only.", "info");
     }
   });
 
-  document.getElementById("cancel").addEventListener("click", function () {
+  $("cancel").addEventListener("click", function () {
     renderForm(savedAgreement);
-    serviceMessage.hidden = true;
+    draftServices = clone(savedAgreement.services);
+    renderServices();
+    renderJobs();
     showMessage("Unsaved changes discarded.", "info");
   });
 
   renderForm(savedAgreement);
+  renderServices();
   renderJobs();
 })();
