@@ -152,12 +152,18 @@
               <div id="specific-time-wrap" class="specific-time-wrap" hidden>
                 <div class="time-range-fields">
                   <div class="input-field">
-                    <label for="from-time" class="field-label">From time</label>
-                    <select id="from-time" class="field"></select>
+                    <div id="from-time-label" class="field-label">From time</div>
+                    <div class="time-pair" role="group" aria-labelledby="from-time-label">
+                      <select id="from-hour" class="field" aria-label="From hour"></select>
+                      <select id="from-minute" class="field" aria-label="From minute"></select>
+                    </div>
                   </div>
                   <div class="input-field">
-                    <label for="to-time" class="field-label">To time</label>
-                    <select id="to-time" class="field"></select>
+                    <div id="to-time-label" class="field-label">To time</div>
+                    <div class="time-pair" role="group" aria-labelledby="to-time-label">
+                      <select id="to-hour" class="field" aria-label="To hour"></select>
+                      <select id="to-minute" class="field" aria-label="To minute"></select>
+                    </div>
                   </div>
                 </div>
               </div>
