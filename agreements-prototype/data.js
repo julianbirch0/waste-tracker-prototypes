@@ -15,6 +15,29 @@ window.AgreementPrototypeData = {
     ],
     "Non-waste": ["Gravel", "Sand", "Boxes", "Hanging Garments", "Furniture"]
   },
+  // Service choices match the Rate Card, plus Other for agreement-specific work.
+  services: ["Deliver", "Collect", "Exchange", "Wait and Load", "Empty", "Other"],
+  serviceTypes: ["Regular, recurring", "Ad hoc and one-off"],
+  timingOptions: ["Any time", "Morning", "Afternoon", "Specific time"],
+
+  // Illustrative rate fixtures. Single Price represents the Rate Card's
+  // Per Container charge for this iteration; disposal/rental/wait charges
+  // are not being calculated here. This prototype does not edit live rates.
+  // Deliver deliberately omits the material because it is not used in
+  // the Rate Card's Deliver activity.
+  standardRates: [
+    { service: "Deliver", containerType: "Skip", containerSize: "10 yd", price: "45.00" },
+    { service: "Collect", containerType: "Skip", containerSize: "10 yd", materialType: "Waste", material: "General Waste", price: "120.00" },
+    { service: "Exchange", containerType: "Skip", containerSize: "12 yd", materialType: "Waste", material: "Mixed Construction Waste", price: "135.00" },
+    { service: "Deliver", containerType: "Bin", containerSize: "660 litres", price: "15.00" },
+    { service: "Empty", containerType: "Bin", containerSize: "1100 litres", materialType: "Waste", material: "General Waste", price: "18.00" },
+    { service: "Wait and Load", containerType: "Loose", containerSize: "1/2 load", materialType: "Waste", material: "Mixed Construction Waste", price: "80.00" },
+    { service: "Wait and Load", containerType: "Loose", containerSize: "Items", materialType: "Non-waste", material: "Furniture", price: "40.00" }
+  ],
+  customerRates: [
+    { service: "Collect", containerType: "Skip", containerSize: "10 yd", materialType: "Waste", material: "General Waste", price: "110.00" },
+    { service: "Exchange", containerType: "Skip", containerSize: "12 yd", materialType: "Waste", material: "Mixed Construction Waste", price: "125.00" }
+  ],
   customer: {
     type: "Business",
     name: "Oakfield Construction Ltd",
