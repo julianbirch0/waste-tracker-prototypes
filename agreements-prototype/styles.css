@@ -252,8 +252,12 @@ select.field {
 .dialog-divider { height: 1px; background: var(--line-soft); margin: 23px 0; }
 .dialog-content .field { height: 37px; }
 .dialog-content input.field { padding-right: 10px; }
-.dialog-content input[type="date"], .dialog-content input[type="time"] { cursor: pointer; }
+.dialog-content input[type="date"] { cursor: pointer; }
+.dialog-content select.field:disabled { color: #8899ac; background-color: #f0f3f7; cursor: not-allowed; }
 .specific-time-wrap { margin-top: 12px; }
+.time-range-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.time-range-fields .field-label { margin-bottom: 5px; }
+.time-range-fields .field { padding-left: 8px; padding-right: 24px; font-variant-numeric: tabular-nums; }
 .price-row { display: flex; align-items: flex-end; flex-wrap: wrap; gap: 14px 18px; }
 .price-input-field { width: 175px; flex: 0 0 175px; }
 .price-field { font-weight: 600; font-variant-numeric: tabular-nums; }
