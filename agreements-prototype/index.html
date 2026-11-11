@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Agreement | WasteTracker Prototype</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="page">
+    <header class="page-header">
+      <div class="page-heading">
+        <h1>Agreement</h1>
+        <p class="subtitle" id="page-subtitle">Edit agreement</p>
+      </div>
+      <div class="header-actions">
+        <button type="button" id="save" class="btn btn-primary">Save</button>
+        <button type="button" id="cancel" class="btn btn-secondary">Cancel</button>
+      </div>
+    </header>
+
+    <div id="message" class="message" role="status" aria-live="polite" hidden></div>
+
+    <section class="customer-details" aria-label="Customer and site details">
+      <div class="customer-summary">
+        <div class="readonly-field">
+          <div class="field-label">Customer type</div>
+          <div class="readonly-value" id="customer-type"></div>
+        </div>
+        <div class="readonly-field">
+          <div class="field-label">Customer name</div>
+          <div class="readonly-value" id="customer-name"></div>
+        </div>
+        <div class="readonly-field">
+          <div class="field-label">Site name</div>
+          <div class="readonly-value" id="site-name"></div>
+        </div>
+      </div>
+      <div class="readonly-notes">
+        <div class="readonly-field">
+          <div class="field-label">Customer notes</div>
+          <div class="readonly-value notes-value" id="customer-notes"></div>
+        </div>
+        <div class="readonly-field">
+          <div class="field-label">Site notes</div>
+          <div class="readonly-value notes-value" id="site-notes"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="agreement-details" aria-label="Agreement material and container">
+      <div class="field-grid">
+        <div class="input-field">
+          <label class="field-label" for="container-type">Container type</label>
+          <select class="field" id="container-type"></select>
+        </div>
+        <div class="input-field">
+          <label class="field-label" for="container-size">Container size</label>
+          <select class="field" id="container-size"></select>
+        </div>
+        <div class="input-field">
+          <label class="field-label" for="material-type">Material type</label>
+          <select class="field" id="material-type"></select>
+        </div>
+        <div class="input-field">
+          <label class="field-label" for="material">Material</label>
+          <select class="field" id="material"></select>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="services-heading">
+      <div class="section-heading">
+        <h2 id="services-heading">Services</h2>
+        <button type="button" id="add-service" class="btn btn-primary">
+          <span class="plus-icon" aria-hidden="true">+</span> Add service
+        </button>
+      </div>
+      <div class="section-body services-body">
+        <p id="service-placeholder-message" class="service-placeholder-message" hidden>
+          Service details will be defined in a future prototype iteration.
+        </p>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="jobs-heading">
+      <div class="section-heading">
+        <h2 id="jobs-heading">Jobs</h2>
+      </div>
+      <div class="table-wrap">
+        <table class="jobs-table">
+          <thead>
+            <tr>
+              <th scope="col">Status</th>
+              <th scope="col">Job ID</th>
+              <th scope="col">Service</th>
+              <th scope="col">Job date</th>
+            </tr>
+          </thead>
+          <tbody id="jobs-body"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+  <!-- Standalone files: no server, libraries, modules or build required. -->
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
