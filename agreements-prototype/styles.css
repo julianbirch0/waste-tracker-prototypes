@@ -25,14 +25,20 @@ button:focus-visible, select:focus-visible {
   outline: 2px solid #4e94c7;
   outline-offset: 2px;
 }
-.page { min-width: 0; padding: 0 8px 36px; }
+.page {
+  width: 100%;
+  max-width: 1440px;
+  min-width: 0;
+  margin: 0 auto;
+  padding: 26px clamp(20px, 2.7vw, 44px) 44px;
+}
 .page-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 20px;
-  min-height: 83px;
-  padding: 10px 0 16px;
+  min-height: 74px;
+  padding: 0 0 20px;
 }
 .page-heading h1 {
   margin: 0;
@@ -76,11 +82,13 @@ button:focus-visible, select:focus-visible {
   border: 1px solid var(--line);
   border-radius: 7px;
   background: #fbfcfe;
+  max-width: 1100px;
 }
 .customer-summary {
   display: grid;
-  grid-template-columns: minmax(140px, .8fr) minmax(220px, 1.5fr) minmax(220px, 1.5fr);
-  column-gap: 26px;
+  grid-template-columns: minmax(110px, 160px) repeat(2, minmax(0, 1fr));
+  max-width: 900px;
+  column-gap: 24px;
   row-gap: 16px;
 }
 .readonly-value {
@@ -88,9 +96,11 @@ button:focus-visible, select:focus-visible {
   font-size: 13px;
   font-weight: 500;
   min-height: 19px;
+  max-width: 340px;
   overflow-wrap: anywhere;
 }
 .readonly-notes {
+  max-width: 900px;
   display: grid;
   gap: 16px;
   margin-top: 20px;
@@ -98,10 +108,11 @@ button:focus-visible, select:focus-visible {
   border-top: 1px solid var(--line-soft);
 }
 .notes-value { font-weight: 400; line-height: 1.5; white-space: pre-wrap; }
-.agreement-details { margin: 0 0 25px; }
+.agreement-details { max-width: 1100px; margin: 0 0 25px; }
 .field-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
+  max-width: 960px;
   gap: 18px;
 }
 .field {
@@ -190,13 +201,15 @@ select.field {
 .message[data-type="info"] { color: #536c88; border-color: #dbe4ee; background: #f6f9fc; }
 @media (max-width: 700px) {
   .page-header { gap: 10px; }
-  .field-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .field-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 500px; }
   .customer-summary { grid-template-columns: 1fr 1fr; }
   .customer-summary .readonly-field:last-child { grid-column: 1 / -1; }
 }
 @media (max-width: 480px) {
+  .page { padding: 18px 16px 36px; }
   .page-header { flex-wrap: wrap; }
   .header-actions { margin-left: auto; }
   .field-grid, .customer-summary { grid-template-columns: 1fr; }
+  .field-grid { max-width: 300px; }
   .customer-summary .readonly-field:last-child { grid-column: auto; }
 }
