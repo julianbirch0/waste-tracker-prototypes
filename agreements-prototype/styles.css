@@ -249,6 +249,7 @@ select.field {
 .dialog-grid { display: grid; gap: 18px; }
 .dialog-primary-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .dialog-schedule-fields { grid-template-columns: 1.1fr .7fr 1.2fr; }
+.dialog-job-fields { grid-template-columns: minmax(0, 1fr) minmax(0, 1.65fr); margin-top: 18px; }
 .dialog-divider { height: 1px; background: var(--line-soft); margin: 23px 0; }
 .dialog-content .field { height: 37px; }
 .dialog-content input.field { padding-right: 10px; }
@@ -298,7 +299,7 @@ select.field {
 .service-table-scroll { width: 100%; overflow-x: auto; }
 .services-table {
   width: 100%;
-  min-width: 880px;
+  min-width: 1160px;
   border-collapse: collapse;
   table-layout: auto;
   text-align: left;
@@ -333,6 +334,7 @@ select.field {
   .dialog-header { padding: 15px 18px; }
   .dialog-actions { padding: 14px 18px; }
   .dialog-primary-fields { grid-template-columns: 1fr; }
+  .dialog-job-fields { grid-template-columns: 1fr; }
   .dialog-schedule-fields { grid-template-columns: 1fr 1fr; }
   .dialog-schedule-fields > :last-child { grid-column: 1 / -1; }
 }
