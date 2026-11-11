@@ -13,8 +13,6 @@
   }
 
   const STORAGE_KEY = 'wastetracker.rate-card.prototype.v1';
-  // The prototype persists display preferences separately from rate card prices.
-  const PREFERENCES_KEY = 'wastetracker.rate-card.prototype.display-groups.v1';
   const MONEY_FIELDS = ['perContainerCharge', 'attendanceCharge', 'weightUnitPrice', 'rentalCharge', 'waitCharge'];
   const NUMBER_FIELDS = ['weightAllowance'];
   const ALL_FIELDS = [
@@ -39,14 +37,14 @@
     waitUnit: 'Wait and Load Charge Unit'
   };
   const GROUPS = [
-    { key: 'service', title: 'Service', always: true, fields: [
+    { key: 'service', title: 'Service', fields: [
       ['activity', 'Activity', 146],
       ['containerType', 'Container Type', 123],
       ['containerSize', 'Container Size', 119],
       ['materialType', 'Material Type', 124],
       ['material', 'Material', 170]
     ] },
-    { key: 'transport', title: 'Transport Charges', always: true, fields: [
+    { key: 'transport', title: 'Transport Charges', fields: [
       ['perContainerCharge', 'Per Container', 126],
       ['attendanceCharge', 'Attendance', 112]
     ] },
@@ -76,7 +74,6 @@
   let nextId = 1;
   let saved = loadSavedRows();
   let draft = clone(saved);
-  let visibleGroups = loadDisplayPreferences();
 
   function clone(value) {
     return JSON.parse(JSON.stringify(value));
@@ -89,29 +86,6 @@
     row.rentalFrequency = 'Weekly';
     row.waitUnit = 'Hour';
     return row;
-  }
-
-  function loadDisplayPreferences() {
-    const defaults = { disposal: false, rental: false, wait: false };
-    try {
-      const stored = JSON.parse(window.localStorage.getItem(PREFERENCES_KEY));
-      if (stored && typeof stored === 'object') {
-        Object.keys(defaults).forEach(function (key) {
-          if (typeof stored[key] === 'boolean') defaults[key] = stored[key];
-        });
-      }
-    } catch (error) {
-      // Missing/unavailable browser storage means use the default hidden groups.
-    }
-    return defaults;
-  }
-
-  function persistDisplayPreferences() {
-    try {
-      window.localStorage.setItem(PREFERENCES_KEY, JSON.stringify(visibleGroups));
-    } catch (error) {
-      // Controls remain usable for the session, even without storage.
-    }
   }
 
   function normaliseRow(input, fallbackId) {
@@ -244,6 +218,13 @@
   }
 
   function fieldHTML(row, field) {
+    // These two cells should be genuinely empty for all other activities:
+    // no disabled inputs, no dropdowns and no placeholder controls.
+    if (row.activity !== 'Wait and Load' &&
+        (field === 'waitCharge' || field === 'waitUnit')) {
+      return '';
+    }
+
     const options = {
       activity: [data.activities, 'Select activity'],
       containerType: [Object.keys(data.containerSizes), 'Select type'],
@@ -261,9 +242,7 @@
   }
 
   function renderRows() {
-    const groups = GROUPS.filter(function (group) {
-      return group.always || visibleGroups[group.key];
-    });
+    const groups = GROUPS;
     const columns = groups.flatMap(function (group) { return group.fields; });
     const width = columns.reduce(function (total, column) {
       return total + column[2];
@@ -308,9 +287,6 @@
           '</div></td></tr>';
       }).join('');
     }
-    document.querySelectorAll('[data-group-toggle]').forEach(function (checkbox) {
-      checkbox.checked = Boolean(visibleGroups[checkbox.dataset.groupToggle]);
-    });
     $('row-count').textContent = draft.length + (draft.length === 1 ? ' item' : ' items');
     updateDirtyIndicator();
   }
@@ -397,14 +373,6 @@
   function save() {
     const invalid = validateAndNormaliseAmounts();
     if (invalid) {
-      // Reveal a hidden pricing group if an invalid value was entered there.
-      const invalidGroup = GROUPS.find(function (group) {
-        return group.fields.some(function (column) { return column[0] === invalid.field; });
-      });
-      if (invalidGroup && !invalidGroup.always && !visibleGroups[invalidGroup.key]) {
-        visibleGroups[invalidGroup.key] = true;
-        persistDisplayPreferences();
-      }
       renderRows();
       const control = getRowElement(invalid.rowId)?.querySelector('[data-field="' + invalid.field + '"]');
       if (control) {
@@ -522,14 +490,6 @@
   $('save').addEventListener('click', save);
   $('cancel').addEventListener('click', cancel);
   $('reset-data').addEventListener('click', restoreSamples);
-  document.querySelectorAll('[data-group-toggle]').forEach(function (checkbox) {
-    checkbox.addEventListener('change', function () {
-      visibleGroups[checkbox.dataset.groupToggle] = checkbox.checked;
-      persistDisplayPreferences();
-      renderRows();
-    });
-  });
-
   renderRows();
   if (!storageAvailable) {
     showMessage('Browser storage is unavailable for this local file. You can use the prototype, but changes will not survive a reload.', 'warning');
