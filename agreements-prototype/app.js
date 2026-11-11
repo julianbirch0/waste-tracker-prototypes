@@ -134,8 +134,12 @@
   }
 
   function displayTiming(service) {
-    return service.timing === "Specific time" && service.specificTime
-      ? service.specificTime : service.timing || "—";
+    if (service.timing !== "Specific time") return service.timing || "—";
+    if (service.fromTime && service.toTime) {
+      return service.fromTime + "–" + service.toTime;
+    }
+    // Keep previously saved v0.0002 entries readable.
+    return service.specificTime || "—";
   }
 
   function renderJobs() {
@@ -269,41 +273,92 @@
   }
 
   function toggleServiceType() {
-    const adHoc = $("service-type").value === "Ad hoc and one-off";
+    const hasService = Boolean($("service-kind").value);
+    const adHoc = hasService && $("service-type").value === "Ad hoc and one-off";
+    const recurring = hasService && $("service-type").value === "Regular, recurring";
     $("ad-hoc-fields").hidden = !adHoc;
-    $("regular-service-notice").hidden = adHoc;
-    $("confirm-service").disabled = !adHoc || !$("service-kind").value;
+    $("regular-service-notice").hidden = !recurring;
+    $("confirm-service").disabled = !adHoc;
     clearDialogError();
+  }
+
+  function setServiceType(value) {
+    const select = $("service-type");
+    select.replaceChildren();
+    // No placeholder option: when the Service is blank, this control is
+    // genuinely empty and disabled, rather than displaying an option.
+    if (!value) {
+      select.disabled = true;
+      select.selectedIndex = -1;
+      return;
+    }
+    data.serviceTypes.forEach(function (choice) {
+      const option = document.createElement("option");
+      option.value = choice;
+      option.textContent = choice;
+      select.appendChild(option);
+    });
+    select.disabled = false;
+    select.value = value;
+  }
+
+  function setServiceOptions() {
+    selectOptions($("service-kind"), data.services, "Select service", "");
+    // The introductory prompt is visible only as the initial display value.
+    // It is not a selectable item in the opened list.
+    const prompt = $("service-kind").options[0];
+    prompt.disabled = true;
+    prompt.hidden = true;
+  }
+
+  function setTimeOptions(element) {
+    element.replaceChildren();
+    const prompt = document.createElement("option");
+    prompt.value = "";
+    prompt.textContent = "Select time";
+    prompt.disabled = true;
+    prompt.hidden = true;
+    element.appendChild(prompt);
+    for (let hour = 0; hour < 24; hour++) {
+      for (let minute = 0; minute < 60; minute += 10) {
+        const time = String(hour).padStart(2, "0") + ":" + String(minute).padStart(2, "0");
+        const option = document.createElement("option");
+        option.value = time;
+        option.textContent = time;
+        element.appendChild(option);
+      }
+    }
+    element.value = "";
   }
 
   function toggleSpecificTime() {
     const selected = $("service-timing").value === "Specific time";
     $("specific-time-wrap").hidden = !selected;
-    $("specific-time").required = selected;
+    $("from-time").required = selected;
+    $("to-time").required = selected;
   }
 
   function openAddService() {
     dialogForm.reset();
-    selectOptions($("service-kind"), data.services, "Select service", "");
-    selectOptions($("service-type"), data.serviceTypes, "Select service type", "Regular, recurring");
+    setServiceOptions();
+    setServiceType("");
     selectOptions($("service-timing"), data.timingOptions, "Select timing", "Any time");
+    setTimeOptions($("from-time"));
+    setTimeOptions($("to-time"));
     $("service-quantity").value = "1";
     $("job-date").value = "";
-    $("specific-time").value = "";
     dialogForm.querySelectorAll(".invalid").forEach(function (input) {
       input.classList.remove("invalid");
     });
     toggleSpecificTime();
     toggleServiceType();
     restoreSuggestedPrice();
-    if (typeof dialog.showModal === "function") dialog.showModal();
-    else dialog.setAttribute("open", "");
+    dialog.showModal();
     $("service-kind").focus();
   }
 
   function closeAddService() {
-    if (typeof dialog.close === "function") dialog.close();
-    else dialog.removeAttribute("open");
+    dialog.close();
   }
 
   function addService(event) {
@@ -320,9 +375,14 @@
       return dialogError("Please enter a whole-number quantity of at least 1.", "service-quantity");
     }
     const timing = $("service-timing").value;
-    const specificTime = $("specific-time").value;
-    if (timing === "Specific time" && !specificTime) {
-      return dialogError("Please choose a specific time.", "specific-time");
+    const fromTime = $("from-time").value;
+    const toTime = $("to-time").value;
+    if (timing === "Specific time") {
+      if (!fromTime) return dialogError("Please select a From time.", "from-time");
+      if (!toTime) return dialogError("Please select a To time.", "to-time");
+      if (toTime <= fromTime) {
+        return dialogError("To time must be later than From time.", "to-time");
+      }
     }
     const parsedPrice = parseMoney($("service-price").value);
     if (parsedPrice === null) {
@@ -338,7 +398,8 @@
       jobDate: jobDate,
       quantity: quantity,
       timing: timing,
-      specificTime: timing === "Specific time" ? specificTime : "",
+      fromTime: timing === "Specific time" ? fromTime : "",
+      toTime: timing === "Specific time" ? toTime : "",
       price: parsedPrice,
       rateSource: manuallyPriced ? "Agreement rate" : priceSuggestion.source
     });
@@ -370,19 +431,15 @@
   $("add-service").addEventListener("click", openAddService);
   $("close-service-dialog").addEventListener("click", closeAddService);
   $("cancel-service-dialog").addEventListener("click", closeAddService);
-  dialog.addEventListener("click", function (event) {
-    // Native backdrop clicks target the dialog, rather than its contents.
-    if (event.target !== dialog) return;
-    const bounds = dialog.getBoundingClientRect();
-    if (event.clientX < bounds.left || event.clientX > bounds.right ||
-        event.clientY < bounds.top || event.clientY > bounds.bottom) {
-      closeAddService();
-    }
-  });
+  // Only explicit Close/Cancel (or the browser's Escape key) dismiss the
+  // native modal. Backdrop clicks deliberately have no handler.
   $("service-kind").addEventListener("change", function () {
+    const selectedService = this.value;
+    // Once a real service is chosen, remove the prompt from the DOM entirely.
+    this.querySelector('option[value=""]')?.remove();
     const adHocServices = ["Deliver", "Collect", "Other"];
-    $("service-type").value = adHocServices.includes(this.value)
-      ? "Ad hoc and one-off" : "Regular, recurring";
+    setServiceType(adHocServices.includes(selectedService)
+      ? "Ad hoc and one-off" : "Regular, recurring");
     toggleServiceType();
     restoreSuggestedPrice();
   });
