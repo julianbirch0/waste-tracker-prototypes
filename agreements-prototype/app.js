@@ -34,6 +34,7 @@
 
   function initialAgreement() {
     return Object.assign(
+      {},
       isNew
         ? { containerType: "", containerSize: "", materialType: "", material: "" }
         : data.existingAgreement,
@@ -371,7 +372,12 @@
   $("cancel-service-dialog").addEventListener("click", closeAddService);
   dialog.addEventListener("click", function (event) {
     // Native backdrop clicks target the dialog, rather than its contents.
-    if (event.target === dialog) closeAddService();
+    if (event.target !== dialog) return;
+    const bounds = dialog.getBoundingClientRect();
+    if (event.clientX < bounds.left || event.clientX > bounds.right ||
+        event.clientY < bounds.top || event.clientY > bounds.bottom) {
+      closeAddService();
+    }
   });
   $("service-kind").addEventListener("change", function () {
     const adHocServices = ["Deliver", "Collect", "Other"];
