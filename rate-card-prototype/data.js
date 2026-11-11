@@ -40,8 +40,7 @@ window.RateCardPrototypeData = {
     {
       id: "sample-5", activity: "Empty", containerType: "Bin", containerSize: "1100 litres",
       materialType: "Waste", material: "General Waste", perContainerCharge: "18.00",
-      weightUnit: "kg", weightUnitPrice: "0.12", weightAllowance: "100",
-      waitCharge: "0.50", waitUnit: "Minute"
+      weightUnit: "kg", weightUnitPrice: "0.12", weightAllowance: "100"
     },
     {
       id: "sample-6", activity: "Wait and Load", containerType: "Loose", containerSize: "1/2 load",
