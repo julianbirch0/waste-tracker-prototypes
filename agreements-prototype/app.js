@@ -358,33 +358,26 @@
   function setRoundOptions() {
     const select = $("service-round");
     select.replaceChildren();
-    const isoDate = $("job-date").value;
-    const dateParts = /^\d{4}-\d{2}-\d{2}$/.test(isoDate) ? isoDate.split("-").map(Number) : null;
-    const weekday = dateParts
-      ? ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][
-          new Date(dateParts[0], dateParts[1] - 1, dateParts[2], 12).getDay()
-        ] : null;
-
     const prompt = document.createElement("option");
     prompt.value = "";
-    prompt.textContent = weekday ? "Select round" : "Select job date first";
+    prompt.textContent = "Select round";
     prompt.disabled = true;
     prompt.hidden = true;
     select.appendChild(prompt);
-    select.disabled = !weekday;
-    if (weekday) {
-      const unallocated = document.createElement("option");
-      unallocated.value = "unallocated";
-      unallocated.textContent = "Unallocated";
-      select.appendChild(unallocated);
-      data.rounds.filter(function (round) { return round.day === weekday; })
-        .forEach(function (round) {
-          const option = document.createElement("option");
-          option.value = round.id;
-          option.textContent = round.name + " – " + round.day;
-          select.appendChild(option);
-        });
-    }
+
+    // List every parent Round once, irrespective of the selected Job date.
+    // Day-of-week mismatch warnings are deferred to production requirements.
+    const unallocated = document.createElement("option");
+    unallocated.value = "unallocated";
+    unallocated.textContent = "Unallocated";
+    select.appendChild(unallocated);
+    data.rounds.forEach(function (round) {
+      const option = document.createElement("option");
+      option.value = round.id;
+      option.textContent = round.name;
+      select.appendChild(option);
+    });
+    select.disabled = false;
     select.value = "";
     select.classList.remove("invalid");
   }
@@ -459,7 +452,7 @@
     const roundId = $("service-round").value;
     if (!roundId) return dialogError("Please select a Round or Unallocated.", "service-round");
     const round = data.rounds.find(function (item) { return item.id === roundId; });
-    const roundName = round ? round.name + " – " + round.day : "Unallocated";
+    const roundName = round ? round.name : "Unallocated";
     const jobNotes = $("job-notes").value.trim();
     const parsedPrice = parseMoney($("service-price").value);
     if (parsedPrice === null) {
@@ -528,7 +521,7 @@
   $("from-hour").addEventListener("change", refreshToHours);
   $("from-minute").addEventListener("change", refreshToMinutes);
   $("to-hour").addEventListener("change", refreshToMinutes);
-  $("job-date").addEventListener("change", setRoundOptions);
+  // Round choices are parent names and do not change with the Job date.
   $("service-round").addEventListener("change", function () {
     this.classList.remove("invalid");
   });
