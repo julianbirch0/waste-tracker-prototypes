@@ -249,6 +249,52 @@ select.field {
 .dialog-grid { display: grid; gap: 18px; }
 .dialog-primary-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .dialog-schedule-fields { grid-template-columns: 1.1fr .7fr 1.2fr; }
+.recurring-dates { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 535px; }
+.recurring-dates:has(#job-date) { grid-template-columns: minmax(0, 1fr); max-width: 255px; }
+.optional { font-weight: 400; color: var(--muted); }
+.frequency-panel {
+  margin: 18px 0 20px;
+  padding: 17px 18px 18px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: #fbfcfe;
+}
+.frequency-heading { margin-bottom: 14px; font-size: 14px; font-weight: 600; }
+.frequency-top-grid, .monthly-detail-grid, .weekend-adjustment-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.monthly-pattern-select { margin: 16px 0 14px; max-width: 330px; }
+.monthly-day-field { max-width: 200px; margin: 16px 0; }
+.monthly-detail-grid { max-width: 500px; }
+.weekend-adjustment-grid { margin-top: 12px; }
+#weekly-pattern { margin-top: 16px; }
+.custom-weeks-wrap { margin-top: 13px; }
+.small-number-field { max-width: 125px; }
+.weekday-checks { display: flex; flex-wrap: wrap; gap: 7px; }
+.weekday-checks label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 11px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: #fff;
+  color: #465b74;
+  font-size: 12px;
+  cursor: pointer;
+}
+.weekday-checks label:has(input:checked) { border-color: #78b9b0; background: #eef8f6; color: #286e66; }
+.weekday-checks input { accent-color: var(--teal-dark); cursor: pointer; }
+.frequency-help { margin: 10px 0 0; font-size: 11.5px; color: var(--muted); }
+.schedule-preview { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line-soft); }
+.preview-heading { margin-bottom: 8px; font-size: 11.5px; font-weight: 600; color: #60748e; }
+.preview-dates { display: flex; flex-wrap: wrap; gap: 7px; font-size: 12px; color: #667b93; }
+.preview-date { display: inline-block; padding: 5px 8px; background: #fff; border: 1px solid var(--line); border-radius: 4px; }
+.shared-schedule-fields { grid-template-columns: 1fr 2fr; margin-top: 18px; max-width: 690px; }
+.price-period { font-size: 13px; color: #293b55; font-weight: 650; }
+.price-period:empty { display: none; }
+.price-period:not(:empty)::after { content: "·"; color: #aab6c5; margin-left: 10px; font-weight: 400; }
+
 .dialog-job-fields { grid-template-columns: minmax(0, 1fr) minmax(0, 1.65fr); margin-top: 18px; }
 .dialog-divider { height: 1px; background: var(--line-soft); margin: 23px 0; }
 .dialog-content .field { height: 37px; }
@@ -335,10 +381,14 @@ select.field {
   .dialog-actions { padding: 14px 18px; }
   .dialog-primary-fields { grid-template-columns: 1fr; }
   .dialog-job-fields { grid-template-columns: 1fr; }
+  .frequency-top-grid, .weekend-adjustment-grid { grid-template-columns: 1fr; }
+  .shared-schedule-fields { grid-template-columns: 1fr; }
+  .frequency-panel { padding: 14px; }
   .dialog-schedule-fields { grid-template-columns: 1fr 1fr; }
   .dialog-schedule-fields > :last-child { grid-column: 1 / -1; }
 }
 @media (max-width: 380px) {
   .dialog-schedule-fields { grid-template-columns: 1fr; }
+  .recurring-dates, .monthly-detail-grid { grid-template-columns: 1fr; }
   .dialog-schedule-fields > :last-child { grid-column: auto; }
 }
