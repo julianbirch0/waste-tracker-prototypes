@@ -247,7 +247,9 @@ select.field {
 .dialog-close:hover { color: #293b55; }
 .dialog-content { padding: 22px 24px 24px; }
 .dialog-grid { display: grid; gap: 18px; }
-.dialog-primary-fields { grid-template-columns: repeat(2, 220px); }
+.dialog-primary-fields { grid-template-columns: repeat(4, 220px); align-items: start; }
+.dialog-primary-fields .recurring-dates { grid-column: span 2; }
+.dialog-primary-fields .recurring-dates:has(#job-date) { grid-column: span 1; }
 .dialog-schedule-fields { grid-template-columns: 1.1fr .7fr 1.2fr; }
 .recurring-dates { grid-template-columns: repeat(2, 220px); max-width: 458px; }
 .recurring-dates:has(#job-date) { grid-template-columns: 220px; max-width: 220px; }
@@ -313,7 +315,7 @@ select.field {
 .dialog-content select.field:disabled { color: #8899ac; background-color: #f0f3f7; cursor: not-allowed; }
 .specific-time-wrap { min-width: 0; margin-top: 0; }
 .time-range-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-.time-range-fields .field-label { margin-bottom: 5px; }
+.time-range-fields .field-label { margin-bottom: 7px; }
 .time-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
 .time-pair .field { padding-left: 7px; padding-right: 19px; font-variant-numeric: tabular-nums; font-size: 11.5px; }
 .price-row { display: flex; align-items: flex-end; flex-wrap: wrap; gap: 14px 18px; }
@@ -482,5 +484,20 @@ select.field {
     grid-column: auto;
     grid-row: auto;
     width: 100%;
+  }
+}
+
+/* Keep all four top-row fields together on office monitors; wrap dates below
+   Service and Service Type when the viewport cannot fit four 220px fields. */
+@media (min-width: 601px) and (max-width: 1021px) {
+  .dialog-primary-fields { grid-template-columns: repeat(2, minmax(0, 220px)); }
+  .dialog-primary-fields .recurring-dates,
+  .dialog-primary-fields .recurring-dates:has(#job-date) { grid-column: 1 / -1; }
+}
+
+@media (max-width: 600px) {
+  .dialog-primary-fields .recurring-dates,
+  .dialog-primary-fields .recurring-dates:has(#job-date) {
+    grid-column: 1 / -1;
   }
 }
