@@ -396,7 +396,7 @@ select.field {
 
 /* Use the additional width to put the schedule preview beside the repeat
    controls; this reduces vertical scrolling for regular, recurring services. */
-@media (min-width: 900px) {
+@media (min-width: 1050px) {
   .frequency-panel {
     display: grid;
     grid-template-columns: minmax(0, 1.85fr) minmax(280px, 1fr);
@@ -421,7 +421,7 @@ select.field {
 }
 
 /* Let controls keep their natural width instead of stretching with the dialog. */
-@media (min-width: 601px) and (max-width: 900px) {
+@media (min-width: 741px) and (max-width: 900px) {
   .shared-schedule-fields {
     grid-template-columns: 105px minmax(300px, 1fr) minmax(180px, 220px);
   }
@@ -439,4 +439,9 @@ select.field {
 }
 @media (max-width: 420px) {
   .preview-dates { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (min-width: 601px) and (max-width: 740px) {
+  .shared-schedule-fields { grid-template-columns: 120px minmax(0, 1fr); max-width: 540px; }
+  .shared-schedule-fields > .input-field:last-child { grid-column: 1 / -1; max-width: 245px; }
 }
