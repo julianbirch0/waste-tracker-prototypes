@@ -173,7 +173,7 @@
                 <select id="weekly-repeat" class="field">
                   <option value="1">Every week</option>
                   <option value="2">Fortnightly</option>
-                  <option value="n">Every 𝑁 weeks</option>
+                  <option value="n">Every 𝘕 weeks</option>
                 </select>
               </div>
               <div id="monthly-interval-wrap" class="input-field" hidden>
@@ -273,7 +273,7 @@
             </div>
           </div>
 
-          <div class="dialog-grid shared-schedule-fields">
+          <div class="dialog-grid shared-schedule-fields" id="shared-schedule-fields">
             <div class="input-field">
               <label for="service-quantity" class="field-label">Quantity</label>
               <input id="service-quantity" class="field" type="number" min="1" step="1" value="1" required>
@@ -281,21 +281,21 @@
             <div class="input-field">
               <label for="service-timing" class="field-label">Timing</label>
               <select id="service-timing" class="field"></select>
-              <div id="specific-time-wrap" class="specific-time-wrap" hidden>
-                <div class="time-range-fields">
-                  <div class="input-field">
-                    <div id="from-time-label" class="field-label">From time</div>
-                    <div class="time-pair" role="group" aria-labelledby="from-time-label">
-                      <select id="from-hour" class="field" aria-label="From hour"></select>
-                      <select id="from-minute" class="field" aria-label="From minute"></select>
-                    </div>
+            </div>
+            <div id="specific-time-wrap" class="specific-time-wrap" hidden>
+              <div class="time-range-fields">
+                <div class="input-field">
+                  <div id="from-time-label" class="field-label">From time</div>
+                  <div class="time-pair" role="group" aria-labelledby="from-time-label">
+                    <select id="from-hour" class="field" aria-label="From hour"></select>
+                    <select id="from-minute" class="field" aria-label="From minute"></select>
                   </div>
-                  <div class="input-field">
-                    <div id="to-time-label" class="field-label">To time</div>
-                    <div class="time-pair" role="group" aria-labelledby="to-time-label">
-                      <select id="to-hour" class="field" aria-label="To hour"></select>
-                      <select id="to-minute" class="field" aria-label="To minute"></select>
-                    </div>
+                </div>
+                <div class="input-field">
+                  <div id="to-time-label" class="field-label">To time</div>
+                  <div class="time-pair" role="group" aria-labelledby="to-time-label">
+                    <select id="to-hour" class="field" aria-label="To hour"></select>
+                    <select id="to-minute" class="field" aria-label="To minute"></select>
                   </div>
                 </div>
               </div>
