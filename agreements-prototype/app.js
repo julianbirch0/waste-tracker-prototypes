@@ -460,6 +460,19 @@
       .sort(function (a, b) { return a.isoDate.localeCompare(b.isoDate); });
   }
 
+  function jobMatchesFilter(job, filter, today, fourWeeksAgo) {
+    const date = job.isoDate || "";
+    if (!date) return filter === "all";
+    switch (filter) {
+      case "future": return date >= today;
+      case "last4": return date >= fourWeeksAgo && date < today;
+      case "historic": return date < today;
+      case "all": return true;
+      case "last4-future":
+      default: return date >= fourWeeksAgo;
+    }
+  }
+
   function renderJobs() {
     const body = $("jobs-body");
     body.replaceChildren();
@@ -483,14 +496,18 @@
       };
     });
     const recurringJobs = draftServices.flatMap(projectedJobsFor);
+    const today = isoOfDate(new Date());
+    const fourWeeksAgo = isoDaysFromToday(-28);
+    const filter = $("jobs-date-filter").value;
     const allJobs = staticJobs.concat(oneOffJobs, recurringJobs)
+      .filter(function (job) { return jobMatchesFilter(job, filter, today, fourWeeksAgo); })
       .sort(function (a, b) { return (b.isoDate || "").localeCompare(a.isoDate || ""); });
     if (!allJobs.length) {
       const row = document.createElement("tr");
       const cell = document.createElement("td");
-      cell.colSpan = 4;
+      cell.colSpan = 5;
       cell.className = "empty-jobs";
-      cell.textContent = "No jobs for this agreement.";
+      cell.textContent = "No jobs in the selected date range.";
       row.appendChild(cell);
       body.appendChild(row);
       return;
@@ -503,38 +520,62 @@
         if (index === 0) cell.className = "job-status " + job.status.toLowerCase();
         row.appendChild(cell);
       });
+      const actions = document.createElement("td");
+      const goToJob = document.createElement("button");
+      goToJob.type = "button";
+      goToJob.className = "go-to-job";
+      goToJob.textContent = "Go to job";
+      goToJob.dataset.jobId = job.id;
+      goToJob.title = "Job navigation is not implemented in this prototype";
+      actions.appendChild(goToJob);
+      row.appendChild(actions);
       body.appendChild(row);
     });
   }
 
-  function actionButton(label, action, id) {
+  const SERVICE_ICON_PATHS = {
+    edit: '<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
+    clone: '<rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>',
+    delete: '<path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/>'
+  };
+
+  function actionButton(label, action, service) {
     const button = document.createElement("button");
     button.type = "button";
     button.className = "service-row-action";
-    button.textContent = label;
     button.dataset.serviceAction = action;
-    button.dataset.serviceId = id;
+    button.dataset.serviceId = service.id;
+    button.setAttribute("aria-label", label + " " + service.service + " service");
+    button.title = label;
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("viewBox", "0 0 24 24");
+    svg.setAttribute("width", "17");
+    svg.setAttribute("height", "17");
+    svg.setAttribute("fill", "none");
+    svg.setAttribute("stroke", "currentColor");
+    svg.setAttribute("stroke-width", "1.8");
+    svg.setAttribute("stroke-linecap", "round");
+    svg.setAttribute("stroke-linejoin", "round");
+    svg.setAttribute("aria-hidden", "true");
+    svg.innerHTML = SERVICE_ICON_PATHS[action];
+    button.appendChild(svg);
     return button;
   }
 
   function renderServiceGroup(type, bodyId, headers) {
     const body = $(bodyId);
     body.replaceChildren();
+    const recurring = type === "recurring";
     const services = draftServices.filter(function (item) {
-      return isRecurring(item) === (type === "recurring");
+      return isRecurring(item) === recurring;
+    }).sort(function (a, b) {
+      const aDate = recurring ? (a.startDate || "") : (a.jobDate || "");
+      const bDate = recurring ? (b.startDate || "") : (b.jobDate || "");
+      return bDate.localeCompare(aDate);
     });
-    if (!services.length) {
-      const row = document.createElement("tr");
-      const cell = document.createElement("td");
-      cell.colSpan = headers;
-      cell.className = "services-empty";
-      cell.textContent = type === "recurring"
-        ? "No regular, recurring services."
-        : "No ad hoc or one-off services.";
-      row.appendChild(cell);
-      body.appendChild(row);
-      return;
-    }
+    $(recurring ? "regular-services-section" : "ad-hoc-services-section").hidden =
+      services.length === 0;
+    if (!services.length) return;
     services.forEach(function (service) {
       const status = serviceStatus(service);
       const cells = type === "recurring" ? [
@@ -562,9 +603,9 @@
       const cell = document.createElement("td");
       const actions = document.createElement("div");
       actions.className = "service-actions";
-      actions.appendChild(actionButton("Edit", "edit", service.id));
-      if (type !== "recurring") actions.appendChild(actionButton("Clone", "clone", service.id));
-      actions.appendChild(actionButton("Delete", "delete", service.id));
+      actions.appendChild(actionButton("Edit", "edit", service));
+      if (!recurring) actions.appendChild(actionButton("Clone", "clone", service));
+      actions.appendChild(actionButton("Delete", "delete", service));
       cell.appendChild(actions);
       row.appendChild(cell);
       body.appendChild(row);
@@ -574,6 +615,7 @@
   function renderServices() {
     renderServiceGroup("ad-hoc", "ad-hoc-services-body", 7);
     renderServiceGroup("recurring", "regular-services-body", 9);
+    $("service-tables").hidden = draftServices.length === 0;
   }
 
   function parseMoney(raw) {
@@ -1258,6 +1300,14 @@
   });
   $("reset-service-price").addEventListener("click", restoreSuggestedPrice);
   dialogForm.addEventListener("submit", addService);
+
+  $("jobs-date-filter").addEventListener("change", renderJobs);
+  $("jobs-body").addEventListener("click", function (event) {
+    const button = event.target.closest("button[data-job-id]");
+    if (!button) return;
+    showMessage("Go to job: " + button.dataset.jobId +
+      ". Navigation is not part of this prototype.", "info");
+  });
 
   ["ad-hoc-services-body", "regular-services-body"].forEach(function (id) {
     $(id).addEventListener("click", function (event) {
