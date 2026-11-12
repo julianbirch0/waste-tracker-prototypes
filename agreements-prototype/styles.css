@@ -648,3 +648,12 @@ select.field {
   .jobs-filter .field { width: min(235px, calc(100vw - 130px)); }
   .jobs-table { min-width: 730px; }
 }
+
+/* Cloning fixes Service and Service Type without showing editable dropdowns. */
+#service-kind[hidden], #service-type[hidden],
+.clone-readonly-field[hidden] { display: none !important; }
+.clone-readonly-field[readonly] {
+  cursor: default;
+  background: #f1f4f7;
+  color: var(--text);
+}
