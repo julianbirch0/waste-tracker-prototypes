@@ -765,7 +765,63 @@
       n % 10 === 2 ? "nd" : n % 10 === 3 ? "rd" : "th";
   }
 
-  function openAddService() {
+  function fillTimePair(prefix, value) {
+    if (!value || !/^\d{2}:\d{2}$/.test(value)) return;
+    $(prefix + "-hour").value = value.slice(0, 2);
+    $(prefix + "-minute").value = value.slice(3, 5);
+  }
+
+  function populateServiceModal(service) {
+    // Called after resetting all controls, so no previous service values leak.
+    if (!service) return;
+    const kind = $("service-kind");
+    kind.value = service.service;
+    kind.querySelector('option[value=""]')?.remove();
+    setServiceType(service.serviceType);
+    $("job-date").value = modalMode === "clone" ? "" : (service.jobDate || "");
+    $("recurring-start").value = modalMode === "clone" ? "" : (service.startDate || "");
+    $("recurring-end").value = service.endDate || "";
+    $("service-quantity").value = service.quantity || "1";
+    $("service-timing").value = service.timing || "Any time";
+    const rule = service.recurrence;
+    if (rule) {
+      $("frequency-basis").value = rule.basis || "weekly";
+      $("weekly-repeat").value = rule.basis === "weekly"
+        ? (rule.every === 1 ? "1" : rule.every === 2 ? "2" : "n") : "1";
+      $("custom-weeks").value = String(rule.every > 2 && rule.basis === "weekly" ? rule.every : 3);
+      $("monthly-interval").value = String(rule.basis === "monthly" ? rule.every : 1);
+      $("monthly-method").value = rule.monthMethod || "weekday";
+      $("monthly-ordinal").value = String(rule.ordinal || 1);
+      $("monthly-weekday").value = String(rule.weekday ?? 1);
+      $("monthly-day").value = String(rule.monthDay || 1);
+      $("saturday-rule").value = String(rule.saturdayShift || 0);
+      $("sunday-rule").value = String(rule.sundayShift || 0);
+      $("weekday-checkboxes").querySelectorAll('input[type="checkbox"]').forEach(function (input) {
+        input.checked = (rule.weekdays || []).includes(Number(input.value));
+      });
+      monthDateOverridden = true;
+      monthWeekdayOverridden = true;
+    }
+    $("service-round").value = service.roundId || "unallocated";
+    $("job-notes").value = service.jobNotes || "";
+    fillTimePair("from", service.fromTime);
+    refreshToHours();
+    fillTimePair("to", service.toTime);
+    refreshToMinutes();
+    toggleSpecificTime();
+    toggleServiceType();
+    $("service-price").value = moneyFormatter.format(Number(service.price || 0));
+    $("rate-source").textContent = service.rateSource || "Agreement rate";
+    priceSuggestion = suggestedPrice();
+    manuallyPriced = service.rateSource === "Agreement rate";
+    $("reset-service-price").hidden = modalMode === "edit" ||
+      priceSuggestion.source === "Agreement rate" || !manuallyPriced;
+    renderFrequencyPreview();
+  }
+
+  function openAddService(mode, service) {
+    modalMode = typeof mode === "string" ? mode : "new";
+    editingServiceId = modalMode === "edit" && service ? service.id : null;
     dialogForm.reset();
     monthDateOverridden = false;
     monthWeekdayOverridden = false;
@@ -801,8 +857,28 @@
     toggleSpecificTime();
     toggleServiceType();
     restoreSuggestedPrice();
+    if (service) populateServiceModal(service);
+
+    const locked = modalMode === "edit";
+    $("service-kind").disabled = locked;
+    $("service-type").disabled = locked;
+    $("service-round").disabled = locked;
+    $("service-price").disabled = locked;
+    $("reset-service-price").hidden = locked || $("reset-service-price").hidden;
+    $("existing-service-hint").hidden = !locked;
+    $("service-dialog-title").textContent = locked ? "Edit service"
+      : modalMode === "clone" ? "Clone service" : "Add service";
+    $("confirm-service").textContent = locked ? "Save changes" : "Add service";
+    const showHold = locked && !isNew && isRecurring(service) &&
+      savedAgreement.services.some(function (item) { return item.id === service.id; });
+    $("hold-service").hidden = !showHold;
+    if (showHold) {
+      $("hold-service").textContent = service.onHold ? "Resume service" : "Put on hold";
+    }
+    if (locked) $("reset-service-price").hidden = true;
     dialog.showModal();
-    $("service-kind").focus();
+    if (!locked) $("service-kind").focus();
+    else $("service-quantity").focus();
   }
 
   function closeAddService() {
