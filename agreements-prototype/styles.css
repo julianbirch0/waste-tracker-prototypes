@@ -214,9 +214,9 @@ select.field {
 
 /* Add Service modal — deliberately compact, not full-width. */
 .service-dialog {
-  width: min(760px, calc(100vw - 36px));
+  width: min(1080px, calc(100vw - 40px));
   max-width: none;
-  max-height: min(90vh, 820px);
+  max-height: min(96vh, 1040px);
   margin: auto;
   padding: 0;
   overflow-y: auto;
@@ -391,4 +391,32 @@ select.field {
   .dialog-schedule-fields { grid-template-columns: 1fr; }
   .recurring-dates, .monthly-detail-grid { grid-template-columns: 1fr; }
   .dialog-schedule-fields > :last-child { grid-column: auto; }
+}
+
+/* Use the additional width to put the schedule preview beside the repeat
+   controls; this reduces vertical scrolling for regular, recurring services. */
+@media (min-width: 900px) {
+  .frequency-panel {
+    display: grid;
+    grid-template-columns: minmax(0, 1.65fr) minmax(240px, .9fr);
+    grid-template-areas:
+      "heading heading"
+      "controls preview"
+      "custom preview"
+      "pattern preview";
+    gap: 0 22px;
+    align-items: start;
+  }
+  .frequency-heading { grid-area: heading; }
+  .frequency-top-grid { grid-area: controls; }
+  .custom-weeks-wrap { grid-area: custom; }
+  #weekly-pattern, #monthly-pattern { grid-area: pattern; }
+  .schedule-preview {
+    grid-area: preview;
+    margin-top: 0;
+    padding: 3px 0 0 20px;
+    border-top: 0;
+    border-left: 1px solid var(--line-soft);
+    min-height: 100%;
+  }
 }
