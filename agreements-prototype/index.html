@@ -78,25 +78,45 @@
         </button>
       </div>
       <div class="section-body services-body">
-        <div class="service-table-scroll" id="services-list" hidden>
-          <table class="services-table">
-            <thead>
-              <tr>
-                <th scope="col">Service</th>
-                <th scope="col">Service type</th>
-                <th scope="col">Job date / dates</th>
-                <th scope="col">Frequency</th>
-                <th scope="col">Quantity</th>
-                <th scope="col">Timing</th>
-                <th scope="col">Round</th>
-                <th scope="col">Job notes</th>
-                <th scope="col">Price</th>
-                <th scope="col">Rate</th>
-                <th scope="col" class="service-action-heading">Action</th>
-              </tr>
-            </thead>
-            <tbody id="services-body"></tbody>
-          </table>
+        <div class="service-subsection">
+          <h3>Ad hoc and one-off</h3>
+          <div class="service-table-scroll">
+            <table class="services-table ad-hoc-table">
+              <thead>
+                <tr>
+                  <th scope="col">Status</th>
+                  <th scope="col">Service</th>
+                  <th scope="col">Job date</th>
+                  <th scope="col">Quantity</th>
+                  <th scope="col">Round</th>
+                  <th scope="col">Price</th>
+                  <th scope="col">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="ad-hoc-services-body"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="service-subsection">
+          <h3>Regular, recurring</h3>
+          <div class="service-table-scroll">
+            <table class="services-table recurring-table">
+              <thead>
+                <tr>
+                  <th scope="col">Status</th>
+                  <th scope="col">Service</th>
+                  <th scope="col">Start date</th>
+                  <th scope="col">End date</th>
+                  <th scope="col">Frequency</th>
+                  <th scope="col">Quantity</th>
+                  <th scope="col">Round</th>
+                  <th scope="col">Price</th>
+                  <th scope="col">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="regular-services-body"></tbody>
+            </table>
+          </div>
         </div>
       </div>
     </section>
@@ -328,10 +348,30 @@
         <p id="service-dialog-error" class="dialog-error" role="alert" hidden></p>
       </div>
       <div class="dialog-actions">
+        <button type="button" class="btn btn-secondary btn-hold" id="hold-service" hidden>Put on hold</button>
+        <span class="dialog-action-spacer"></span>
         <button type="button" class="btn btn-secondary" id="cancel-service-dialog">Cancel</button>
         <button type="submit" class="btn btn-primary" id="confirm-service">Add service</button>
       </div>
     </form>
+  </dialog>
+  <dialog id="job-confirm-dialog" class="confirmation-dialog" aria-labelledby="job-confirm-title">
+    <div class="dialog-header">
+      <h2 id="job-confirm-title">Confirm change</h2>
+      <button type="button" id="close-job-confirm" class="dialog-close" aria-label="Close confirmation">&times;</button>
+    </div>
+    <div class="dialog-content">
+      <p id="job-confirm-message"></p>
+      <div id="job-confirm-list-wrap" class="confirm-jobs" hidden>
+        <div class="field-label">Affected uncompleted jobs</div>
+        <ul id="job-confirm-list"></ul>
+      </div>
+      <p id="job-confirm-explanation" class="confirm-note"></p>
+    </div>
+    <div class="dialog-actions">
+      <button type="button" class="btn btn-secondary" id="cancel-job-confirm">Cancel</button>
+      <button type="button" class="btn btn-primary" id="apply-job-confirm">Confirm</button>
+    </div>
   </dialog>
   <!-- Standalone files: no server, libraries, modules or build required. -->
   <script src="data.js"></script>
