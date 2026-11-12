@@ -435,7 +435,8 @@
     if (!service || !service.id) return [];
     // Past-due but uncompleted sample jobs, outside the forward four-week window.
     return (data.jobs || []).filter(function (job) {
-      return job.serviceId === service.id && job.status !== "Completed";
+      return job.serviceId === service.id && job.status !== "Completed" &&
+        !(service.removedJobIds || []).includes(job.id);
     }).map(function (job) {
       return {
         id: job.id, serviceId: service.id, status: job.status,
@@ -465,7 +466,7 @@
     const staticJobs = isNew ? [] : (data.jobs || []).filter(function (job) {
       if (!job.serviceId || job.status === "Completed") return true;
       const owner = draftServices.find(function (s) { return s.id === job.serviceId; });
-      return owner && !owner.onHold;
+      return owner && !owner.onHold && !(owner.removedJobIds || []).includes(job.id);
     }).map(function (job) {
       return {
         status: job.status, id: job.id, service: job.service,
@@ -1027,7 +1028,11 @@
         : "There are no uncompleted jobs to remove. New jobs will not be created while this service is on hold.",
       "Put on hold",
       function () {
-        replaceService(Object.assign({}, service, { onHold: true }));
+        const removed = linkedOpenJobsFor(service).map(function (job) { return job.id; });
+        replaceService(Object.assign({}, service, {
+          onHold: true,
+          removedJobIds: Array.from(new Set((service.removedJobIds || []).concat(removed)))
+        }));
       }
     );
   }
@@ -1153,13 +1158,14 @@
     if (oldService) {
       const revised = Object.assign({}, oldService, candidate);
       const apply = function () { replaceService(revised); };
-      const affected = affectedJobsFor(oldService);
+      const affected = isRecurring(oldService)
+        ? projectedJobsFor(oldService) : affectedJobsFor(oldService);
       if (editMayAffectJobs(oldService, revised) && affected.length) {
         return showJobConfirmation(
           "Update existing jobs",
-          "This change affects jobs already created for this service. Replace the following outstanding jobs?",
+          "This change affects jobs already created in the forward four-week window. Update the following planned jobs?",
           affected,
-          "Confirming updates the service and rebuilds the illustrated forward four-week jobs. Completed jobs remain unchanged.",
+          "The prototype recalculates future jobs. Overdue and in-progress jobs would need a separate reconciliation rule in production.",
           "Update service", apply
         );
       }
