@@ -224,22 +224,34 @@
     const from = parseLocalDate(fromISO) || start;
     const every = Number(rule.every);
     if (!start || !from || (end && end < start) ||
-        !Number.isSafeInteger(every) || every < 1 || every > 52) return [];
+        !Number.isSafeInteger(every) || every < 1) return [];
     const minISO = isoOfDate(new Date(Math.max(start.getTime(), from.getTime())));
     const endISO = end ? isoOfDate(end) : null;
     const dates = [];
 
     if (rule.basis === "weekly") {
       if (!rule.weekdays || !rule.weekdays.length) return [];
-      const startWeek = startOfCalendarWeek(start);
-      const candidate = parseLocalDate(minISO);
-      for (let dayIndex = 0; dayIndex < 3650 && dates.length < limit; dayIndex++) {
-        const iso = isoOfDate(candidate);
-        if (endISO && iso > endISO) break;
-        const weekDiff = startOfCalendarWeek(candidate) - startWeek;
-        if (weekDiff >= 0 && weekDiff % every === 0 &&
-            rule.weekdays.includes(candidate.getDay())) dates.push(iso);
-        candidate.setDate(candidate.getDate() + 1);
+      // Jump from recurring week to recurring week rather than scanning every
+      // calendar day, so any whole-number interval remains practical.
+      const sortedDays = rule.weekdays.slice().sort(function (x, y) {
+        return (x + 6) % 7 - (y + 6) % 7;
+      });
+      const weekStart = parseLocalDate(minISO);
+      weekStart.setDate(weekStart.getDate() - ((weekStart.getDay() + 6) % 7));
+      const weeksSinceStart = startOfCalendarWeek(weekStart) - startOfCalendarWeek(start);
+      const skipWeeks = (every - (weeksSinceStart % every)) % every;
+      weekStart.setDate(weekStart.getDate() + skipWeeks * 7);
+      for (let cycle = 0; cycle < limit + 2 && dates.length < limit; cycle++) {
+        if (!Number.isFinite(weekStart.getTime())) break;
+        for (const day of sortedDays) {
+          const candidate = new Date(weekStart);
+          candidate.setDate(candidate.getDate() + ((day + 6) % 7));
+          const iso = isoOfDate(candidate);
+          if (endISO && iso > endISO) return dates;
+          if (iso >= minISO) dates.push(iso);
+          if (dates.length >= limit) break;
+        }
+        weekStart.setDate(weekStart.getDate() + every * 7);
       }
       return dates;
     }
@@ -289,8 +301,8 @@
     if (!rule.startDate) reason = "Choose a start date to see upcoming jobs.";
     else if (rule.endDate && rule.endDate < rule.startDate) reason = "End date must be on or after start date.";
     else if (rule.basis === "weekly" && !rule.weekdays.length) reason = "Select at least one weekday.";
-    else if (rule.basis === "weekly" && (!Number.isInteger(rule.every) || rule.every < 1 || rule.every > 52)) {
-      reason = "Enter a repeat interval from 3 to 52 weeks.";
+    else if (rule.basis === "weekly" && (!Number.isSafeInteger(rule.every) || rule.every < 1)) {
+      reason = "Enter a valid whole-number repeat interval.";
     }
 
     const dates = reason ? [] : scheduledDates(rule, previewStartISO(rule), 6);
@@ -698,8 +710,8 @@
         return dialogError("End date must be on or after Start date.", "recurring-end");
       }
       if (recurrence.basis === "weekly") {
-        if (!Number.isSafeInteger(recurrence.every) || recurrence.every < 1 || recurrence.every > 52) {
-          return dialogError("Choose a weekly interval from 1 to 52 weeks.", "custom-weeks");
+        if (!Number.isSafeInteger(recurrence.every) || recurrence.every < 1) {
+          return dialogError("Choose a positive whole-number weekly interval.", "custom-weeks");
         }
         if ($("weekly-repeat").value === "n" && recurrence.every < 3) {
           return dialogError("Use Every week or Fortnightly for 1 or 2 weeks.", "custom-weeks");
