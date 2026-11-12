@@ -446,7 +446,16 @@
   }
 
   function affectedJobsFor(service) {
-    return linkedOpenJobsFor(service).concat(projectedJobsFor(service))
+    if (!service || service.onHold) return [];
+    const oneOff = !isRecurring(service) &&
+      service.jobDate >= isoOfDate(new Date()) ? [{
+        id: service.jobId || "JOB-PROTOTYPE",
+        serviceId: service.id,
+        service: service.service,
+        status: "Planned",
+        isoDate: service.jobDate
+      }] : [];
+    return linkedOpenJobsFor(service).concat(projectedJobsFor(service), oneOff)
       .sort(function (a, b) { return a.isoDate.localeCompare(b.isoDate); });
   }
 
@@ -921,11 +930,30 @@
   }
 
   function editMayAffectJobs(before, after) {
-    const editableKeys = ["jobDate", "startDate", "endDate", "recurrence",
-      "quantity", "timing", "fromTime", "toTime", "jobNotes"];
-    return editableKeys.some(function (key) {
-      return JSON.stringify(before[key] ?? null) !== JSON.stringify(after[key] ?? null);
-    });
+    // Compare recurrence by its actual fields, not object property ordering.
+    const relevant = function (service) {
+      const rule = service.recurrence || {};
+      return {
+        jobDate: service.jobDate || "",
+        startDate: service.startDate || "",
+        endDate: service.endDate || "",
+        basis: rule.basis || "",
+        every: Number(rule.every || 0),
+        weekdays: (rule.weekdays || []).slice().sort(),
+        monthMethod: rule.monthMethod || "",
+        ordinal: Number(rule.ordinal || 0),
+        weekday: Number(rule.weekday || 0),
+        monthDay: Number(rule.monthDay || 0),
+        saturdayShift: Number(rule.saturdayShift || 0),
+        sundayShift: Number(rule.sundayShift || 0),
+        quantity: Number(service.quantity || 0),
+        timing: service.timing || "",
+        fromTime: service.fromTime || "",
+        toTime: service.toTime || "",
+        jobNotes: service.jobNotes || ""
+      };
+    };
+    return JSON.stringify(relevant(before)) !== JSON.stringify(relevant(after));
   }
 
   function actOnService(action, id) {
