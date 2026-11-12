@@ -875,6 +875,10 @@
     $("service-price").disabled = locked;
     $("reset-service-price").hidden = locked || $("reset-service-price").hidden;
     $("existing-service-hint").hidden = !locked;
+    $("existing-service-hint").textContent = service && service.onHold
+      ? "This service is on hold. Only dates, frequency, quantity, timing and job notes can be edited. Service, Service Type, Round and Price are fixed."
+      : "Existing service: Service, Service Type, Round and Price are fixed. You can edit dates, frequency, quantity, timing and job notes.";
+    dialog.querySelector(".rate-hint").hidden = locked;
     $("service-dialog-title").textContent = locked ? "Edit service"
       : modalMode === "clone" ? "Clone service" : "Add service";
     $("confirm-service").textContent = locked ? "Save changes" : "Add service";
