@@ -189,7 +189,7 @@
 
             <div id="custom-weeks-wrap" class="custom-weeks-wrap" hidden>
               <label for="custom-weeks" class="field-label">Repeat every (weeks)</label>
-              <input id="custom-weeks" type="number" class="field small-number-field" min="3" max="52" step="1" value="3">
+              <input id="custom-weeks" type="number" class="field small-number-field" min="3" step="1" value="3">
             </div>
 
             <div id="weekly-pattern">
@@ -269,7 +269,7 @@
             </div>
 
             <div class="schedule-preview" id="schedule-preview" aria-live="polite">
-              <div class="preview-heading">Next scheduled dates</div>
+              <div class="preview-heading">Next scheduled dates <span class="optional">(illustrative preview; not created as jobs)</span></div>
               <div id="preview-dates" class="preview-dates">Select a start date and frequency to see the next six dates.</div>
             </div>
           </div>
@@ -325,7 +325,7 @@
               <button type="button" id="reset-service-price" class="reset-price-button" hidden title="Restore the applicable customer or standard rate">Reset</button>
             </div>
           </div>
-          <p class="rate-hint">Uses the applicable customer rate, otherwise the standard rate. You can override either for this agreement.</p>
+          <p class="rate-hint">Uses the applicable customer rate, otherwise the standard rate. You can override either for this agreement. For recurring work, the price is shown against the selected frequency period.</p>
         </div>
         <p id="service-dialog-error" class="dialog-error" role="alert" hidden></p>
       </div>
