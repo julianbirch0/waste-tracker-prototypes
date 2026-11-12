@@ -29,9 +29,39 @@
   let idSequence = 1;
   let monthDateOverridden = false;
   let monthWeekdayOverridden = false;
+  let modalMode = "new"; // new, edit, or clone
+  let editingServiceId = null;
+  let pendingConfirmation = null;
 
   function clone(value) {
     return JSON.parse(JSON.stringify(value));
+  }
+
+
+  function isoDaysFromToday(offset) {
+    const date = new Date();
+    date.setHours(12, 0, 0, 0);
+    date.setDate(date.getDate() + Number(offset));
+    return isoOfDate(date);
+  }
+
+  function exampleServices() {
+    return (data.demoServices || []).map(function (entry) {
+      const sample = clone(entry);
+      if (sample.startDaysFromToday != null) {
+        sample.startDate = isoDaysFromToday(sample.startDaysFromToday);
+        delete sample.startDaysFromToday;
+      }
+      if (sample.jobDaysFromToday != null) {
+        sample.jobDate = isoDaysFromToday(sample.jobDaysFromToday);
+        delete sample.jobDaysFromToday;
+      }
+      if (sample.recurrence) {
+        sample.recurrence.startDate = sample.startDate;
+        sample.recurrence.endDate = sample.endDate || "";
+      }
+      return sample;
+    });
   }
 
   function initialAgreement() {
@@ -40,7 +70,7 @@
       isNew
         ? { containerType: "", containerSize: "", materialType: "", material: "" }
         : data.existingAgreement,
-      { services: [] }
+      { services: isNew ? [] : exampleServices() }
     );
   }
 
@@ -363,24 +393,88 @@
     return service.specificTime || "—";
   }
 
+  function isRecurring(service) {
+    return service.serviceType === "Regular, recurring";
+  }
+
+  function serviceStatus(service) {
+    if (!isRecurring(service)) {
+      return (service.jobDate || "") >= isoOfDate(new Date()) ? "Future" : "Past";
+    }
+    if (service.onHold) return "On hold";
+    if (service.endDate && service.endDate < isoOfDate(new Date())) return "Expired";
+    return "Live";
+  }
+
+  function projectedJobsFor(service) {
+    if (!isRecurring(service) || service.onHold || !service.recurrence) return [];
+    const today = isoOfDate(new Date());
+    const last = parseLocalDate(today);
+    last.setDate(last.getDate() + 27);
+    const lastISO = isoOfDate(last);
+    const schedule = Object.assign({}, service.recurrence, {
+      startDate: service.startDate || service.recurrence.startDate,
+      endDate: service.endDate || ""
+    });
+    return scheduledDates(schedule, today, 100).filter(function (iso) {
+      return iso <= lastISO;
+    }).map(function (date, index) {
+      return {
+        id: "JOB-R-" + String(service.id || "NEW").replace(/[^a-zA-Z0-9]/g, "").slice(-7) +
+          "-" + date.replaceAll("-", ""),
+        serviceId: service.id,
+        status: "Planned",
+        service: service.service,
+        isoDate: date,
+        fromBuilder: true
+      };
+    });
+  }
+
+  function linkedOpenJobsFor(service) {
+    if (!service || !service.id) return [];
+    // Past-due but uncompleted sample jobs, outside the forward four-week window.
+    return (data.jobs || []).filter(function (job) {
+      return job.serviceId === service.id && job.status !== "Completed";
+    }).map(function (job) {
+      return {
+        id: job.id, serviceId: service.id, status: job.status,
+        service: job.service, isoDate: isoDaysFromToday(job.daysFromToday),
+        fromBuilder: false
+      };
+    });
+  }
+
+  function affectedJobsFor(service) {
+    return linkedOpenJobsFor(service).concat(projectedJobsFor(service))
+      .sort(function (a, b) { return a.isoDate.localeCompare(b.isoDate); });
+  }
+
   function renderJobs() {
     const body = $("jobs-body");
     body.replaceChildren();
-    const staticJobs = isNew ? [] : data.jobs.map(function (job) {
+    const staticJobs = isNew ? [] : (data.jobs || []).filter(function (job) {
+      if (!job.serviceId || job.status === "Completed") return true;
+      const owner = draftServices.find(function (s) { return s.id === job.serviceId; });
+      return owner && !owner.onHold;
+    }).map(function (job) {
       return {
         status: job.status, id: job.id, service: job.service,
-        displayDate: formatJobDate(job.daysFromToday)
+        isoDate: isoDaysFromToday(job.daysFromToday)
       };
     });
-    const addedJobs = draftServices.filter(function (item) {
-      return item.serviceType === "Ad hoc and one-off";
-    }).map(function (item) {
+    const oneOffJobs = draftServices.filter(function (service) {
+      return !isRecurring(service);
+    }).map(function (service) {
       return {
-        status: "Planned", id: item.jobId || "JOB-PROTOTYPE",
-        service: item.service, displayDate: formatISODate(item.jobDate)
+        status: serviceStatus(service) === "Past" ? "Completed" : "Planned",
+        id: service.jobId || "JOB-PROTOTYPE",
+        service: service.service, isoDate: service.jobDate || ""
       };
     });
-    const allJobs = addedJobs.concat(staticJobs);
+    const recurringJobs = draftServices.flatMap(projectedJobsFor);
+    const allJobs = staticJobs.concat(oneOffJobs, recurringJobs)
+      .sort(function (a, b) { return (b.isoDate || "").localeCompare(a.isoDate || ""); });
     if (!allJobs.length) {
       const row = document.createElement("tr");
       const cell = document.createElement("td");
@@ -393,9 +487,9 @@
     }
     allJobs.forEach(function (job) {
       const row = document.createElement("tr");
-      [job.status, job.id, job.service, job.displayDate].forEach(function (value, index) {
+      [job.status, job.id, job.service, formatISODate(job.isoDate)].forEach(function (value, index) {
         const cell = document.createElement("td");
-        cell.textContent = value;
+        cell.textContent = value || "—";
         if (index === 0) cell.className = "job-status " + job.status.toLowerCase();
         row.appendChild(cell);
       });
@@ -403,42 +497,73 @@
     });
   }
 
-  function renderServices() {
-    const body = $("services-body");
+  function actionButton(label, action, id) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "service-row-action";
+    button.textContent = label;
+    button.dataset.serviceAction = action;
+    button.dataset.serviceId = id;
+    return button;
+  }
+
+  function renderServiceGroup(type, bodyId, headers) {
+    const body = $(bodyId);
     body.replaceChildren();
-    $("services-list").hidden = draftServices.length === 0;
-    draftServices.forEach(function (service) {
+    const services = draftServices.filter(function (item) {
+      return isRecurring(item) === (type === "recurring");
+    });
+    if (!services.length) {
       const row = document.createElement("tr");
-      const cells = [
-        service.service, service.serviceType,
-        service.serviceType === "Regular, recurring"
-          ? (formatISODate(service.startDate) + (service.endDate ? " – " + formatISODate(service.endDate) : " – ongoing"))
-          : formatISODate(service.jobDate),
-        service.serviceType === "Regular, recurring"
-          ? frequencyDescription(service.recurrence) : "One-off",
-        service.quantity, displayTiming(service),
-        service.roundName || (service.roundId === "unallocated" ? "Unallocated" : ""),
-        service.jobNotes || "",
-        moneyFormatter.format(Number(service.price || 0)) +
-          (service.serviceType === "Regular, recurring" ? " " + periodLabel(service.recurrence) : ""),
-        service.rateSource
+      const cell = document.createElement("td");
+      cell.colSpan = headers;
+      cell.className = "services-empty";
+      cell.textContent = type === "recurring"
+        ? "No regular, recurring services."
+        : "No ad hoc or one-off services.";
+      row.appendChild(cell);
+      body.appendChild(row);
+      return;
+    }
+    services.forEach(function (service) {
+      const status = serviceStatus(service);
+      const cells = type === "recurring" ? [
+        status,
+        service.service,
+        formatISODate(service.startDate),
+        service.endDate ? formatISODate(service.endDate) : "Ongoing",
+        frequencyDescription(service.recurrence),
+        String(service.quantity || 1),
+        service.roundName || "Unallocated",
+        moneyFormatter.format(Number(service.price || 0)) + " " + periodLabel(service.recurrence)
+      ] : [
+        status, service.service, formatISODate(service.jobDate),
+        String(service.quantity || 1),
+        service.roundName || "Unallocated",
+        moneyFormatter.format(Number(service.price || 0))
       ];
-      cells.forEach(function (value) {
+      const row = document.createElement("tr");
+      cells.forEach(function (value, i) {
         const cell = document.createElement("td");
         cell.textContent = value || "—";
+        if (i === 0) cell.className = "service-status " + status.toLowerCase().replaceAll(" ", "-");
         row.appendChild(cell);
       });
-      const action = document.createElement("td");
-      const remove = document.createElement("button");
-      remove.type = "button";
-      remove.className = "service-delete";
-      remove.textContent = "Remove";
-      remove.dataset.serviceId = service.id;
-      remove.setAttribute("aria-label", "Remove " + service.service + " service");
-      action.appendChild(remove);
-      row.appendChild(action);
+      const cell = document.createElement("td");
+      const actions = document.createElement("div");
+      actions.className = "service-actions";
+      actions.appendChild(actionButton("Edit", "edit", service.id));
+      if (type !== "recurring") actions.appendChild(actionButton("Clone", "clone", service.id));
+      actions.appendChild(actionButton("Delete", "delete", service.id));
+      cell.appendChild(actions);
+      row.appendChild(cell);
       body.appendChild(row);
     });
+  }
+
+  function renderServices() {
+    renderServiceGroup("ad-hoc", "ad-hoc-services-body", 7);
+    renderServiceGroup("recurring", "regular-services-body", 9);
   }
 
   function parseMoney(raw) {
