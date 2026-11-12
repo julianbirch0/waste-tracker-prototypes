@@ -280,7 +280,7 @@
   function renderFrequencyPreview() {
     const recurring = $("service-type").value === "Regular, recurring";
     const label = $("price-period");
-    label.textContent = recurring ? "per " + periodLabel(readRecurrence()) : "";
+    label.textContent = recurring ? periodLabel(readRecurrence()) : "";
     if (!recurring) return;
     const target = $("preview-dates");
     target.replaceChildren();
