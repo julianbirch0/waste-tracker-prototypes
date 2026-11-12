@@ -608,8 +608,27 @@
     });
   }
 
+  function populateMonthlyDays() {
+    const select = $("monthly-day");
+    select.replaceChildren();
+    for (let day = 1; day <= 31; day++) {
+      const option = document.createElement("option");
+      option.value = String(day);
+      option.textContent = String(day) + ordinalDateSuffix(day);
+      select.appendChild(option);
+    }
+    select.value = "1";
+  }
+
+  function ordinalDateSuffix(n) {
+    return n >= 11 && n <= 13 ? "th" : n % 10 === 1 ? "st" :
+      n % 10 === 2 ? "nd" : n % 10 === 3 ? "rd" : "th";
+  }
+
   function openAddService() {
     dialogForm.reset();
+    monthDateOverridden = false;
+    monthWeekdayOverridden = false;
     setServiceOptions();
     setServiceType("");
     selectOptions($("service-timing"), data.timingOptions, "Select timing", "Any time");
@@ -619,6 +638,21 @@
     setClockOptions($("to-minute"), "minute", 0, false);
     $("service-quantity").value = "1";
     $("job-date").value = "";
+    $("recurring-start").value = "";
+    $("recurring-end").value = "";
+    $("frequency-basis").value = "weekly";
+    $("weekly-repeat").value = "1";
+    $("custom-weeks").value = "3";
+    $("monthly-interval").value = "1";
+    $("monthly-method").value = "weekday";
+    $("monthly-ordinal").value = "1";
+    $("monthly-weekday").value = "1";
+    $("monthly-day").value = "1";
+    $("saturday-rule").value = "0";
+    $("sunday-rule").value = "0";
+    $("weekday-checkboxes").querySelectorAll('input[type="checkbox"]').forEach(function (input) {
+      input.checked = false;
+    });
     $("job-notes").value = "";
     setRoundOptions();
     dialogForm.querySelectorAll(".invalid").forEach(function (input) {
@@ -640,10 +674,60 @@
     clearDialogError();
     const service = $("service-kind").value;
     const serviceType = $("service-type").value;
+    const recurring = serviceType === "Regular, recurring";
     if (!service) return dialogError("Please select a service.", "service-kind");
-    if (serviceType !== "Ad hoc and one-off") return;
-    const jobDate = $("job-date").value;
-    if (!jobDate) return dialogError("Please select a job date.", "job-date");
+    if (!recurring && serviceType !== "Ad hoc and one-off") {
+      return dialogError("Please choose a Service Type.", "service-type");
+    }
+
+    let jobDate = "";
+    let startDate = "";
+    let endDate = "";
+    let recurrence = null;
+    if (recurring) {
+      recurrence = readRecurrence();
+      startDate = recurrence.startDate;
+      endDate = recurrence.endDate;
+      if (!parseLocalDate(startDate)) {
+        return dialogError("Please select a Start date.", "recurring-start");
+      }
+      if (endDate && !parseLocalDate(endDate)) {
+        return dialogError("Please enter a valid End date.", "recurring-end");
+      }
+      if (endDate && endDate < startDate) {
+        return dialogError("End date must be on or after Start date.", "recurring-end");
+      }
+      if (recurrence.basis === "weekly") {
+        if (!Number.isSafeInteger(recurrence.every) || recurrence.every < 1 || recurrence.every > 52) {
+          return dialogError("Choose a weekly interval from 1 to 52 weeks.", "custom-weeks");
+        }
+        if ($("weekly-repeat").value === "n" && recurrence.every < 3) {
+          return dialogError("Use Every week or Fortnightly for 1 or 2 weeks.", "custom-weeks");
+        }
+        if (!recurrence.weekdays.length) {
+          return dialogError("Select at least one weekday.", "weekday-checkboxes");
+        }
+      } else if (recurrence.basis === "monthly") {
+        if (![1, 2, 3, 4].includes(recurrence.every)) {
+          return dialogError("Please select a monthly frequency.", "monthly-interval");
+        }
+        if (recurrence.monthMethod === "weekday" &&
+            (!Number.isSafeInteger(recurrence.ordinal) || recurrence.ordinal < 1 || recurrence.ordinal > 5)) {
+          return dialogError("Please select a weekday occurrence.", "monthly-ordinal");
+        }
+        if (recurrence.monthMethod === "date" &&
+            (!Number.isSafeInteger(recurrence.monthDay) || recurrence.monthDay < 1 || recurrence.monthDay > 31)) {
+          return dialogError("Please select a day of the month.", "monthly-day");
+        }
+      }
+      if (!scheduledDates(recurrence, startDate, 1).length) {
+        return dialogError("There is no scheduled date between the Start and End dates. Please revise the schedule.", "recurring-end");
+      }
+    } else {
+      jobDate = $("job-date").value;
+      if (!parseLocalDate(jobDate)) return dialogError("Please select a Job date.", "job-date");
+    }
+
     const quantity = Number($("service-quantity").value);
     if (!Number.isSafeInteger(quantity) || quantity < 1) {
       return dialogError("Please enter a whole-number quantity of at least 1.", "service-quantity");
@@ -680,10 +764,13 @@
     const uniqueId = String(Date.now()) + "-" + (idSequence++);
     draftServices.push({
       id: "service-" + uniqueId,
-      jobId: "JOB-P" + String(Date.now()).slice(-7) + String(idSequence),
+      jobId: recurring ? "" : "JOB-P" + String(Date.now()).slice(-7) + String(idSequence),
       service: service,
       serviceType: serviceType,
       jobDate: jobDate,
+      startDate: startDate,
+      endDate: endDate,
+      recurrence: recurrence,
       quantity: quantity,
       timing: timing,
       fromTime: timing === "Specific time" ? fromTime : "",
@@ -736,6 +823,28 @@
   });
   $("service-type").addEventListener("change", toggleServiceType);
   $("service-timing").addEventListener("change", toggleSpecificTime);
+  $("recurring-start").addEventListener("change", seedScheduleFromStart);
+  $("recurring-end").addEventListener("change", renderFrequencyPreview);
+  $("frequency-basis").addEventListener("change", updateFrequencyControls);
+  $("weekly-repeat").addEventListener("change", updateFrequencyControls);
+  $("custom-weeks").addEventListener("input", renderFrequencyPreview);
+  $("monthly-interval").addEventListener("change", renderFrequencyPreview);
+  $("monthly-method").addEventListener("change", updateFrequencyControls);
+  $("monthly-ordinal").addEventListener("change", function () {
+    monthWeekdayOverridden = true;
+    updateFrequencyControls();
+  });
+  $("monthly-weekday").addEventListener("change", function () {
+    monthWeekdayOverridden = true;
+    renderFrequencyPreview();
+  });
+  $("monthly-day").addEventListener("change", function () {
+    monthDateOverridden = true;
+    renderFrequencyPreview();
+  });
+  $("saturday-rule").addEventListener("change", renderFrequencyPreview);
+  $("sunday-rule").addEventListener("change", renderFrequencyPreview);
+  $("weekday-checkboxes").addEventListener("change", renderFrequencyPreview);
   $("from-hour").addEventListener("change", refreshToHours);
   $("from-minute").addEventListener("change", refreshToMinutes);
   $("to-hour").addEventListener("change", refreshToMinutes);
@@ -787,6 +896,7 @@
     showMessage("Unsaved changes discarded.", "info");
   });
 
+  populateMonthlyDays();
   renderForm(savedAgreement);
   renderServices();
   renderJobs();
