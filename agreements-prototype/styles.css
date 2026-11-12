@@ -591,3 +591,60 @@ select.field {
   .btn-hold { margin-right: auto; }
   .services-table { min-width: 800px; }
 }
+
+/* Service table visibility and compact icon-only actions. */
+.service-subsection[hidden] + .service-subsection { border-top: 0; }
+.service-actions { gap: 5px; }
+.service-row-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 31px;
+  height: 31px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: transparent;
+  color: #4d6985;
+}
+.service-row-action svg { display: block; pointer-events: none; }
+.service-row-action:hover {
+  border-color: var(--line);
+  background: #f2f6fa;
+  text-decoration: none;
+}
+.service-row-action[data-service-action="delete"] { color: #a35459; }
+.service-row-action[data-service-action="delete"]:hover {
+  border-color: #efd5d7;
+  background: #fff7f7;
+}
+
+/* Jobs date filter and prototype navigation. */
+.jobs-filter { display: flex; align-items: center; gap: 12px; }
+.jobs-filter .field-label { margin-bottom: 0; white-space: nowrap; }
+.jobs-filter .field { width: 235px; height: 34px; }
+.jobs-table th:nth-child(1) { width: 17%; }
+.jobs-table th:nth-child(2) { width: 21%; }
+.jobs-table th:nth-child(3) { width: 27%; }
+.jobs-table th:nth-child(4) { width: 19%; }
+.jobs-table th:nth-child(5) { width: 16%; }
+.go-to-job {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 30px;
+  padding: 4px 10px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: #fff;
+  color: #456784;
+  font-size: 11.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.go-to-job:hover { background: var(--field); border-color: #b6c8db; }
+@media (max-width: 570px) {
+  .jobs-filter { width: 100%; justify-content: flex-start; }
+  .jobs-filter .field { width: min(235px, calc(100vw - 130px)); }
+  .jobs-table { min-width: 730px; }
+}
