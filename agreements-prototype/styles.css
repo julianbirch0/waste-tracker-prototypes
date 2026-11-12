@@ -214,7 +214,7 @@ select.field {
 
 /* Add Service modal — deliberately compact, not full-width. */
 .service-dialog {
-  width: min(1280px, calc(100vw - 40px));
+  width: min(1160px, calc(100vw - 40px));
   max-width: none;
   max-height: min(96vh, 1040px);
   margin: auto;
@@ -247,7 +247,7 @@ select.field {
 .dialog-close:hover { color: #293b55; }
 .dialog-content { padding: 22px 24px 24px; }
 .dialog-grid { display: grid; gap: 18px; }
-.dialog-primary-fields { grid-template-columns: 220px 255px; }
+.dialog-primary-fields { grid-template-columns: repeat(2, 220px); }
 .dialog-schedule-fields { grid-template-columns: 1.1fr .7fr 1.2fr; }
 .recurring-dates { grid-template-columns: repeat(2, 220px); max-width: 458px; }
 .recurring-dates:has(#job-date) { grid-template-columns: 220px; max-width: 220px; }
@@ -291,22 +291,31 @@ select.field {
 .preview-heading { margin-bottom: 8px; font-size: 11.5px; font-weight: 600; color: #60748e; }
 .preview-dates { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; font-size: 12px; color: #667b93; }
 .preview-date { display: block; width: 100%; text-align: center; white-space: nowrap; padding: 5px 8px; background: #fff; border: 1px solid var(--line); border-radius: 4px; }
-.shared-schedule-fields { grid-template-columns: 120px minmax(360px, 420px) 245px; margin-top: 18px; gap: 18px; align-items: start; }
+.shared-schedule-fields {
+  grid-template-columns: 110px 175px 220px;
+  margin-top: 18px;
+  gap: 16px;
+  align-items: start;
+}
+.shared-schedule-fields.has-specific-time {
+  grid-template-columns: 110px 160px 355px 220px;
+}
+.shared-schedule-fields > .input-field { min-width: 0; }
 .price-period { font-size: 13px; color: #293b55; font-weight: 650; }
 .price-period:empty { display: none; }
 .price-period:not(:empty)::after { content: "·"; color: #aab6c5; margin-left: 10px; font-weight: 400; }
 
-.dialog-job-fields { grid-template-columns: minmax(0, 1fr); margin-top: 18px; max-width: 1030px; }
+.dialog-job-fields { grid-template-columns: minmax(0, 1fr); margin-top: 18px; width: 100%; max-width: none; }
 .dialog-divider { height: 1px; background: var(--line-soft); margin: 23px 0; }
 .dialog-content .field { height: 37px; }
 .dialog-content input.field { padding-right: 10px; }
 .dialog-content input[type="date"] { cursor: pointer; }
 .dialog-content select.field:disabled { color: #8899ac; background-color: #f0f3f7; cursor: not-allowed; }
-.specific-time-wrap { margin-top: 12px; }
+.specific-time-wrap { min-width: 0; margin-top: 0; }
 .time-range-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .time-range-fields .field-label { margin-bottom: 5px; }
 .time-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
-.time-pair .field { padding-left: 7px; padding-right: 21px; font-variant-numeric: tabular-nums; font-size: 11.5px; }
+.time-pair .field { padding-left: 7px; padding-right: 19px; font-variant-numeric: tabular-nums; font-size: 11.5px; }
 .price-row { display: flex; align-items: flex-end; flex-wrap: wrap; gap: 14px 18px; }
 .price-input-field { width: 175px; flex: 0 0 175px; }
 .price-field { font-weight: 600; font-variant-numeric: tabular-nums; }
@@ -421,9 +430,18 @@ select.field {
 }
 
 /* Let controls keep their natural width instead of stretching with the dialog. */
-@media (min-width: 741px) and (max-width: 900px) {
-  .shared-schedule-fields {
-    grid-template-columns: 105px minmax(300px, 1fr) minmax(180px, 220px);
+@media (min-width: 601px) and (max-width: 1089px) {
+  .shared-schedule-fields.has-specific-time {
+    grid-template-columns: 110px 175px 220px;
+  }
+  .shared-schedule-fields.has-specific-time > #specific-time-wrap {
+    grid-column: 2 / 4;
+    grid-row: 2;
+    width: min(100%, 355px);
+  }
+  .shared-schedule-fields.has-specific-time > .input-field:last-child {
+    grid-column: 3;
+    grid-row: 1;
   }
 }
 @media (min-width: 601px) and (max-width: 760px) {
@@ -442,6 +460,27 @@ select.field {
 }
 
 @media (min-width: 601px) and (max-width: 740px) {
-  .shared-schedule-fields { grid-template-columns: 120px minmax(0, 1fr); max-width: 540px; }
-  .shared-schedule-fields > .input-field:last-child { grid-column: 1 / -1; max-width: 245px; }
+  .shared-schedule-fields { grid-template-columns: 110px 175px 190px; }
+  .shared-schedule-fields.has-specific-time { grid-template-columns: 110px 175px 190px; }
+  .shared-schedule-fields.has-specific-time > #specific-time-wrap {
+    grid-column: 2 / 4;
+    grid-row: 2;
+    width: min(100%, 355px);
+  }
+  .shared-schedule-fields.has-specific-time > .input-field:last-child {
+    grid-column: 3;
+    grid-row: 1;
+  }
+}
+
+@media (max-width: 600px) {
+  .shared-schedule-fields,
+  .shared-schedule-fields.has-specific-time { grid-template-columns: 1fr; }
+  .shared-schedule-fields > #specific-time-wrap,
+  .shared-schedule-fields.has-specific-time > #specific-time-wrap,
+  .shared-schedule-fields.has-specific-time > .input-field:last-child {
+    grid-column: auto;
+    grid-row: auto;
+    width: 100%;
+  }
 }
