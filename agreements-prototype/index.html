@@ -173,7 +173,7 @@
                 <select id="weekly-repeat" class="field">
                   <option value="1">Every week</option>
                   <option value="2">Fortnightly</option>
-                  <option value="n">Every N weeks</option>
+                  <option value="n">Every 𝑁 weeks</option>
                 </select>
               </div>
               <div id="monthly-interval-wrap" class="input-field" hidden>
@@ -185,11 +185,10 @@
                   <option value="4">Every fourth month</option>
                 </select>
               </div>
-            </div>
-
-            <div id="custom-weeks-wrap" class="custom-weeks-wrap" hidden>
-              <label for="custom-weeks" class="field-label">Repeat every (weeks)</label>
-              <input id="custom-weeks" type="number" class="field small-number-field" min="3" step="1" value="3">
+              <div id="custom-weeks-wrap" class="input-field custom-weeks-wrap" hidden>
+                <label for="custom-weeks" class="field-label">Repeat every (weeks)</label>
+                <input id="custom-weeks" type="number" class="field small-number-field" min="3" step="1" value="3">
+              </div>
             </div>
 
             <div id="weekly-pattern">
@@ -301,13 +300,13 @@
                 </div>
               </div>
             </div>
-          </div>
-
-          <div class="dialog-grid dialog-job-fields">
             <div class="input-field">
               <label for="service-round" class="field-label">Round</label>
               <select id="service-round" class="field" required></select>
             </div>
+          </div>
+
+          <div class="dialog-grid dialog-job-fields">
             <div class="input-field">
               <label for="job-notes" class="field-label">Job notes</label>
               <input id="job-notes" class="field" type="text" maxlength="500" placeholder="Optional notes for this job">
