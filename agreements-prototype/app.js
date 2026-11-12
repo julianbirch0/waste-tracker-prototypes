@@ -615,6 +615,9 @@
   function toggleSpecificTime() {
     const selected = $("service-timing").value === "Specific time";
     $("specific-time-wrap").hidden = !selected;
+    // Give the four time selectors their own position between Timing and Round,
+    // without altering the compact row used by all other timing choices.
+    $("shared-schedule-fields").classList.toggle("has-specific-time", selected);
     ["from-hour", "from-minute", "to-hour", "to-minute"].forEach(function (id) {
       $(id).required = selected;
     });
