@@ -60,9 +60,37 @@ window.AgreementPrototypeData = {
     materialType: "Waste",
     material: "General Waste"
   },
+  /* Example services only appear on a fresh Edit agreement prototype.
+     Their dates are relative to today. Actual user saves in localStorage win. */
+  demoServices: [
+    {
+      id: "demo-recurring-1", service: "Empty", serviceType: "Regular, recurring",
+      startDaysFromToday: -35, endDate: "",
+      recurrence: { basis: "weekly", every: 1, weekdays: [1, 4],
+        monthMethod: "weekday", ordinal: 1, weekday: 1, monthDay: 1,
+        saturdayShift: 0, sundayShift: 0 },
+      quantity: 2, timing: "Morning", roundId: "parent-round-001", roundName: "Small Bins",
+      jobNotes: "Call site office before visiting", price: "18.00", rateSource: "Standard rate", onHold: false
+    },
+    {
+      id: "demo-adhoc-future", service: "Collect", serviceType: "Ad hoc and one-off",
+      jobDaysFromToday: 9, quantity: 1, timing: "Any time",
+      roundId: "parent-round-002", roundName: "Skips 1",
+      jobNotes: "Use south entrance", price: "110.00", rateSource: "Customer rate",
+      jobId: "JOB-10522"
+    },
+    {
+      id: "demo-adhoc-past", service: "Deliver", serviceType: "Ad hoc and one-off",
+      jobDaysFromToday: -12, quantity: 1, timing: "Afternoon",
+      roundId: "unallocated", roundName: "Unallocated",
+      jobNotes: "", price: "45.00", rateSource: "Standard rate",
+      jobId: "JOB-10468"
+    }
+  ],
   /* Offsets keep the illustrative Planned/Completed dates relevant over time. */
   jobs: [
-    { status: "Planned", id: "JOB-10482", service: "Collect", daysFromToday: 6 },
+    { status: "Planned", id: "JOB-10482", service: "Empty", serviceId: "demo-recurring-1", daysFromToday: -2 },
+    { status: "Planned", id: "JOB-10482A", service: "Collect", daysFromToday: 6 },
     { status: "Planned", id: "JOB-10483", service: "Exchange", daysFromToday: 13 },
     { status: "Completed", id: "JOB-10479", service: "Exchange", daysFromToday: -5 },
     { status: "Completed", id: "JOB-10475", service: "Deliver", daysFromToday: -15 }
