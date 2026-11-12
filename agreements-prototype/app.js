@@ -27,6 +27,8 @@
   let priceSuggestion = { value: "0.00", source: "Agreement rate" };
   let manuallyPriced = false;
   let idSequence = 1;
+  let monthDateOverridden = false;
+  let monthWeekdayOverridden = false;
 
   function clone(value) {
     return JSON.parse(JSON.stringify(value));
@@ -133,6 +135,213 @@
     return formatDate(new Date(parts[0], parts[1] - 1, parts[2]));
   }
 
+
+  const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const MS_PER_DAY = 86400000;
+  const MS_PER_WEEK = MS_PER_DAY * 7;
+
+  function parseLocalDate(iso) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(iso || "")) return null;
+    const parts = iso.split("-").map(Number);
+    const date = new Date(parts[0], parts[1] - 1, parts[2], 12);
+    return date.getFullYear() === parts[0] &&
+      date.getMonth() === parts[1] - 1 &&
+      date.getDate() === parts[2] ? date : null;
+  }
+
+  function isoOfDate(date) {
+    return String(date.getFullYear()).padStart(4, "0") + "-" +
+      String(date.getMonth() + 1).padStart(2, "0") + "-" +
+      String(date.getDate()).padStart(2, "0");
+  }
+
+  function startOfCalendarWeek(date) {
+    const dateUTC = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
+    return Math.floor((dateUTC - ((date.getDay() + 6) % 7) * MS_PER_DAY) / MS_PER_WEEK);
+  }
+
+  function ordinal(n) {
+    const names = ["", "first", "second", "third", "fourth", "fifth"];
+    if (names[n]) return names[n];
+    const suffix = n % 100 >= 11 && n % 100 <= 13 ? "th" :
+      n % 10 === 1 ? "st" : n % 10 === 2 ? "nd" : n % 10 === 3 ? "rd" : "th";
+    return String(n) + suffix;
+  }
+
+  function periodLabel(rule) {
+    if (!rule || rule.basis === "ad-hoc") return "";
+    const n = Number(rule.every);
+    if (rule.basis === "weekly") {
+      return n === 1 ? "weekly" : n === 2 ? "fortnightly" : "every " + ordinal(n) + " week";
+    }
+    return n === 1 ? "monthly" : "every " + ordinal(n) + " month";
+  }
+
+  function readRecurrence() {
+    const basis = $("frequency-basis").value;
+    const repeat = $("weekly-repeat").value;
+    return {
+      basis: basis,
+      startDate: $("recurring-start").value,
+      endDate: $("recurring-end").value,
+      every: basis === "weekly"
+        ? (repeat === "n" ? Number($("custom-weeks").value) : Number(repeat))
+        : Number($("monthly-interval").value),
+      weekdays: Array.from($("weekday-checkboxes").querySelectorAll('input[type="checkbox"]:checked'))
+        .map(function (input) { return Number(input.value); }),
+      monthMethod: $("monthly-method").value,
+      ordinal: Number($("monthly-ordinal").value),
+      weekday: Number($("monthly-weekday").value),
+      monthDay: Number($("monthly-day").value),
+      saturdayShift: Number($("saturday-rule").value),
+      sundayShift: Number($("sunday-rule").value)
+    };
+  }
+
+  function frequencyDescription(rule) {
+    if (!rule || !rule.basis || rule.basis === "ad-hoc") return "One-off";
+    const period = periodLabel(rule);
+    if (rule.basis === "weekly") {
+      const days = (rule.weekdays || []).slice().sort(function (a, b) {
+        return (a + 6) % 7 - (b + 6) % 7;
+      }).map(function (day) { return WEEKDAY_LABELS[day]; }).join(", ");
+      return (period.charAt(0).toUpperCase() + period.slice(1)) + (days ? " · " + days : "");
+    }
+    if (rule.monthMethod === "weekday") {
+      const names = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+      return (period.charAt(0).toUpperCase() + period.slice(1)) + " · " +
+        ordinal(rule.ordinal) + " " + names[rule.weekday];
+    }
+    return (period.charAt(0).toUpperCase() + period.slice(1)) + " · day " + rule.monthDay +
+      ((rule.saturdayShift || rule.sundayShift) ? " (weekend adjusted)" : "");
+  }
+
+  // Produces dates for preview only. Recurring Jobs are created by the back-end
+  // in production; these dates are not written as job records by the prototype.
+  function scheduledDates(rule, fromISO, limit) {
+    const start = parseLocalDate(rule.startDate);
+    const end = rule.endDate ? parseLocalDate(rule.endDate) : null;
+    const from = parseLocalDate(fromISO) || start;
+    const every = Number(rule.every);
+    if (!start || !from || (end && end < start) ||
+        !Number.isSafeInteger(every) || every < 1 || every > 52) return [];
+    const minISO = isoOfDate(new Date(Math.max(start.getTime(), from.getTime())));
+    const endISO = end ? isoOfDate(end) : null;
+    const dates = [];
+
+    if (rule.basis === "weekly") {
+      if (!rule.weekdays || !rule.weekdays.length) return [];
+      const startWeek = startOfCalendarWeek(start);
+      const candidate = parseLocalDate(minISO);
+      for (let dayIndex = 0; dayIndex < 3650 && dates.length < limit; dayIndex++) {
+        const iso = isoOfDate(candidate);
+        if (endISO && iso > endISO) break;
+        const weekDiff = startOfCalendarWeek(candidate) - startWeek;
+        if (weekDiff >= 0 && weekDiff % every === 0 &&
+            rule.weekdays.includes(candidate.getDay())) dates.push(iso);
+        candidate.setDate(candidate.getDate() + 1);
+      }
+      return dates;
+    }
+
+    if (rule.basis === "monthly") {
+      if (every > 4) return [];
+      for (let offset = 0; offset < 240 && dates.length < limit; offset += every) {
+        const year = start.getFullYear();
+        const month = start.getMonth() + offset;
+        const first = new Date(year, month, 1, 12);
+        const lastDate = new Date(first.getFullYear(), first.getMonth() + 1, 0, 12).getDate();
+        let number;
+        if (rule.monthMethod === "weekday") {
+          if (!Number.isInteger(rule.ordinal) || rule.ordinal < 1 || rule.ordinal > 5 ||
+              !Number.isInteger(rule.weekday) || rule.weekday < 0 || rule.weekday > 6) return [];
+          number = 1 + (rule.weekday - first.getDay() + 7) % 7 + (rule.ordinal - 1) * 7;
+        } else {
+          number = rule.monthDay;
+        }
+        if (!Number.isInteger(number) || number < 1 || number > lastDate) continue;
+        const date = new Date(first.getFullYear(), first.getMonth(), number, 12);
+        if (rule.monthMethod === "date") {
+          if (date.getDay() === 6) date.setDate(date.getDate() + rule.saturdayShift);
+          else if (date.getDay() === 0) date.setDate(date.getDate() + rule.sundayShift);
+        }
+        const iso = isoOfDate(date);
+        if (iso >= minISO && (!endISO || iso <= endISO)) dates.push(iso);
+      }
+    }
+    return dates;
+  }
+
+  function previewStartISO(rule) {
+    const today = isoOfDate(new Date());
+    return rule.startDate > today ? rule.startDate : today;
+  }
+
+  function renderFrequencyPreview() {
+    const recurring = $("service-type").value === "Regular, recurring";
+    const label = $("price-period");
+    label.textContent = recurring ? "per " + periodLabel(readRecurrence()) : "";
+    if (!recurring) return;
+    const target = $("preview-dates");
+    target.replaceChildren();
+    const rule = readRecurrence();
+    let reason = "";
+    if (!rule.startDate) reason = "Choose a start date to see upcoming jobs.";
+    else if (rule.endDate && rule.endDate < rule.startDate) reason = "End date must be on or after start date.";
+    else if (rule.basis === "weekly" && !rule.weekdays.length) reason = "Select at least one weekday.";
+    else if (rule.basis === "weekly" && (!Number.isInteger(rule.every) || rule.every < 1 || rule.every > 52)) {
+      reason = "Enter a repeat interval from 3 to 52 weeks.";
+    }
+
+    const dates = reason ? [] : scheduledDates(rule, previewStartISO(rule), 6);
+    if (!reason && !dates.length) reason = "No future dates within this schedule.";
+    if (reason) {
+      target.textContent = reason;
+    } else {
+      dates.forEach(function (iso) {
+        const chip = document.createElement("span");
+        chip.className = "preview-date";
+        chip.textContent = new Intl.DateTimeFormat("en-GB", {
+          weekday: "short", day: "numeric", month: "short", year: "numeric"
+        }).format(parseLocalDate(iso));
+        target.appendChild(chip);
+      });
+    }
+  }
+
+  function updateFrequencyControls() {
+    const weekly = $("frequency-basis").value === "weekly";
+    $("weekly-repeat-wrap").hidden = !weekly;
+    $("monthly-interval-wrap").hidden = weekly;
+    $("weekly-pattern").hidden = !weekly;
+    $("monthly-pattern").hidden = weekly;
+    $("custom-weeks-wrap").hidden = !weekly || $("weekly-repeat").value !== "n";
+    const dateBased = $("monthly-method").value === "date";
+    $("monthly-date-wrap").hidden = !dateBased;
+    $("monthly-weekday-wrap").hidden = dateBased;
+    $("fifth-note").hidden = dateBased || $("monthly-ordinal").value !== "5";
+    renderFrequencyPreview();
+  }
+
+  function seedScheduleFromStart() {
+    const date = parseLocalDate($("recurring-start").value);
+    if (date) {
+      const days = $("weekday-checkboxes").querySelectorAll('input[type="checkbox"]');
+      if (!Array.from(days).some(function (input) { return input.checked; })) {
+        const selected = Array.from(days).find(function (input) {
+          return Number(input.value) === date.getDay();
+        });
+        if (selected) selected.checked = true;
+      }
+      if (!monthDateOverridden) $("monthly-day").value = String(date.getDate());
+      if (!monthWeekdayOverridden) {
+        $("monthly-ordinal").value = String(Math.ceil(date.getDate() / 7));
+        $("monthly-weekday").value = String(date.getDay());
+      }
+    }
+    renderFrequencyPreview();
+  }
+
   function displayTiming(service) {
     if (service.timing !== "Specific time") return service.timing || "—";
     if (service.fromTime && service.toTime) {
@@ -189,11 +398,17 @@
     draftServices.forEach(function (service) {
       const row = document.createElement("tr");
       const cells = [
-        service.service, service.serviceType, formatISODate(service.jobDate),
+        service.service, service.serviceType,
+        service.serviceType === "Regular, recurring"
+          ? (formatISODate(service.startDate) + (service.endDate ? " – " + formatISODate(service.endDate) : " – ongoing"))
+          : formatISODate(service.jobDate),
+        service.serviceType === "Regular, recurring"
+          ? frequencyDescription(service.recurrence) : "One-off",
         service.quantity, displayTiming(service),
         service.roundName || (service.roundId === "unallocated" ? "Unallocated" : ""),
         service.jobNotes || "",
-        moneyFormatter.format(Number(service.price || 0)),
+        moneyFormatter.format(Number(service.price || 0)) +
+          (service.serviceType === "Regular, recurring" ? " " + periodLabel(service.recurrence) : ""),
         service.rateSource
       ];
       cells.forEach(function (value) {
@@ -278,9 +493,12 @@
     const hasService = Boolean($("service-kind").value);
     const adHoc = hasService && $("service-type").value === "Ad hoc and one-off";
     const recurring = hasService && $("service-type").value === "Regular, recurring";
-    $("ad-hoc-fields").hidden = !adHoc;
-    $("regular-service-notice").hidden = !recurring;
-    $("confirm-service").disabled = !adHoc;
+    $("service-detail-fields").hidden = !hasService;
+    $("ad-hoc-date-fields").hidden = !adHoc;
+    $("recurring-date-fields").hidden = !recurring;
+    $("frequency-panel").hidden = !recurring;
+    $("confirm-service").disabled = !hasService;
+    updateFrequencyControls();
     clearDialogError();
   }
 
