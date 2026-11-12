@@ -64,13 +64,13 @@ window.AgreementPrototypeData = {
      Their dates are relative to today. Actual user saves in localStorage win. */
   demoServices: [
     {
-      id: "demo-recurring-1", service: "Empty", serviceType: "Regular, recurring",
+      id: "demo-recurring-1", service: "Collect", serviceType: "Regular, recurring",
       startDaysFromToday: -35, endDate: "",
       recurrence: { basis: "weekly", every: 1, weekdays: [1, 4],
         monthMethod: "weekday", ordinal: 1, weekday: 1, monthDay: 1,
         saturdayShift: 0, sundayShift: 0 },
-      quantity: 2, timing: "Morning", roundId: "parent-round-001", roundName: "Small Bins",
-      jobNotes: "Call site office before visiting", price: "18.00", rateSource: "Standard rate", onHold: false
+      quantity: 2, timing: "Morning", roundId: "parent-round-002", roundName: "Skips 1",
+      jobNotes: "Call site office before visiting", price: "110.00", rateSource: "Customer rate", onHold: false
     },
     {
       id: "demo-adhoc-future", service: "Collect", serviceType: "Ad hoc and one-off",
@@ -89,7 +89,7 @@ window.AgreementPrototypeData = {
   ],
   /* Offsets keep the illustrative Planned/Completed dates relevant over time. */
   jobs: [
-    { status: "Planned", id: "JOB-10482", service: "Empty", serviceId: "demo-recurring-1", daysFromToday: -2 },
+    { status: "Planned", id: "JOB-10482", service: "Collect", serviceId: "demo-recurring-1", daysFromToday: -2 },
     { status: "Planned", id: "JOB-10482A", service: "Collect", daysFromToday: 6 },
     { status: "Planned", id: "JOB-10483", service: "Exchange", daysFromToday: 13 },
     { status: "Completed", id: "JOB-10479", service: "Exchange", daysFromToday: -5 },
