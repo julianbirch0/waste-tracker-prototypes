@@ -84,7 +84,8 @@
               <tr>
                 <th scope="col">Service</th>
                 <th scope="col">Service type</th>
-                <th scope="col">Job date</th>
+                <th scope="col">Job date / dates</th>
+                <th scope="col">Frequency</th>
                 <th scope="col">Quantity</th>
                 <th scope="col">Timing</th>
                 <th scope="col">Round</th>
@@ -137,13 +138,143 @@
           </div>
         </div>
 
-        <div id="ad-hoc-fields" hidden>
+        <div id="service-detail-fields" hidden>
           <div class="dialog-divider"></div>
-          <div class="dialog-grid dialog-schedule-fields">
+
+          <div class="dialog-grid recurring-dates" id="recurring-date-fields" hidden>
+            <div class="input-field">
+              <label for="recurring-start" class="field-label">Start date</label>
+              <input id="recurring-start" type="date" class="field">
+            </div>
+            <div class="input-field">
+              <label for="recurring-end" class="field-label">End date <span class="optional">(optional)</span></label>
+              <input id="recurring-end" type="date" class="field">
+            </div>
+          </div>
+          <div id="ad-hoc-date-fields" class="dialog-grid recurring-dates" hidden>
             <div class="input-field">
               <label for="job-date" class="field-label">Job date</label>
               <input id="job-date" class="field" type="date" required>
             </div>
+          </div>
+
+          <div id="frequency-panel" class="frequency-panel" hidden>
+            <div class="frequency-heading">Frequency</div>
+            <div class="dialog-grid frequency-top-grid">
+              <div class="input-field">
+                <label for="frequency-basis" class="field-label">Frequency basis</label>
+                <select id="frequency-basis" class="field">
+                  <option value="weekly">Weekly</option>
+                  <option value="monthly">Monthly</option>
+                </select>
+              </div>
+              <div id="weekly-repeat-wrap" class="input-field">
+                <label for="weekly-repeat" class="field-label">Repeat</label>
+                <select id="weekly-repeat" class="field">
+                  <option value="1">Every week</option>
+                  <option value="2">Fortnightly</option>
+                  <option value="n">Every n weeks</option>
+                </select>
+              </div>
+              <div id="monthly-interval-wrap" class="input-field" hidden>
+                <label for="monthly-interval" class="field-label">Repeat</label>
+                <select id="monthly-interval" class="field">
+                  <option value="1">Every month</option>
+                  <option value="2">Every other month</option>
+                  <option value="3">Every third month</option>
+                  <option value="4">Every fourth month</option>
+                </select>
+              </div>
+            </div>
+
+            <div id="custom-weeks-wrap" class="custom-weeks-wrap" hidden>
+              <label for="custom-weeks" class="field-label">Repeat every (weeks)</label>
+              <input id="custom-weeks" type="number" class="field small-number-field" min="3" max="52" step="1" value="3">
+            </div>
+
+            <div id="weekly-pattern">
+              <div class="field-label">Days of the week</div>
+              <div id="weekday-checkboxes" class="weekday-checks" role="group" aria-label="Days of the week">
+                <label><input type="checkbox" value="1"> Mon</label>
+                <label><input type="checkbox" value="2"> Tue</label>
+                <label><input type="checkbox" value="3"> Wed</label>
+                <label><input type="checkbox" value="4"> Thu</label>
+                <label><input type="checkbox" value="5"> Fri</label>
+                <label><input type="checkbox" value="6"> Sat</label>
+                <label><input type="checkbox" value="0"> Sun</label>
+              </div>
+              <p class="frequency-help">The same quantity, timing and price apply to every selected day.</p>
+            </div>
+
+            <div id="monthly-pattern" hidden>
+              <div class="input-field monthly-pattern-select">
+                <label for="monthly-method" class="field-label">Repeat on</label>
+                <select id="monthly-method" class="field">
+                  <option value="weekday">A weekday of the month</option>
+                  <option value="date">A date of the month</option>
+                </select>
+              </div>
+              <div id="monthly-weekday-wrap" class="dialog-grid monthly-detail-grid">
+                <div class="input-field">
+                  <label for="monthly-ordinal" class="field-label">Which occurrence?</label>
+                  <select id="monthly-ordinal" class="field">
+                    <option value="1">First</option>
+                    <option value="2">Second</option>
+                    <option value="3">Third</option>
+                    <option value="4">Fourth</option>
+                    <option value="5">Fifth</option>
+                  </select>
+                </div>
+                <div class="input-field">
+                  <label for="monthly-weekday" class="field-label">Day</label>
+                  <select id="monthly-weekday" class="field">
+                    <option value="1">Monday</option>
+                    <option value="2">Tuesday</option>
+                    <option value="3">Wednesday</option>
+                    <option value="4">Thursday</option>
+                    <option value="5">Friday</option>
+                    <option value="6">Saturday</option>
+                    <option value="0">Sunday</option>
+                  </select>
+                </div>
+              </div>
+              <div id="monthly-date-wrap" hidden>
+                <div class="input-field monthly-day-field">
+                  <label for="monthly-day" class="field-label">Day of the month</label>
+                  <select id="monthly-day" class="field"></select>
+                </div>
+                <div class="dialog-grid weekend-adjustment-grid">
+                  <div class="input-field">
+                    <label for="saturday-rule" class="field-label">If that date falls on Saturday</label>
+                    <select id="saturday-rule" class="field">
+                      <option value="0">Keep Saturday</option>
+                      <option value="-1">Move to Friday (before)</option>
+                      <option value="1">Move to Sunday (after)</option>
+                      <option value="2">Move to Monday (after)</option>
+                    </select>
+                  </div>
+                  <div class="input-field">
+                    <label for="sunday-rule" class="field-label">If that date falls on Sunday</label>
+                    <select id="sunday-rule" class="field">
+                      <option value="0">Keep Sunday</option>
+                      <option value="-2">Move to Friday (before)</option>
+                      <option value="-1">Move to Saturday (before)</option>
+                      <option value="1">Move to Monday (after)</option>
+                    </select>
+                  </div>
+                </div>
+                <p class="frequency-help">Dates missing from a month are skipped. A weekend adjustment may move the job into an adjacent month.</p>
+              </div>
+              <p id="fifth-note" class="frequency-help" hidden>A fifth occurrence is not available every month; those months will be skipped.</p>
+            </div>
+
+            <div class="schedule-preview" id="schedule-preview" aria-live="polite">
+              <div class="preview-heading">Next scheduled dates</div>
+              <div id="preview-dates" class="preview-dates">Select a start date and frequency to see the next six dates.</div>
+            </div>
+          </div>
+
+          <div class="dialog-grid shared-schedule-fields">
             <div class="input-field">
               <label for="service-quantity" class="field-label">Quantity</label>
               <input id="service-quantity" class="field" type="number" min="1" step="1" value="1" required>
@@ -171,10 +302,11 @@
               </div>
             </div>
           </div>
+
           <div class="dialog-grid dialog-job-fields">
             <div class="input-field">
               <label for="service-round" class="field-label">Round</label>
-              <select id="service-round" class="field" required disabled></select>
+              <select id="service-round" class="field" required></select>
             </div>
             <div class="input-field">
               <label for="job-notes" class="field-label">Job notes</label>
@@ -188,16 +320,13 @@
               <input id="service-price" class="field price-field" type="text" inputmode="decimal" autocomplete="off" value="£0.00" required>
             </div>
             <div class="rate-source-wrap">
+              <span id="price-period" class="price-period"></span>
               <span id="rate-source" class="rate-source">Agreement rate</span>
               <button type="button" id="reset-service-price" class="reset-price-button" hidden title="Restore the applicable customer or standard rate">Reset</button>
             </div>
           </div>
           <p class="rate-hint">Uses the applicable customer rate, otherwise the standard rate. You can override either for this agreement.</p>
         </div>
-        <p id="regular-service-notice" class="dialog-notice" hidden>
-          Regular, recurring service scheduling will be added in the next iteration.
-          Select Ad hoc and one-off to try the controls in this version.
-        </p>
         <p id="service-dialog-error" class="dialog-error" role="alert" hidden></p>
       </div>
       <div class="dialog-actions">
