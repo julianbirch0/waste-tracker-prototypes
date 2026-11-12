@@ -77,8 +77,8 @@
           <span class="plus-icon" aria-hidden="true">+</span> Add service
         </button>
       </div>
-      <div class="section-body services-body">
-        <div class="service-subsection">
+      <div class="section-body services-body" id="service-tables" hidden>
+        <div class="service-subsection" id="ad-hoc-services-section" hidden>
           <h3>Ad hoc and one-off</h3>
           <div class="service-table-scroll">
             <table class="services-table ad-hoc-table">
@@ -97,7 +97,7 @@
             </table>
           </div>
         </div>
-        <div class="service-subsection">
+        <div class="service-subsection" id="regular-services-section" hidden>
           <h3>Regular, recurring</h3>
           <div class="service-table-scroll">
             <table class="services-table recurring-table">
@@ -124,6 +124,16 @@
     <section class="section" aria-labelledby="jobs-heading">
       <div class="section-heading">
         <h2 id="jobs-heading">Jobs</h2>
+        <div class="jobs-filter">
+          <label class="field-label" for="jobs-date-filter">Date range</label>
+          <select id="jobs-date-filter" class="field">
+            <option value="last4-future" selected>Last 4 weeks and Future</option>
+            <option value="future">Future</option>
+            <option value="last4">Last 4 weeks</option>
+            <option value="historic">All historic</option>
+            <option value="all">All</option>
+          </select>
+        </div>
       </div>
       <div class="table-wrap">
         <table class="jobs-table">
@@ -133,6 +143,7 @@
               <th scope="col">Job ID</th>
               <th scope="col">Service</th>
               <th scope="col">Job date</th>
+              <th scope="col">Action</th>
             </tr>
           </thead>
           <tbody id="jobs-body"></tbody>
