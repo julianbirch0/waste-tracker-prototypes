@@ -912,8 +912,16 @@
     if (service) populateServiceModal(service);
 
     const locked = modalMode === "edit";
-    $("service-kind").disabled = locked;
-    $("service-type").disabled = locked;
+    const cloning = modalMode === "clone";
+    $("service-kind").hidden = cloning;
+    $("service-type").hidden = cloning;
+    $("clone-service-kind").hidden = !cloning;
+    $("clone-service-type").hidden = !cloning;
+    $("clone-service-kind").value = cloning && service ? service.service : "";
+    $("clone-service-type").value = cloning && service ? service.serviceType : "";
+    // Keep the original select values available to the existing save logic.
+    $("service-kind").disabled = locked || cloning;
+    $("service-type").disabled = locked || cloning;
     $("service-round").disabled = locked;
     $("service-price").disabled = locked;
     $("reset-service-price").hidden = locked || $("reset-service-price").hidden;
@@ -933,7 +941,8 @@
     }
     if (locked) $("reset-service-price").hidden = true;
     dialog.showModal();
-    if (!locked) $("service-kind").focus();
+    if (cloning) $("job-date").focus();
+    else if (!locked) $("service-kind").focus();
     else $("service-quantity").focus();
   }
 
