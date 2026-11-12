@@ -885,6 +885,121 @@
     dialog.close();
   }
 
+  function showJobConfirmation(title, message, jobs, explanation, confirmLabel, callback) {
+    pendingConfirmation = callback;
+    $("job-confirm-title").textContent = title;
+    $("job-confirm-message").textContent = message;
+    const wrap = $("job-confirm-list-wrap");
+    const list = $("job-confirm-list");
+    list.replaceChildren();
+    const entries = jobs || [];
+    wrap.hidden = entries.length === 0;
+    entries.forEach(function (job) {
+      const row = document.createElement("li");
+      row.textContent = job.id + " · " + formatISODate(job.isoDate) +
+        " · " + job.service + " · " + job.status;
+      list.appendChild(row);
+    });
+    $("job-confirm-explanation").textContent = explanation;
+    $("apply-job-confirm").textContent = confirmLabel;
+    $("job-confirm-dialog").showModal();
+  }
+
+  function dismissJobConfirmation() {
+    pendingConfirmation = null;
+    $("job-confirm-dialog").close();
+  }
+
+  function replaceService(item) {
+    const index = draftServices.findIndex(function (existing) { return existing.id === item.id; });
+    if (index < 0) return;
+    draftServices[index] = item;
+    renderServices();
+    renderJobs();
+    hideMessage();
+    closeAddService();
+  }
+
+  function editMayAffectJobs(before, after) {
+    const editableKeys = ["jobDate", "startDate", "endDate", "recurrence",
+      "quantity", "timing", "fromTime", "toTime", "jobNotes"];
+    return editableKeys.some(function (key) {
+      return JSON.stringify(before[key] ?? null) !== JSON.stringify(after[key] ?? null);
+    });
+  }
+
+  function actOnService(action, id) {
+    const service = draftServices.find(function (entry) { return entry.id === id; });
+    if (!service) return;
+    if (action === "edit") return openAddService("edit", service);
+    if (action === "clone" && !isRecurring(service)) {
+      return openAddService("clone", service);
+    }
+    if (action !== "delete") return;
+
+    const remove = function () {
+      draftServices = draftServices.filter(function (entry) { return entry.id !== id; });
+      renderServices();
+      renderJobs();
+      hideMessage();
+    };
+    if (isRecurring(service)) {
+      const affected = affectedJobsFor(service);
+      return showJobConfirmation(
+        "Delete recurring service",
+        "Delete this recurring service?",
+        affected,
+        affected.length
+          ? "These uncompleted jobs will be removed in the prototype. Completed jobs remain in the history."
+          : "No uncompleted jobs are currently associated with this service.",
+        "Delete service", remove
+      );
+    }
+    if (serviceStatus(service) === "Future") {
+      return showJobConfirmation(
+        "Delete ad hoc service",
+        "This service has a future job. Delete the service and the job?",
+        [{ id: service.jobId || "JOB-PROTOTYPE", isoDate: service.jobDate,
+          service: service.service, status: "Planned" }],
+        "Deleting a future service removes its planned job from the prototype.",
+        "Delete service", remove
+      );
+    }
+    remove();
+  }
+
+  function holdOrResumeService() {
+    if (modalMode !== "edit" || isNew || !editingServiceId) return;
+    const service = draftServices.find(function (item) { return item.id === editingServiceId; });
+    if (!service || !isRecurring(service) ||
+        !savedAgreement.services.some(function (item) { return item.id === service.id; })) return;
+    if (service.onHold) {
+      return showJobConfirmation(
+        "Resume recurring service",
+        "Resume this service?",
+        [],
+        "The prototype will again display the jobs due in the rolling four-week window.",
+        "Resume service",
+        function () {
+          replaceService(Object.assign({}, service, { onHold: false }));
+        }
+      );
+    }
+    const affected = affectedJobsFor(service);
+    showJobConfirmation(
+      "Put recurring service on hold",
+      "Do you want to remove the following jobs?",
+      affected,
+      affected.length
+        ? "Putting the service on hold removes these outstanding jobs in this prototype and stops new jobs being created."
+        : "There are no uncompleted jobs to remove. New jobs will not be created while this service is on hold.",
+      "Put on hold",
+      function () {
+        replaceService(Object.assign({}, service, { onHold: true }));
+      }
+    );
+  }
+
   function addService(event) {
     event.preventDefault();
     clearDialogError();
@@ -977,12 +1092,16 @@
       return dialogError("Please enter a valid, non-negative price in pounds and pence.", "service-price");
     }
 
+    const oldService = modalMode === "edit"
+      ? draftServices.find(function (item) { return item.id === editingServiceId; }) : null;
+    if (modalMode === "edit" && !oldService) return;
     const uniqueId = String(Date.now()) + "-" + (idSequence++);
-    draftServices.push({
-      id: "service-" + uniqueId,
-      jobId: recurring ? "" : "JOB-P" + String(Date.now()).slice(-7) + String(idSequence),
-      service: service,
-      serviceType: serviceType,
+    const candidate = {
+      id: oldService ? oldService.id : "service-" + uniqueId,
+      jobId: oldService ? oldService.jobId :
+        recurring ? "" : "JOB-P" + String(Date.now()).slice(-7) + String(idSequence),
+      service: oldService ? oldService.service : service,
+      serviceType: oldService ? oldService.serviceType : serviceType,
       jobDate: jobDate,
       startDate: startDate,
       endDate: endDate,
@@ -991,12 +1110,30 @@
       timing: timing,
       fromTime: timing === "Specific time" ? fromTime : "",
       toTime: timing === "Specific time" ? toTime : "",
-      roundId: roundId,
-      roundName: roundName,
+      roundId: oldService ? oldService.roundId : roundId,
+      roundName: oldService ? oldService.roundName : roundName,
       jobNotes: jobNotes,
-      price: parsedPrice,
-      rateSource: manuallyPriced ? "Agreement rate" : priceSuggestion.source
-    });
+      price: oldService ? oldService.price : parsedPrice,
+      rateSource: oldService ? oldService.rateSource :
+        manuallyPriced ? "Agreement rate" : priceSuggestion.source,
+      onHold: oldService ? !!oldService.onHold : false
+    };
+    if (oldService) {
+      const revised = Object.assign({}, oldService, candidate);
+      const apply = function () { replaceService(revised); };
+      const affected = affectedJobsFor(oldService);
+      if (editMayAffectJobs(oldService, revised) && affected.length) {
+        return showJobConfirmation(
+          "Update existing jobs",
+          "This change affects jobs already created for this service. Replace the following outstanding jobs?",
+          affected,
+          "Confirming updates the service and rebuilds the illustrated forward four-week jobs. Completed jobs remain unchanged.",
+          "Update service", apply
+        );
+      }
+      return apply();
+    }
+    draftServices.push(candidate);
     renderServices();
     renderJobs();
     hideMessage();
@@ -1084,13 +1221,24 @@
   $("reset-service-price").addEventListener("click", restoreSuggestedPrice);
   dialogForm.addEventListener("submit", addService);
 
-  $("services-body").addEventListener("click", function (event) {
-    const button = event.target.closest("button[data-service-id]");
-    if (!button) return;
-    draftServices = draftServices.filter(function (item) { return item.id !== button.dataset.serviceId; });
-    renderServices();
-    renderJobs();
-    hideMessage();
+  ["ad-hoc-services-body", "regular-services-body"].forEach(function (id) {
+    $(id).addEventListener("click", function (event) {
+      const button = event.target.closest("button[data-service-action]");
+      if (button) actOnService(button.dataset.serviceAction, button.dataset.serviceId);
+    });
+  });
+
+  $("hold-service").addEventListener("click", holdOrResumeService);
+  $("close-job-confirm").addEventListener("click", dismissJobConfirmation);
+  $("cancel-job-confirm").addEventListener("click", dismissJobConfirmation);
+  $("job-confirm-dialog").addEventListener("close", function () {
+    pendingConfirmation = null;
+  });
+  $("apply-job-confirm").addEventListener("click", function () {
+    const apply = pendingConfirmation;
+    pendingConfirmation = null;
+    $("job-confirm-dialog").close();
+    if (apply) apply();
   });
 
   $("save").addEventListener("click", function () {
