@@ -242,6 +242,21 @@
     selectOptions(elements.containerSize, data.containerSizes[agreement.containerType] || [], "Select container size", agreement.containerSize);
     selectOptions(elements.materialType, data.materialTypes, "Select material type", agreement.materialType);
     selectOptions(elements.material, data.materials[agreement.materialType] || [], "Select material", agreement.material);
+    updateMaterialFieldsMode();
+  }
+
+  function updateMaterialFieldsMode() {
+    // The four fields define the Agreement and must not be changed after
+    // creation. Keep the select values for pricing and agreement serialization.
+    fieldNames.forEach(function (name) {
+      const select = elements[name];
+      const display = $(fieldIds[name] + "-readonly");
+      const label = select.closest(".input-field").querySelector("label");
+      display.value = select.value || "—";
+      display.hidden = isNew;
+      select.hidden = !isNew;
+      label.htmlFor = isNew ? select.id : display.id;
+    });
   }
 
   function readForm() {
@@ -424,73 +439,9 @@
       ((rule.saturdayShift || rule.sundayShift) ? " (weekend adjusted)" : "");
   }
 
-  // Produces dates for preview only. Recurring Jobs are created by the back-end
-  // in production; these dates are not written as job records by the prototype.
-  function scheduledDates(rule, fromISO, limit) {
-    const start = parseLocalDate(rule.startDate);
-    const end = rule.endDate ? parseLocalDate(rule.endDate) : null;
-    const from = parseLocalDate(fromISO) || start;
-    const every = Number(rule.every);
-    if (!start || !from || (end && end < start) ||
-        !Number.isSafeInteger(every) || every < 1) return [];
-    const minISO = isoOfDate(new Date(Math.max(start.getTime(), from.getTime())));
-    const endISO = end ? isoOfDate(end) : null;
-    const dates = [];
-
-    if (rule.basis === "weekly") {
-      if (!rule.weekdays || !rule.weekdays.length) return [];
-      // Jump from recurring week to recurring week rather than scanning every
-      // calendar day, so any whole-number interval remains practical.
-      const sortedDays = rule.weekdays.slice().sort(function (x, y) {
-        return (x + 6) % 7 - (y + 6) % 7;
-      });
-      const weekStart = parseLocalDate(minISO);
-      weekStart.setDate(weekStart.getDate() - ((weekStart.getDay() + 6) % 7));
-      const weeksSinceStart = startOfCalendarWeek(weekStart) - startOfCalendarWeek(start);
-      const skipWeeks = (every - (weeksSinceStart % every)) % every;
-      weekStart.setDate(weekStart.getDate() + skipWeeks * 7);
-      for (let cycle = 0; cycle < limit + 2 && dates.length < limit; cycle++) {
-        if (!Number.isFinite(weekStart.getTime())) break;
-        for (const day of sortedDays) {
-          const candidate = new Date(weekStart);
-          candidate.setDate(candidate.getDate() + ((day + 6) % 7));
-          const iso = isoOfDate(candidate);
-          if (endISO && iso > endISO) return dates;
-          if (iso >= minISO) dates.push(iso);
-          if (dates.length >= limit) break;
-        }
-        weekStart.setDate(weekStart.getDate() + every * 7);
-      }
-      return dates;
-    }
-
-    if (rule.basis === "monthly") {
-      if (every > 4) return [];
-      for (let offset = 0; offset < 240 && dates.length < limit; offset += every) {
-        const year = start.getFullYear();
-        const month = start.getMonth() + offset;
-        const first = new Date(year, month, 1, 12);
-        const lastDate = new Date(first.getFullYear(), first.getMonth() + 1, 0, 12).getDate();
-        let number;
-        if (rule.monthMethod === "weekday") {
-          if (!Number.isInteger(rule.ordinal) || rule.ordinal < 1 || rule.ordinal > 5 ||
-              !Number.isInteger(rule.weekday) || rule.weekday < 0 || rule.weekday > 6) return [];
-          number = 1 + (rule.weekday - first.getDay() + 7) % 7 + (rule.ordinal - 1) * 7;
-        } else {
-          number = rule.monthDay;
-        }
-        if (!Number.isInteger(number) || number < 1 || number > lastDate) continue;
-        const date = new Date(first.getFullYear(), first.getMonth(), number, 12);
-        if (rule.monthMethod === "date") {
-          if (date.getDay() === 6) date.setDate(date.getDate() + rule.saturdayShift);
-          else if (date.getDay() === 0) date.setDate(date.getDate() + rule.sundayShift);
-        }
-        const iso = isoOfDate(date);
-        if (iso >= minISO && (!endISO || iso <= endISO)) dates.push(iso);
-      }
-    }
-    return dates;
-  }
+  // Shared with the Agreements list, so the preview and list totals cannot
+  // diverge when weekly/monthly scheduling rules change.
+  const scheduledDates = window.AgreementsPrototypeSchedule.scheduledDates;
 
   function previewStartISO(rule) {
     const today = isoOfDate(new Date());
@@ -1688,6 +1639,7 @@
             return true;
           }
           renderCustomerFields();
+          updateMaterialFieldsMode();
           renderJobs();
         }
       }
