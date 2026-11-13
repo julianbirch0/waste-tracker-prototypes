@@ -4,6 +4,7 @@
   const $ = function (id) { return document.getElementById(id); };
   const store = window.AgreementsPrototypeStore;
   const source = window.AgreementPrototypeData;
+  const schedule = window.AgreementsPrototypeSchedule;
   const search = $("agreement-search");
 
   function agreementUrl(id) {
@@ -39,20 +40,7 @@
     });
     const tbody = $("agreements-list-body");
     tbody.replaceChildren();
-    const totalRecurring = agreements.reduce(function (n, item) {
-      return n + (item.services || []).filter(function (service) {
-        return service.serviceType === "Regular, recurring";
-      }).length;
-    }, 0);
-    const totalAdHoc = agreements.reduce(function (n, item) {
-      return n + (item.services || []).filter(function (service) {
-        return service.serviceType === "Ad hoc and one-off";
-      }).length;
-    }, 0);
-
-    $("agreement-count").textContent = String(agreements.length);
-    $("recurring-count").textContent = String(totalRecurring);
-    $("adhoc-count").textContent = String(totalAdHoc);
+    $("list-agreement-count").textContent = "(" + agreements.length + ")";
     $("list-result-count").textContent = "Showing " + matching.length + " of " +
       agreements.length + " agreement" + (agreements.length === 1 ? "" : "s");
 
@@ -71,13 +59,6 @@
     matching.forEach(function (agreement) {
       const customer = store.customerFor(agreement);
       const site = store.siteFor(agreement);
-      const services = agreement.services || [];
-      const adhoc = services.filter(function (service) {
-        return service.serviceType === "Ad hoc and one-off";
-      }).length;
-      const recurring = services.filter(function (service) {
-        return service.serviceType === "Regular, recurring";
-      }).length;
       const row = document.createElement("tr");
       const number = document.createElement("td");
       const link = document.createElement("a");
@@ -90,15 +71,10 @@
       cell(row, site ? site.name : "Unknown site");
       cell(row, [agreement.containerType, agreement.containerSize].filter(Boolean).join(" · "));
       cell(row, [agreement.materialType, agreement.material].filter(Boolean).join(" · "));
-      const countCell = document.createElement("td");
-      countCell.className = "agreement-service-counts";
-      const adHocSpan = document.createElement("span");
-      adHocSpan.textContent = adhoc + " ad hoc";
-      countCell.appendChild(adHocSpan);
-      const regularSpan = document.createElement("span");
-      regularSpan.textContent = recurring + " recurring";
-      countCell.appendChild(regularSpan);
-      row.appendChild(countCell);
+      const illustrated = agreement.id === "AGR-10421" ? source.jobs : [];
+      const planned = schedule.plannedJobCount(agreement, illustrated);
+      const plannedCell = cell(row, planned, "agreement-planned-count");
+      plannedCell.title = "Next 28 days plus any outstanding overdue jobs";
       const action = document.createElement("td");
       const button = document.createElement("a");
       button.href = agreementUrl(agreement.id);
