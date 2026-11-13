@@ -43,13 +43,38 @@
     return svg;
   }
 
-  function showDeleteNotice(agreementId, hasPlannedJobs) {
-    $("agreement-delete-title").textContent = hasPlannedJobs
+  const DELETE_REASONS = {
+    planned: "This agreement has still got planned jobs",
+    unexpired: "This agreement has got services that have not reached the end date."
+  };
+
+  function deletionBlocker(agreement, planned, today) {
+    // Priority: outstanding jobs first, then the service's own lifecycle.
+    // A suspended recurring service with an open-ended or future End date
+    // still belongs to an active Agreement even if it produces zero jobs.
+    if (planned > 0) return "planned";
+    const stillActive = (agreement.services || []).some(function (service) {
+      if (service.serviceType === "Regular, recurring") {
+        return !service.endDate || service.endDate >= today;
+      }
+      // A one-off date in the future also means its service is unfinished,
+      // including when it lies beyond the rolling four-week job horizon.
+      if (service.serviceType === "Ad hoc and one-off") {
+        return !service.jobDate || service.jobDate >= today;
+      }
+      return true;
+    });
+    return stillActive ? "unexpired" : null;
+  }
+
+  function showDeleteNotice(agreementId, reason) {
+    $("agreement-delete-title").textContent = reason
       ? "Agreement cannot be deleted" : "Delete agreement";
-    $("agreement-delete-message").textContent = hasPlannedJobs
-      ? "This agreement still has planned jobs against it."
+    $("agreement-delete-message").textContent = reason
+      ? DELETE_REASONS[reason]
       : "Agreement " + agreementId +
-        " has no planned jobs. Deleting agreements is not implemented in this prototype.";
+        " has no planned jobs or unexpired services. Deleting agreements is not implemented in this prototype.";
+    $("agreement-delete-explanation").hidden = !reason;
     $("agreement-delete-dialog").showModal();
   }
 
@@ -104,6 +129,7 @@
       cell(row, [agreement.materialType, agreement.material].filter(Boolean).join(" · "));
       const illustrated = agreement.id === "AGR-10421" ? source.jobs : [];
       const planned = schedule.plannedJobCount(agreement, illustrated);
+      const blocker = deletionBlocker(agreement, planned, schedule.isoOfDate(new Date()));
       const plannedCell = cell(row, planned, "agreement-planned-count");
       plannedCell.title = "Next 28 days plus any outstanding overdue jobs";
       const action = document.createElement("td");
@@ -120,17 +146,17 @@
       control.type = "button";
       control.className = "agreement-icon-action";
       control.dataset.agreementId = agreement.id;
-      control.dataset.hasPlannedJobs = String(planned > 0);
-      if (planned === 0) {
+      control.dataset.deleteBlocker = blocker || "";
+      if (!blocker) {
         control.classList.add("agreement-delete-action");
         control.title = "Delete (prototype)";
         control.setAttribute("aria-label", "Delete agreement " + agreement.id);
         control.appendChild(icon("delete"));
       } else {
-        // Not a delete button: explain why the delete action is unavailable.
+        // A lock replaces Delete when jobs remain or services are unexpired.
         control.classList.add("agreement-delete-blocked");
-        control.title = "Why can't this agreement be deleted?";
-        control.setAttribute("aria-label", "Explain why agreement " + agreement.id + " cannot be deleted");
+        control.title = DELETE_REASONS[blocker];
+        control.setAttribute("aria-label", DELETE_REASONS[blocker] + " (" + agreement.id + ")");
         control.appendChild(icon("locked"));
       }
       actions.appendChild(control);
@@ -146,7 +172,7 @@
   $("agreements-list-body").addEventListener("click", function (event) {
     const button = event.target.closest("button[data-agreement-id]");
     if (!button) return;
-    showDeleteNotice(button.dataset.agreementId, button.dataset.hasPlannedJobs === "true");
+    showDeleteNotice(button.dataset.agreementId, button.dataset.deleteBlocker || null);
   });
   ["close-agreement-delete", "ok-agreement-delete"].forEach(function (id) {
     $(id).addEventListener("click", function () {
@@ -154,6 +180,11 @@
     });
   });
   search.addEventListener("input", render);
+  function refreshListHeader() {
+    $("agreements-list-header").classList.toggle("is-scrolled", window.scrollY > 8);
+  }
+  window.addEventListener("scroll", refreshListHeader, { passive: true });
+  refreshListHeader();
   // Restore freshly saved records when using browser Back / forward-cache.
   window.addEventListener("pageshow", render);
   render();
