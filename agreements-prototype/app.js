@@ -36,6 +36,9 @@
   let pendingConfirmation = null;
   let filteredServiceId = null; // Additional Jobs filter; combines with date range.
   let roundOmissionConfirmed = false;
+  let serviceOpeningSnapshot = "";
+  let serviceSaveAndClose = false;
+  let serviceValidationFirstField = null;
   let skipUnloadWarning = false;
 
   function clone(value) {
@@ -929,7 +932,8 @@
     $("ad-hoc-date-fields").hidden = !adHoc;
     $("recurring-date-fields").hidden = !recurring;
     $("frequency-panel").hidden = !recurring;
-    $("confirm-service").disabled = !hasService;
+    // Validation, not button disabling, reports missing Service and dates.
+    // The Save buttons are always usable once any value has changed.
     updateFrequencyControls();
     clearDialogError();
   }
@@ -1088,6 +1092,77 @@
     field.focus();
   }
 
+  // The same change-aware behavior as the Agreement page. Reading values
+  // instead of "touched" flags means an edit that is subsequently undone
+  // restores the single Close button. Defaults aren't counted as edits.
+  function serviceFormSnapshot() {
+    const fields = Array.from(dialogForm.querySelectorAll("input, select, textarea"))
+      .filter(function (field) { return field.id || field.type === "checkbox"; });
+    return JSON.stringify(fields.map(function (field) {
+      if (field.type === "checkbox") return [field.value, field.checked];
+      if (field.id === "service-price") {
+        const price = parseMoney(field.value);
+        return [field.id, price === null ? field.value.trim() : price];
+      }
+      return [field.id, field.value];
+    }));
+  }
+
+  function hasUnsavedServiceChanges() {
+    // A clone is an additional service even before changing the source details.
+    return modalMode === "clone" || serviceFormSnapshot() !== serviceOpeningSnapshot;
+  }
+
+  function updateServiceDialogActions() {
+    if (!dialog.open) return;
+    const dirty = hasUnsavedServiceChanges();
+    $("close-service-unchanged").hidden = dirty;
+    ["save-service", "save-close-service", "cancel-service-dialog"].forEach(function (id) {
+      $(id).hidden = !dirty;
+      $(id).disabled = false;
+    });
+  }
+
+  function discardOrCloseService() {
+    if (!hasUnsavedServiceChanges()) return closeAddService();
+    $("unsaved-service-dialog").showModal();
+  }
+
+  function trySaveService(shouldClose) {
+    serviceSaveAndClose = Boolean(shouldClose);
+    // The form is explicitly novalidate: we show every problem in ONE dialog.
+    dialogForm.requestSubmit();
+  }
+
+  function showServiceValidation(problems) {
+    const list = $("service-validation-list");
+    list.replaceChildren();
+    serviceValidationFirstField = null;
+    problems.forEach(function (problem) {
+      const line = document.createElement("li");
+      line.textContent = problem.message;
+      list.appendChild(line);
+      if (problem.field && !serviceValidationFirstField) {
+        serviceValidationFirstField = problem.field;
+      }
+      if (problem.field) $(problem.field).classList.add("invalid");
+    });
+    $("service-validation-dialog").showModal();
+  }
+
+  function finishServiceSave(item) {
+    renderServices();
+    renderJobs();
+    hideMessage();
+    if (serviceSaveAndClose) {
+      closeAddService();
+    } else {
+      // Save leaves the service open, clean and editable. This new draft
+      // service is now treated as an existing service within the Agreement.
+      openAddService("edit", item);
+    }
+  }
+
   function populateServiceModal(service) {
     // Called after resetting all controls, so no previous service values leak.
     if (!service) return;
@@ -1201,7 +1276,8 @@
       : cloning ? "Clone ad hoc service"
       : requestedType === "Regular, recurring" ? "Add regular, recurring service"
       : "Add ad hoc and one-off service";
-    $("confirm-service").textContent = locked ? "Save changes" : "Add service";
+    // The modal footer uses the same Save / Save and Close / Cancel labels
+    // for both Add and Edit, with a single Close when unchanged.
     const showHold = locked && !isNew && isRecurring(service) &&
       savedAgreement.services.some(function (item) { return item.id === service.id; });
     $("hold-service").hidden = !showHold;
@@ -1209,14 +1285,18 @@
       $("hold-service").textContent = service.onHold ? "Resume service" : "Put on hold";
     }
     if (locked) $("reset-service-price").hidden = true;
-    dialog.showModal();
+    if (!dialog.open) dialog.showModal();
+    serviceOpeningSnapshot = serviceFormSnapshot();
+    updateServiceDialogActions();
     if (cloning) $("service-kind").focus();
     else if (!locked) $("service-kind").focus();
     else $("service-quantity").focus();
   }
 
   function closeAddService() {
-    dialog.close();
+    if (dialog.open) dialog.close();
+    serviceSaveAndClose = false;
+    roundOmissionConfirmed = false;
   }
 
   function showJobConfirmation(title, message, jobs, explanation, confirmLabel, callback) {
@@ -1248,10 +1328,7 @@
     const index = draftServices.findIndex(function (existing) { return existing.id === item.id; });
     if (index < 0) return;
     draftServices[index] = item;
-    renderServices();
-    renderJobs();
-    hideMessage();
-    closeAddService();
+    finishServiceSave(item);
   }
 
   function editMayAffectJobs(before, after) {
