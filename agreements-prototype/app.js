@@ -2,8 +2,10 @@
   "use strict";
 
   const data = window.AgreementPrototypeData;
-  const isNew = new URLSearchParams(window.location.search).get("mode") === "new";
-  const storageKey = "wastetracker-agreement-prototype-v1-" + (isNew ? "new" : "edit");
+  const query = new URLSearchParams(window.location.search);
+  let isNew = query.get("mode") === "new";
+  let currentAgreementId = isNew ? null : (query.get("id") || "AGR-10421");
+  const agreementsStore = window.AgreementsPrototypeStore;
   const fieldNames = ["containerType", "containerSize", "materialType", "material"];
   const fieldIds = {
     containerType: "container-type",
@@ -122,13 +124,11 @@
   }
 
   function initialAgreement() {
-    return Object.assign(
-      {},
-      isNew
-        ? { containerType: "", containerSize: "", materialType: "", material: "" }
-        : data.existingAgreement,
-      { services: isNew ? [] : exampleServices() }
-    );
+    return {
+      customerId: "", siteId: "",
+      containerType: "", containerSize: "", materialType: "", material: "",
+      services: []
+    };
   }
 
   function normaliseAgreement(raw) {
@@ -152,16 +152,73 @@
   }
 
   function readSaved() {
-    try {
-      const stored = window.localStorage.getItem(storageKey);
-      return stored ? normaliseAgreement(JSON.parse(stored)) : initialAgreement();
-    } catch (error) {
-      return initialAgreement();
-    }
+    if (isNew) return initialAgreement();
+    const record = agreementsStore.find(currentAgreementId);
+    return normaliseAgreement(record || initialAgreement());
   }
 
   let savedAgreement = readSaved();
   let draftServices = clone(savedAgreement.services);
+
+  function customerLookup(id) {
+    return (data.customers || []).find(function (customer) { return customer.id === id; }) || null;
+  }
+
+  function populateCustomerSelect() {
+    const select = $("customer-select");
+    select.replaceChildren();
+    const placeholder = document.createElement("option");
+    placeholder.value = "";
+    placeholder.textContent = "Select customer";
+    select.appendChild(placeholder);
+    (data.customers || []).forEach(function (customer) {
+      const option = document.createElement("option");
+      option.value = customer.id;
+      option.textContent = customer.name;
+      select.appendChild(option);
+    });
+    select.value = savedAgreement.customerId || "";
+  }
+
+  function populateSiteSelect(customerId, siteId) {
+    const field = $("site-select");
+    field.replaceChildren();
+    const placeholder = document.createElement("option");
+    placeholder.value = "";
+    placeholder.textContent = "Select site";
+    field.appendChild(placeholder);
+    const customer = customerLookup(customerId);
+    (customer ? customer.sites : []).forEach(function (site) {
+      const option = document.createElement("option");
+      option.value = site.id;
+      option.textContent = site.name;
+      field.appendChild(option);
+    });
+    field.disabled = !customer;
+    field.value = customer && customer.sites.some(function (site) {
+      return site.id === siteId;
+    }) ? siteId : "";
+  }
+
+  function renderCustomerFields() {
+    const customerId = isNew ? $("customer-select").value : savedAgreement.customerId;
+    const siteId = isNew ? $("site-select").value : savedAgreement.siteId;
+    const customer = customerLookup(customerId);
+    const site = customer && customer.sites.find(function (item) {
+      return item.id === siteId;
+    });
+    $("customer-type").textContent = customer ? customer.type : "—";
+    $("customer-name").textContent = customer ? customer.name : "—";
+    $("site-name").textContent = site ? site.name : "—";
+    $("customer-notes").textContent = customer ? customer.notes : "";
+    $("site-notes").textContent = site ? site.notes : "";
+    $("customer-name").hidden = isNew;
+    $("site-name").hidden = isNew;
+    $("customer-select").hidden = !isNew;
+    $("site-select").hidden = !isNew;
+    $("page-subtitle").textContent = isNew ? "New agreement" :
+      "Edit " + (currentAgreementId || "agreement");
+  }
 
   function selectOptions(element, options, placeholder, currentValue) {
     element.replaceChildren();
@@ -187,7 +244,10 @@
   }
 
   function readForm() {
-    const result = {};
+    const result = {
+      customerId: isNew ? $("customer-select").value : savedAgreement.customerId,
+      siteId: isNew ? $("site-select").value : savedAgreement.siteId
+    };
     fieldNames.forEach(function (name) { result[name] = elements[name].value; });
     return result;
   }
@@ -559,7 +619,8 @@
   function renderJobs() {
     const body = $("jobs-body");
     body.replaceChildren();
-    const staticJobs = isNew ? [] : (data.jobs || []).filter(function (job) {
+    // Legacy illustrative jobs belong only to the original sample Agreement.
+    const staticJobs = currentAgreementId !== "AGR-10421" ? [] : (data.jobs || []).filter(function (job) {
       if (!job.serviceId || job.status === "Completed") return true;
       const owner = draftServices.find(function (s) { return s.id === job.serviceId; });
       return owner && !owner.onHold && !(owner.removedJobIds || []).includes(job.id);
@@ -1383,13 +1444,20 @@
     closeAddService();
   }
 
-  // Existing customer details remain read-only on the Agreement screen.
-  $("page-subtitle").textContent = isNew ? "Add agreement" : "Edit agreement";
-  $("customer-type").textContent = data.customer.type;
-  $("customer-name").textContent = data.customer.name;
-  $("site-name").textContent = data.customer.site;
-  $("customer-notes").textContent = data.customer.notes;
-  $("site-notes").textContent = data.customer.siteNotes;
+  // New Agreements select an existing customer/site; existing Agreements
+  // show those relationships read-only, as before.
+  populateCustomerSelect();
+  populateSiteSelect(savedAgreement.customerId, savedAgreement.siteId);
+  renderCustomerFields();
+  $("customer-select").addEventListener("change", function () {
+    populateSiteSelect(this.value, "");
+    renderCustomerFields();
+    hideMessage();
+  });
+  $("site-select").addEventListener("change", function () {
+    renderCustomerFields();
+    hideMessage();
+  });
 
   elements.containerType.addEventListener("change", function () {
     selectOptions(elements.containerSize, data.containerSizes[elements.containerType.value] || [], "Select container size", "");
@@ -1523,22 +1591,37 @@
   });
 
   $("save").addEventListener("click", function () {
-    const current = normaliseAgreement(Object.assign(readForm(), { services: clone(draftServices) }));
+    const form = readForm();
+    if (!form.customerId) return showMessage("Please choose a customer.", "info");
+    if (!form.siteId) return showMessage("Please choose a customer site.", "info");
+    if (!form.containerType || !form.containerSize || !form.materialType || !form.material) {
+      return showMessage("Please select the container type, size, material type and material.", "info");
+    }
+    const current = normaliseAgreement(Object.assign({}, savedAgreement, form, {
+      services: clone(draftServices)
+    }));
     try {
-      window.localStorage.setItem(storageKey, JSON.stringify(current));
-      savedAgreement = clone(current);
-      showMessage("Agreement changes saved in this browser.");
+      const saved = agreementsStore.save(current);
+      savedAgreement = clone(saved);
+      currentAgreementId = saved.id;
+      if (isNew) {
+        isNew = false;
+        const url = new URL("agreement.html", window.location.href);
+        url.searchParams.set("id", saved.id);
+        window.history.replaceState(null, "", url.href);
+        renderCustomerFields();
+        renderJobs();
+      }
+      showMessage("Agreement " + saved.id + " saved in this browser. Return to Agreements to view it in the list.");
     } catch (error) {
       showMessage("Browser storage is unavailable. Changes remain on screen only.", "info");
     }
   });
 
   $("cancel").addEventListener("click", function () {
-    renderForm(savedAgreement);
-    draftServices = clone(savedAgreement.services);
-    renderServices();
-    renderJobs();
-    showMessage("Unsaved changes discarded.", "info");
+    // Cancel is the return path to the Agreements list, without saving
+    // unsaved changes in this editor.
+    window.location.href = new URL("index.html", window.location.href).href;
   });
 
   populateMonthlyDays();
