@@ -233,6 +233,10 @@
     const placeholderOption = document.createElement("option");
     placeholderOption.value = "";
     placeholderOption.textContent = placeholder;
+    // Show an initial hint in the closed select, but never offer it as a
+    // selectable entry in the opened native dropdown.
+    placeholderOption.disabled = true;
+    placeholderOption.hidden = true;
     element.appendChild(placeholderOption);
 
     options.forEach(function (choice) {
@@ -244,12 +248,29 @@
     element.value = options.includes(currentValue) ? currentValue : "";
   }
 
+  function updateServiceAddButtons() {
+    const ready = fieldNames.every(function (name) {
+      return Boolean(elements[name].value);
+    });
+    $("add-ad-hoc-service").disabled = !ready;
+    $("add-regular-service").disabled = !ready;
+  }
+
+  function updateDependentSelectors() {
+    // The four Agreement fields are immutable once an Agreement is saved.
+    // On Add, a dependent dropdown is inactive until its parent is selected.
+    elements.containerSize.disabled = isNew && !elements.containerType.value;
+    elements.material.disabled = isNew && !elements.materialType.value;
+    updateServiceAddButtons();
+  }
+
   function renderForm(agreement) {
     selectOptions(elements.containerType, Object.keys(data.containerSizes), "Select container type", agreement.containerType);
     selectOptions(elements.containerSize, data.containerSizes[agreement.containerType] || [], "Select container size", agreement.containerSize);
     selectOptions(elements.materialType, data.materialTypes, "Select material type", agreement.materialType);
     selectOptions(elements.material, data.materials[agreement.materialType] || [], "Select material", agreement.material);
     updateMaterialFieldsMode();
+    updateDependentSelectors();
   }
 
   function updateMaterialFieldsMode() {
@@ -1492,14 +1513,22 @@
 
   elements.containerType.addEventListener("change", function () {
     selectOptions(elements.containerSize, data.containerSizes[elements.containerType.value] || [], "Select container size", "");
+    updateDependentSelectors();
     hideMessage();
   });
   elements.materialType.addEventListener("change", function () {
     selectOptions(elements.material, data.materials[elements.materialType.value] || [], "Select material", "");
+    updateDependentSelectors();
     hideMessage();
   });
-  elements.containerSize.addEventListener("change", hideMessage);
-  elements.material.addEventListener("change", hideMessage);
+  elements.containerSize.addEventListener("change", function () {
+    updateServiceAddButtons();
+    hideMessage();
+  });
+  elements.material.addEventListener("change", function () {
+    updateServiceAddButtons();
+    hideMessage();
+  });
 
   $("add-ad-hoc-service").addEventListener("click", function () {
     openAddService("new", null, "Ad hoc and one-off");
