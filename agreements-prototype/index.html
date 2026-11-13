@@ -130,6 +130,10 @@
       <div class="section-heading">
         <h2 id="jobs-heading">Jobs</h2>
         <div class="jobs-filter">
+          <div id="job-service-filter" class="job-service-filter" hidden>
+            <span id="job-service-filter-label"></span>
+            <button type="button" id="clear-job-service-filter" aria-label="Clear service filter" title="Clear service filter">×</button>
+          </div>
           <label class="field-label" for="jobs-date-filter">Date range</label>
           <select id="jobs-date-filter" class="field">
             <option value="last4-future" selected>Last 4 weeks and Future</option>
@@ -168,10 +172,7 @@
             <label for="service-kind" class="field-label">Service</label>
             <select id="service-kind" class="field" required></select>
           </div>
-          <div class="input-field" id="service-type-field">
-            <label for="service-type" class="field-label">Service Type</label>
-            <select id="service-type" class="field" required></select>
-          </div>
+          <input id="service-type" type="hidden" value="">
           <div class="dialog-grid recurring-dates" id="recurring-date-fields" hidden>
             <div class="input-field">
               <label for="recurring-start" class="field-label">Start date</label>
@@ -352,17 +353,20 @@
             </div>
             <div class="input-field">
               <label for="service-round" class="field-label">Round</label>
-              <div class="round-picker">
-                <select id="service-round" class="field" required></select>
-                <button type="button" id="view-round" class="btn btn-secondary" disabled>View Round</button>
-              </div>
+              <select id="service-round" class="field" required></select>
             </div>
           </div>
 
           <div class="dialog-grid dialog-job-fields">
             <div class="input-field">
-              <label for="job-notes" class="field-label">Job notes</label>
-              <input id="job-notes" class="field" type="text" maxlength="500" placeholder="Optional notes for this job">
+              <div class="job-notes-heading">
+                <label for="job-notes" class="field-label">Job notes</label>
+                <div class="job-notes-buttons">
+                  <button type="button" id="copy-customer-notes" class="btn btn-secondary">Copy customer notes</button>
+                  <button type="button" id="copy-site-notes" class="btn btn-secondary">Copy site notes</button>
+                </div>
+              </div>
+              <textarea id="job-notes" class="field" rows="3" maxlength="500" placeholder="Optional notes for this job"></textarea>
             </div>
           </div>
           <div class="dialog-divider"></div>
