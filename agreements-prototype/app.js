@@ -35,6 +35,7 @@
   let editingServiceId = null;
   let pendingConfirmation = null;
   let filteredServiceId = null; // Additional Jobs filter; combines with date range.
+  let skipUnloadWarning = false;
 
   function clone(value) {
     return JSON.parse(JSON.stringify(value));
@@ -250,6 +251,66 @@
     };
     fieldNames.forEach(function (name) { result[name] = elements[name].value; });
     return result;
+  }
+
+  // Take a value snapshot, not a "field was touched" flag. This makes
+  // changing a value and changing it back return the header to Close.
+  function serviceChangeSnapshot(service) {
+    const fields = ["id", "jobId", "service", "serviceType", "jobDate",
+      "startDate", "endDate", "timing", "fromTime", "toTime", "roundId",
+      "roundName", "jobNotes", "rateSource", "specificTime"];
+    const values = fields.map(function (key) { return service[key] || ""; });
+    values.push(Number(service.quantity || 1));
+    values.push(Number(service.price || 0));
+    values.push(Boolean(service.onHold));
+    values.push((service.removedJobIds || []).slice().sort());
+    const r = service.recurrence;
+    values.push(!r ? null : [
+      r.basis || "weekly", Number(r.every || 1),
+      (r.weekdays || []).map(Number).sort(function (a, b) { return a - b; }),
+      r.startDate || service.startDate || "", r.endDate || service.endDate || "",
+      r.monthMethod || "weekday", Number(r.ordinal || 1),
+      Number(r.weekday ?? 1), Number(r.monthDay || 1),
+      Number(r.saturdayShift || 0), Number(r.sundayShift || 0)
+    ]);
+    return values;
+  }
+
+  function agreementChangeSnapshot(agreement) {
+    const base = ["customerId", "siteId", ...fieldNames].map(function (key) {
+      return agreement[key] || "";
+    });
+    // Table order is presentation-only; compare services by their identities.
+    const services = (agreement.services || []).slice().sort(function (a, b) {
+      return String(a.id || "").localeCompare(String(b.id || ""));
+    }).map(serviceChangeSnapshot);
+    return JSON.stringify([base, services]);
+  }
+
+  function currentAgreementDraft() {
+    return Object.assign({}, readForm(), { services: draftServices });
+  }
+
+  function hasUnsavedChanges() {
+    return agreementChangeSnapshot(currentAgreementDraft()) !==
+      agreementChangeSnapshot(savedAgreement);
+  }
+
+  function updateHeaderActions() {
+    const dirty = hasUnsavedChanges();
+    $("close-agreement").hidden = dirty;
+    ["save", "save-and-close", "cancel"].forEach(function (id) {
+      $(id).hidden = !dirty;
+    });
+  }
+
+  function returnToAgreementList() {
+    skipUnloadWarning = true;
+    window.location.href = new URL("index.html", window.location.href).href;
+  }
+
+  function dismissUnsavedDialog() {
+    $("unsaved-agreement-dialog").close();
   }
 
   function showMessage(text, type) {
@@ -808,6 +869,7 @@
     renderServiceGroup("ad-hoc", "ad-hoc-services-body", 7);
     renderServiceGroup("recurring", "regular-services-body", 9);
     $("service-tables").hidden = draftServices.length === 0;
+    updateHeaderActions();
   }
 
   function toggleServiceTable(prefix) {
@@ -1590,12 +1652,19 @@
     if (apply) apply();
   });
 
-  $("save").addEventListener("click", function () {
+  function saveAgreement() {
     const form = readForm();
-    if (!form.customerId) return showMessage("Please choose a customer.", "info");
-    if (!form.siteId) return showMessage("Please choose a customer site.", "info");
+    if (!form.customerId) {
+      showMessage("Please choose a customer.", "info");
+      return false;
+    }
+    if (!form.siteId) {
+      showMessage("Please choose a customer site.", "info");
+      return false;
+    }
     if (!form.containerType || !form.containerSize || !form.materialType || !form.material) {
-      return showMessage("Please select the container type, size, material type and material.", "info");
+      showMessage("Please select the container type, size, material type and material.", "info");
+      return false;
     }
     const current = normaliseAgreement(Object.assign({}, savedAgreement, form, {
       services: clone(draftServices)
@@ -1611,28 +1680,77 @@
         try {
           window.history.replaceState(null, "", url.href);
         } catch (_) {
-          // Some file:// browsers disallow history URL updates.
-          // Reopen this same file with the newly saved Agreement ID.
+          // Same local file: the saved record is safe to reopen if the
+          // browser disallows History API changes for file:// pages.
+          skipUnloadWarning = true;
           window.location.replace(url.href);
-          return;
+          return true;
         }
         renderCustomerFields();
         renderJobs();
       }
-      showMessage("Agreement " + saved.id + " saved in this browser. Return to Agreements to view it in the list.");
+      updateHeaderActions();
+      showMessage("Agreement " + saved.id + " saved in this browser.");
+      return true;
     } catch (error) {
       showMessage("Browser storage is unavailable. Changes remain on screen only.", "info");
+      return false;
+    }
+  }
+
+  function saveAndCloseAgreement() {
+    if (saveAgreement()) returnToAgreementList();
+  }
+
+  $("close-agreement").addEventListener("click", function () {
+    if (hasUnsavedChanges()) {
+      $("unsaved-agreement-dialog").showModal();
+    } else {
+      returnToAgreementList();
     }
   });
 
+  $("save").addEventListener("click", saveAgreement);
+  $("save-and-close").addEventListener("click", saveAndCloseAgreement);
+
   $("cancel").addEventListener("click", function () {
-    // Cancel is the return path to the Agreements list, without saving
-    // unsaved changes in this editor.
-    window.location.href = new URL("index.html", window.location.href).href;
+    if (!hasUnsavedChanges()) returnToAgreementList();
+    $("unsaved-agreement-dialog").showModal();
   });
+
+  $("dismiss-unsaved-agreement").addEventListener("click", dismissUnsavedDialog);
+  $("keep-editing-agreement").addEventListener("click", dismissUnsavedDialog);
+  $("discard-agreement-changes").addEventListener("click", function () {
+    dismissUnsavedDialog();
+    returnToAgreementList();
+  });
+  $("confirm-save-and-close").addEventListener("click", function () {
+    dismissUnsavedDialog();
+    saveAndCloseAgreement();
+  });
+
+  // Only Agreement-level field changes count immediately. A service dialog
+  // contributes to the Agreement's dirty state only after its own Add/Save.
+  ["customer-select", "site-select", ...Object.values(fieldIds)].forEach(function (id) {
+    $(id).addEventListener("change", updateHeaderActions);
+    $(id).addEventListener("input", updateHeaderActions);
+  });
+
+  window.addEventListener("beforeunload", function (event) {
+    if (skipUnloadWarning || !hasUnsavedChanges()) return;
+    event.preventDefault();
+    event.returnValue = "";
+  });
+
+  function refreshStickyHeader() {
+    $("editor-page-header").classList.toggle("is-scrolled", window.scrollY > 8);
+  }
+  window.addEventListener("scroll", refreshStickyHeader, { passive: true });
 
   populateMonthlyDays();
   renderForm(savedAgreement);
   renderServices();
   renderJobs();
+  updateHeaderActions();
+  refreshStickyHeader();
 })();
