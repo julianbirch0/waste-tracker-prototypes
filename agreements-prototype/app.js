@@ -32,6 +32,7 @@
   let modalMode = "new"; // new, edit, or clone
   let editingServiceId = null;
   let pendingConfirmation = null;
+  let filteredServiceId = null; // Additional Jobs filter; combines with date range.
 
   function clone(value) {
     return JSON.parse(JSON.stringify(value));
@@ -63,17 +64,20 @@
       const days = -diff;
       return { text: days + " day" + (days === 1 ? "" : "s") + " in the past", past: true };
     }
-    if (diff === 0) return { text: "today", past: false };
-    if (diff === 1) return { text: "tomorrow", past: false };
+    if (diff === 0) return { text: "Today", past: false };
+    if (diff === 1) return { text: "Tomorrow", past: false };
     const dow = new Intl.DateTimeFormat("en-GB", { weekday: "long" }).format(target);
     const mondayUTC = function (timestamp) {
       const d = new Date(timestamp).getUTCDay();
       return timestamp - ((d + 6) % 7) * 86400000;
     };
     const weeksAway = Math.round((mondayUTC(utcDay(iso)) - mondayUTC(utcDay(today))) / 604800000);
-    if (weeksAway === 0) return { text: "this " + dow, past: false };
-    if (weeksAway === 1) return { text: "next " + dow, past: false };
-    return { text: dow + " in " + weeksAway + " weeks' time", past: false };
+    if (weeksAway === 0) return { text: "This " + dow, past: false };
+    if (weeksAway === 1) return { text: "Next " + dow, past: false };
+    const numberWords = ["zero", "one", "two", "three", "four", "five",
+      "six", "seven", "eight", "nine", "ten", "eleven", "twelve"];
+    const interval = numberWords[weeksAway] || String(weeksAway);
+    return { text: dow + " in " + interval + " weeks", past: false };
   }
 
   function updateDateDescription(id) {
@@ -768,23 +772,9 @@
   }
 
   function setServiceType(value) {
-    const select = $("service-type");
-    select.replaceChildren();
-    // No placeholder option: when the Service is blank, this control is
-    // genuinely empty and disabled, rather than displaying an option.
-    if (!value) {
-      select.disabled = true;
-      select.selectedIndex = -1;
-      return;
-    }
-    data.serviceTypes.forEach(function (choice) {
-      const option = document.createElement("option");
-      option.value = choice;
-      option.textContent = choice;
-      select.appendChild(option);
-    });
-    select.disabled = false;
-    select.value = value;
+    // The two Add buttons (and the cloned source) determine the fixed type.
+    // Keep it internally without showing a redundant Service Type control.
+    $("service-type").value = value || "";
   }
 
   function setServiceOptions() {
@@ -865,17 +855,12 @@
     select.classList.remove("invalid");
   }
 
-  function updateRoundViewButton() {
-    const value = $("service-round").value;
-    $("view-round").disabled = !value || value === "unallocated";
-  }
-
-  function viewSelectedRound() {
+  function viewRound(roundId) {
     const selected = data.rounds.find(function (round) {
-      return round.id === $("service-round").value;
+      return round.id === roundId;
     });
     if (!selected) return;
-    // Opens a separate prototype tab so an unsaved Agreement draft is retained.
+    // Keep the Agreement open, including unsaved changes, in its own tab.
     const url = new URL("../round-planning-prototype/index.html", window.location.href);
     url.searchParams.set("round", selected.name);
     window.open(url.href, "_blank", "noopener");
@@ -915,6 +900,22 @@
     $(prefix + "-minute").value = value.slice(3, 5);
   }
 
+  function appendToJobNotes(text) {
+    const note = String(text || "").trim();
+    if (!note) return;
+    const field = $("job-notes");
+    const existing = field.value.trimEnd();
+    const combined = existing ? existing + "\n" + note : note;
+    if (combined.length > field.maxLength) {
+      dialogError("Job notes must not exceed " + field.maxLength + " characters.", "job-notes");
+      return;
+    }
+    field.value = combined;
+    field.classList.remove("invalid");
+    clearDialogError();
+    field.focus();
+  }
+
   function populateServiceModal(service) {
     // Called after resetting all controls, so no previous service values leak.
     if (!service) return;
@@ -950,7 +951,6 @@
       monthWeekdayOverridden = true;
     }
     $("service-round").value = service.roundId || "unallocated";
-    updateRoundViewButton();
     $("job-notes").value = service.jobNotes || "";
     fillTimePair("from", service.fromTime);
     refreshToHours();
@@ -1000,7 +1000,6 @@
     });
     $("job-notes").value = "";
     setRoundOptions();
-    updateRoundViewButton();
     dialogForm.querySelectorAll(".invalid").forEach(function (input) {
       input.classList.remove("invalid");
     });
@@ -1015,8 +1014,6 @@
     const cloning = modalMode === "clone";
     // Clone: Service may change (e.g. Deliver -> Collect); Type remains ad hoc.
     $("service-kind").disabled = locked;
-    $("service-type-field").hidden = cloning;
-    $("service-type").disabled = true;
     $("service-round").disabled = locked;
     $("service-price").disabled = locked;
     $("reset-service-price").hidden = locked || $("reset-service-price").hidden;
@@ -1038,7 +1035,7 @@
     }
     if (locked) $("reset-service-price").hidden = true;
     dialog.showModal();
-    if (cloning) $("job-date").focus();
+    if (cloning) $("service-kind").focus();
     else if (!locked) $("service-kind").focus();
     else $("service-quantity").focus();
   }
@@ -1363,7 +1360,6 @@
     toggleServiceType();
     restoreSuggestedPrice();
   });
-  $("service-type").addEventListener("change", toggleServiceType);
   ["job-date", "recurring-start", "recurring-end"].forEach(function (id) {
     $(id).addEventListener("input", function () { updateDateDescription(id); });
     $(id).addEventListener("change", function () { updateDateDescription(id); });
@@ -1373,7 +1369,12 @@
     if (!button) return;
     stepDate(button.dataset.dateTarget, Number(button.dataset.dateStep));
   });
-  $("view-round").addEventListener("click", viewSelectedRound);
+  $("copy-customer-notes").addEventListener("click", function () {
+    appendToJobNotes($("customer-notes").textContent);
+  });
+  $("copy-site-notes").addEventListener("click", function () {
+    appendToJobNotes($("site-notes").textContent);
+  });
   $("service-timing").addEventListener("change", toggleSpecificTime);
   $("recurring-start").addEventListener("change", seedScheduleFromStart);
   $("recurring-end").addEventListener("change", renderFrequencyPreview);
@@ -1403,7 +1404,6 @@
   // Round choices are parent names and do not change with the Job date.
   $("service-round").addEventListener("change", function () {
     this.classList.remove("invalid");
-    updateRoundViewButton();
   });
   $("service-price").addEventListener("focus", function () {
     const parsed = parseMoney(this.value);
