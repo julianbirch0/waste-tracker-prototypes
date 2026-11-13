@@ -10,7 +10,7 @@
 <body>
   <div id="agreements-list-view">
   <main class="page agreements-list-page">
-    <header class="page-header">
+    <header class="page-header" id="agreements-list-header">
       <div class="page-heading">
         <h1>Agreements</h1>
         <p class="subtitle">Customer service agreements</p>
@@ -61,7 +61,7 @@
     </div>
     <div class="dialog-content">
       <p id="agreement-delete-message">Deleting agreements is not implemented in this prototype.</p>
-      <p class="confirm-note">An agreement with planned jobs cannot be deleted.</p>
+      <p class="confirm-note" id="agreement-delete-explanation">Agreements with planned jobs or unexpired services cannot be deleted.</p>
     </div>
     <div class="dialog-actions">
       <button type="button" id="ok-agreement-delete" class="btn btn-primary">OK</button>
@@ -143,10 +143,10 @@
       <div class="section-heading">
         <h2 id="services-heading">Services</h2>
         <div class="add-service-actions">
-          <button type="button" id="add-ad-hoc-service" class="btn btn-primary">
+          <button type="button" id="add-ad-hoc-service" class="btn btn-primary" disabled>
             <span class="plus-icon" aria-hidden="true">+</span> Add Ad Hoc and One-Off Service
           </button>
-          <button type="button" id="add-regular-service" class="btn btn-primary">
+          <button type="button" id="add-regular-service" class="btn btn-primary" disabled>
             <span class="plus-icon" aria-hidden="true">+</span> Add Regular, Recurring Service
           </button>
         </div>
