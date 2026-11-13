@@ -657,3 +657,91 @@ select.field {
   background: #f1f4f7;
   color: var(--text);
 }
+
+/* Dedicated Add routes and collapsible, count-bearing service table headers. */
+.add-service-actions { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 9px; }
+.service-subsection .service-collapse-button {
+  display: flex; align-items: center; gap: 10px;
+  width: 100%; border: 0; background: transparent;
+  padding: 0; color: var(--text); text-align: left; cursor: pointer;
+  font-size: 13px; font-weight: 600;
+}
+.service-subsection .service-collapse-button:hover { color: #376483; }
+.service-collapse-chevron {
+  display: inline-block; flex: 0 0 auto; width: 16px;
+  font-size: 15px; line-height: 1; text-align: center;
+  transition: transform 120ms ease;
+}
+.service-collapse-button[aria-expanded="false"] .service-collapse-chevron { transform: rotate(-90deg); }
+.service-counts { color: #7489a1; font-size: 11.5px; font-weight: 400; margin-left: 8px; }
+.service-subsection h3 { padding-top: 15px; padding-bottom: 13px; }
+
+/* Date steppers supplement (and don't replace) the browser calendar picker. */
+.dialog-primary-fields .date-stepper {
+  display: grid;
+  grid-template-columns: 25px minmax(0, 1fr) 25px;
+  align-items: center; gap: 5px; width: 100%;
+}
+.date-stepper .field {
+  min-width: 0; padding-left: 5px; padding-right: 3px;
+  font-variant-numeric: tabular-nums;
+}
+.date-stepper-button {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 25px; height: 37px; padding: 0;
+  border: 1px solid var(--line); border-radius: 5px;
+  background: #fff; color: #476681;
+  font-size: 17px; font-weight: 600; line-height: 1;
+}
+.date-stepper-button:hover { background: #eef3f7; border-color: #b4c5d6; }
+.date-description {
+  min-height: 16px; margin: 4px 0 0 30px;
+  color: #71849c; font-size: 11px; white-space: nowrap;
+}
+.date-description.is-past { color: #be3a42; font-weight: 600; }
+
+/* View Round sits beside Round on the same row, with real navigation. */
+.round-picker { display: flex; align-items: center; gap: 9px; width: 100%; }
+.round-picker select.field { flex: 1 1 215px; min-width: 0; }
+.round-picker .btn { min-width: 95px; padding: 6px 10px; }
+.round-picker .btn:disabled { opacity: .48; cursor: not-allowed; }
+.shared-schedule-fields { grid-template-columns: 110px 175px 335px; }
+.shared-schedule-fields.has-specific-time { grid-template-columns: 110px 160px 355px 335px; }
+
+@media (min-width: 601px) and (max-width: 1159px) {
+  .shared-schedule-fields.has-specific-time {
+    grid-template-columns: 110px 175px 335px;
+  }
+  .shared-schedule-fields.has-specific-time > #specific-time-wrap {
+    grid-column: 2 / 4; grid-row: 2; width: min(100%, 355px);
+  }
+  .shared-schedule-fields.has-specific-time > .input-field:last-child {
+    grid-column: 3; grid-row: 1;
+  }
+}
+@media (min-width: 601px) and (max-width: 900px) {
+  .shared-schedule-fields,
+  .shared-schedule-fields.has-specific-time {
+    grid-template-columns: 110px 175px minmax(0, 1fr);
+    gap: 13px;
+  }
+  .shared-schedule-fields > .input-field:last-child,
+  .shared-schedule-fields.has-specific-time > .input-field:last-child {
+    grid-column: 1 / -1; grid-row: 3; max-width: 335px;
+  }
+  .shared-schedule-fields.has-specific-time > #specific-time-wrap {
+    grid-column: 1 / -1; grid-row: 2; max-width: 355px;
+  }
+  .shared-schedule-fields:not(.has-specific-time) > .input-field:last-child { grid-row: 2; }
+}
+@media (max-width: 600px) {
+  .add-service-actions { justify-content: flex-start; }
+  .add-service-actions .btn { white-space: normal; text-align: left; }
+  .service-collapse-button { flex-wrap: wrap; }
+  .service-counts { width: 100%; margin-left: 26px; }
+  .date-description { white-space: normal; }
+  .shared-schedule-fields > .input-field:last-child,
+  .shared-schedule-fields.has-specific-time > .input-field:last-child {
+    grid-row: auto; grid-column: auto; width: 100%;
+  }
+}
