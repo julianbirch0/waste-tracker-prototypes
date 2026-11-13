@@ -1606,7 +1606,7 @@
       currentAgreementId = saved.id;
       if (isNew) {
         isNew = false;
-        const url = new URL("agreement.html", window.location.href);
+        const url = new URL("index.html", window.location.href);
         url.searchParams.set("id", saved.id);
         window.history.replaceState(null, "", url.href);
         renderCustomerFields();
