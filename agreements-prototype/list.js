@@ -7,7 +7,7 @@
   const search = $("agreement-search");
 
   function agreementUrl(id) {
-    const url = new URL("agreement.html", window.location.href);
+    const url = new URL("index.html", window.location.href);
     if (id) url.searchParams.set("id", id);
     else url.searchParams.set("mode", "new");
     return url.href;
