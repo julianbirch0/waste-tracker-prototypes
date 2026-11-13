@@ -59,16 +59,17 @@
   </main>
   </div>
   <div id="agreement-editor-view" hidden>
-  <main class="page">
-    <header class="page-header">
+  <main class="page agreement-editor-page">
+    <header class="page-header editor-page-header" id="editor-page-header">
       <div class="page-heading">
-        <a class="back-to-agreements" href="index.html">← Back to agreements</a>
         <h1>Agreement</h1>
-        <p class="subtitle" id="page-subtitle">Edit agreement</p>
+        <p class="subtitle" id="page-subtitle">AGR-10421</p>
       </div>
       <div class="header-actions">
-        <button type="button" id="save" class="btn btn-primary">Save</button>
-        <button type="button" id="cancel" class="btn btn-secondary">Cancel</button>
+        <button type="button" id="close-agreement" class="btn btn-secondary">Close</button>
+        <button type="button" id="save" class="btn btn-primary" hidden>Save</button>
+        <button type="button" id="save-and-close" class="btn btn-primary" hidden>Save and Close</button>
+        <button type="button" id="cancel" class="btn btn-secondary" hidden>Cancel</button>
       </div>
     </header>
 
@@ -464,6 +465,20 @@
     <div class="dialog-actions">
       <button type="button" class="btn btn-secondary" id="cancel-job-confirm">Cancel</button>
       <button type="button" class="btn btn-primary" id="apply-job-confirm">Confirm</button>
+    </div>
+  </dialog>
+  <dialog id="unsaved-agreement-dialog" class="confirmation-dialog" aria-labelledby="unsaved-agreement-title">
+    <div class="dialog-header">
+      <h2 id="unsaved-agreement-title">Unsaved changes</h2>
+      <button type="button" id="dismiss-unsaved-agreement" class="dialog-close" aria-label="Close unsaved changes confirmation">&times;</button>
+    </div>
+    <div class="dialog-content">
+      <p>There are unsaved changes to this Agreement. Do you want to discard these changes or save and close?</p>
+    </div>
+    <div class="dialog-actions">
+      <button type="button" id="keep-editing-agreement" class="btn btn-secondary">Keep editing</button>
+      <button type="button" id="discard-agreement-changes" class="btn btn-secondary">Discard changes</button>
+      <button type="button" id="confirm-save-and-close" class="btn btn-primary">Save and Close</button>
     </div>
   </dialog>
   </div>
