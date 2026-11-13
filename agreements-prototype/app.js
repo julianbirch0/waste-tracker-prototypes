@@ -1087,6 +1087,7 @@
       return;
     }
     field.value = combined;
+    field.dispatchEvent(new Event("input", { bubbles: true }));
     field.classList.remove("invalid");
     clearDialogError();
     field.focus();
@@ -1662,10 +1663,52 @@
   $("add-regular-service").addEventListener("click", function () {
     openAddService("new", null, "Regular, recurring");
   });
-  $("close-service-dialog").addEventListener("click", closeAddService);
-  $("cancel-service-dialog").addEventListener("click", closeAddService);
-  // Only explicit Close/Cancel (or the browser's Escape key) dismiss the
-  // native modal. Backdrop clicks deliberately have no handler.
+  $("close-service-dialog").addEventListener("click", discardOrCloseService);
+  $("close-service-unchanged").addEventListener("click", closeAddService);
+  $("cancel-service-dialog").addEventListener("click", discardOrCloseService);
+  $("save-service").addEventListener("click", function () { trySaveService(false); });
+  $("save-close-service").addEventListener("click", function () { trySaveService(true); });
+
+  $("keep-editing-service").addEventListener("click", function () {
+    $("unsaved-service-dialog").close();
+  });
+  $("discard-service-changes").addEventListener("click", function () {
+    $("unsaved-service-dialog").close();
+    closeAddService();
+  });
+  $("confirm-save-close-service").addEventListener("click", function () {
+    $("unsaved-service-dialog").close();
+    trySaveService(true);
+  });
+
+  // Escape is a closing attempt too: do not silently lose edited Services.
+  dialog.addEventListener("cancel", function (event) {
+    if (hasUnsavedServiceChanges()) {
+      event.preventDefault();
+      $("unsaved-service-dialog").showModal();
+    }
+  });
+  dialog.addEventListener("close", function () {
+    roundOmissionConfirmed = false;
+    serviceSaveAndClose = false;
+  });
+  // A single aggregated validation dialog replaces the old weekday-specific
+  // notice and the per-field message at the bottom of the editor.
+  $("ok-service-validation").addEventListener("click", function () {
+    $("service-validation-dialog").close();
+    if (serviceValidationFirstField) {
+      const target = $(serviceValidationFirstField);
+      if (target && !target.hidden && !["hidden"].includes(target.type)) {
+        const focusable = typeof target.focus === "function" &&
+          target.matches("input,select,textarea,button") ? target :
+          target.querySelector("input,select,textarea,button");
+        if (focusable) focusable.focus();
+      }
+    }
+  });
+  dialogForm.addEventListener("input", updateServiceDialogActions);
+  dialogForm.addEventListener("change", updateServiceDialogActions);
+  // Backdrop clicks deliberately have no handler.
   $("service-kind").addEventListener("change", function () {
     const selectedService = this.value;
     // Once a real service is chosen, remove the prompt from the DOM entirely.
@@ -1682,10 +1725,6 @@
     const button = event.target.closest("button[data-date-target][data-date-step]");
     if (!button) return;
     stepDate(button.dataset.dateTarget, Number(button.dataset.dateStep), button);
-  });
-  $("ok-service-day").addEventListener("click", function () {
-    $("service-day-dialog").close();
-    $("weekday-checkboxes").querySelector('input[type="checkbox"]').focus();
   });
   $("keep-editing-service-round").addEventListener("click", function () {
     $("service-round-dialog").close();
@@ -1745,7 +1784,10 @@
       this.classList.remove("invalid");
     }
   });
-  $("reset-service-price").addEventListener("click", restoreSuggestedPrice);
+  $("reset-service-price").addEventListener("click", function () {
+    restoreSuggestedPrice();
+    updateServiceDialogActions();
+  });
   dialogForm.addEventListener("submit", addService);
 
   $("toggle-ad-hoc-services").addEventListener("click", function () {
