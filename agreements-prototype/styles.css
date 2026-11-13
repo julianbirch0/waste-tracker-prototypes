@@ -934,3 +934,35 @@ select.field {
   cursor: default;
   padding-right: 10px;
 }
+
+/* Icon-only Agreement actions: delete is offered only without planned jobs.
+   A muted lock explains why deletion is unavailable on active Agreements. */
+.agreement-row-actions {
+  display: flex; align-items: center; gap: 7px;
+}
+.agreement-icon-action {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; padding: 0;
+  border: 1px solid transparent; border-radius: 5px;
+  color: #4d6985; background: transparent;
+  text-decoration: none;
+}
+.agreement-icon-action svg { display: block; pointer-events: none; }
+.agreement-icon-action:hover {
+  border-color: var(--line);
+  background: #f2f6fa;
+  text-decoration: none;
+}
+.agreement-delete-action { color: #aa4f53; }
+.agreement-delete-action:hover {
+  border-color: #efd5d7;
+  background: #fff7f7;
+}
+.agreement-delete-blocked { color: #a0adbb; }
+.agreement-delete-blocked:hover { color: #637a91; }
+/* Deliberately prominent validation dialog, rather than a discreet message
+   at the bottom of the long Add Service popup. */
+#service-day-dialog { width: min(570px, calc(100vw - 38px)); }
+#service-day-dialog .dialog-content { padding-top: 23px; padding-bottom: 18px; }
+#service-day-dialog .dialog-content p { font-size: 14px; line-height: 1.5; }
+#service-round-dialog { width: min(620px, calc(100vw - 38px)); }
