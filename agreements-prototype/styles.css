@@ -966,3 +966,43 @@ select.field {
 #service-day-dialog .dialog-content { padding-top: 23px; padding-bottom: 18px; }
 #service-day-dialog .dialog-content p { font-size: 14px; line-height: 1.5; }
 #service-round-dialog { width: min(620px, calc(100vw - 38px)); }
+
+/* List screen super-sticky header: exact same fixed content position as the
+   editor, with no upward jump when scrolling. */
+.agreements-list-page { --list-header-inset: 26px; }
+.agreements-list-page > #agreements-list-header {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  margin-top: calc(-1 * var(--list-header-inset));
+  padding-top: var(--list-header-inset);
+  min-height: calc(74px + var(--list-header-inset));
+  background: #fff;
+  transition: box-shadow .14s ease;
+}
+.agreements-list-page > #agreements-list-header.is-scrolled {
+  box-shadow: 0 8px 15px -14px rgba(30, 49, 72, .55);
+}
+@media (max-width: 480px) {
+  .agreements-list-page { --list-header-inset: 18px; }
+}
+
+/* Dependent Agreement dropdowns remain visibly inactive until their
+   Container Type or Material Type has been chosen. */
+.agreement-details select.field:disabled {
+  background-color: #f0f3f6;
+  color: #9ba8b8;
+  opacity: .82;
+  cursor: not-allowed;
+}
+.add-service-actions .btn:disabled {
+  color: #8394a8;
+  border-color: #dbe4ee;
+  background: #eff2f5;
+  cursor: not-allowed;
+}
+.add-service-actions .btn:disabled:hover {
+  color: #8394a8;
+  border-color: #dbe4ee;
+  background: #eff2f5;
+}
