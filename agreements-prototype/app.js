@@ -1608,7 +1608,14 @@
         isNew = false;
         const url = new URL("index.html", window.location.href);
         url.searchParams.set("id", saved.id);
-        window.history.replaceState(null, "", url.href);
+        try {
+          window.history.replaceState(null, "", url.href);
+        } catch (_) {
+          // Some file:// browsers disallow history URL updates.
+          // Reopen this same file with the newly saved Agreement ID.
+          window.location.replace(url.href);
+          return;
+        }
         renderCustomerFields();
         renderJobs();
       }
