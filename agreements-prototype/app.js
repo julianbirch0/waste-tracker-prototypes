@@ -1652,7 +1652,7 @@
     if (apply) apply();
   });
 
-  function saveAgreement() {
+  function saveAgreement(closeAfterSave) {
     const form = readForm();
     if (!form.customerId) {
       showMessage("Please choose a customer.", "info");
@@ -1675,19 +1675,21 @@
       currentAgreementId = saved.id;
       if (isNew) {
         isNew = false;
-        const url = new URL("index.html", window.location.href);
-        url.searchParams.set("id", saved.id);
-        try {
-          window.history.replaceState(null, "", url.href);
-        } catch (_) {
-          // Same local file: the saved record is safe to reopen if the
-          // browser disallows History API changes for file:// pages.
-          skipUnloadWarning = true;
-          window.location.replace(url.href);
-          return true;
+        if (!closeAfterSave) {
+          const url = new URL("index.html", window.location.href);
+          url.searchParams.set("id", saved.id);
+          try {
+            window.history.replaceState(null, "", url.href);
+          } catch (_) {
+            // Same local file: reopening the saved record is safe where the
+            // History API is restricted for file:// pages.
+            skipUnloadWarning = true;
+            window.location.replace(url.href);
+            return true;
+          }
+          renderCustomerFields();
+          renderJobs();
         }
-        renderCustomerFields();
-        renderJobs();
       }
       updateHeaderActions();
       showMessage("Agreement " + saved.id + " saved in this browser.");
@@ -1699,7 +1701,8 @@
   }
 
   function saveAndCloseAgreement() {
-    if (saveAgreement()) returnToAgreementList();
+    // Never reopen the editor between saving and closing a brand-new record.
+    if (saveAgreement(true)) returnToAgreementList();
   }
 
   $("close-agreement").addEventListener("click", function () {
@@ -1710,7 +1713,9 @@
     }
   });
 
-  $("save").addEventListener("click", saveAgreement);
+  $("save").addEventListener("click", function () {
+    saveAgreement(false);
+  });
   $("save-and-close").addEventListener("click", saveAndCloseAgreement);
 
   $("cancel").addEventListener("click", function () {
