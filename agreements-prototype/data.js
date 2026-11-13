@@ -116,7 +116,7 @@ window.AgreementPrototypeData = {
     {
       id: "demo-adhoc-past", service: "Deliver", serviceType: "Ad hoc and one-off",
       jobDaysFromToday: -12, quantity: 1, timing: "Afternoon",
-      roundId: "unallocated", roundName: "Unallocated",
+      roundId: "", roundName: "",
       jobNotes: "", price: "45.00", rateSource: "Standard rate",
       jobId: "JOB-10468"
     }
