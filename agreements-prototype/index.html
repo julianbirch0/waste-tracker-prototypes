@@ -17,7 +17,7 @@
       </div>
       <div class="header-actions">
         <button type="button" id="new-agreement" class="btn btn-primary">
-          <span class="plus-icon" aria-hidden="true">+</span> New agreement
+          <span class="plus-icon" aria-hidden="true">+</span> Add agreement
         </button>
       </div>
     </header>
@@ -54,6 +54,19 @@
 
     <p class="storage-note">Prototype: Agreement records and changes are stored in this browser. Data is not connected to the live system.</p>
   </main>
+  <dialog id="agreement-delete-dialog" class="confirmation-dialog" aria-labelledby="agreement-delete-title">
+    <div class="dialog-header">
+      <h2 id="agreement-delete-title">Delete agreement</h2>
+      <button type="button" id="close-agreement-delete" class="dialog-close" aria-label="Close deletion notice">&times;</button>
+    </div>
+    <div class="dialog-content">
+      <p id="agreement-delete-message">Deleting agreements is not implemented in this prototype.</p>
+      <p class="confirm-note">An agreement with planned jobs cannot be deleted.</p>
+    </div>
+    <div class="dialog-actions">
+      <button type="button" id="ok-agreement-delete" class="btn btn-primary">OK</button>
+    </div>
+  </dialog>
   </div>
   <div id="agreement-editor-view" hidden>
   <main class="page agreement-editor-page">
@@ -134,7 +147,7 @@
             <span class="plus-icon" aria-hidden="true">+</span> Add Ad Hoc and One-Off Service
           </button>
           <button type="button" id="add-regular-service" class="btn btn-primary">
-            <span class="plus-icon" aria-hidden="true">+</span> Add Regular Recurring Service
+            <span class="plus-icon" aria-hidden="true">+</span> Add Regular, Recurring Service
           </button>
         </div>
       </div>
@@ -466,6 +479,29 @@
     <div class="dialog-actions">
       <button type="button" class="btn btn-secondary" id="cancel-job-confirm">Cancel</button>
       <button type="button" class="btn btn-primary" id="apply-job-confirm">Confirm</button>
+    </div>
+  </dialog>
+  <dialog id="service-day-dialog" class="confirmation-dialog" aria-labelledby="service-day-dialog-title">
+    <div class="dialog-header">
+      <h2 id="service-day-dialog-title">Select a day</h2>
+    </div>
+    <div class="dialog-content">
+      <p>Please select at least one day of the week for this regular, recurring service.</p>
+    </div>
+    <div class="dialog-actions">
+      <button type="button" id="ok-service-day" class="btn btn-primary">OK</button>
+    </div>
+  </dialog>
+  <dialog id="service-round-dialog" class="confirmation-dialog" aria-labelledby="service-round-dialog-title">
+    <div class="dialog-header">
+      <h2 id="service-round-dialog-title">No round selected</h2>
+    </div>
+    <div class="dialog-content">
+      <p>No round selected. Keep editing or save with no round assigned?</p>
+    </div>
+    <div class="dialog-actions">
+      <button type="button" id="keep-editing-service-round" class="btn btn-secondary">Keep editing</button>
+      <button type="button" id="save-unallocated-service" class="btn btn-primary">Save with no round assigned</button>
     </div>
   </dialog>
   <dialog id="unsaved-agreement-dialog" class="confirmation-dialog" aria-labelledby="unsaved-agreement-title">
