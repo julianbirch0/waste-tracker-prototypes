@@ -1006,3 +1006,21 @@ select.field {
   border-color: #dbe4ee;
   background: #eff2f5;
 }
+
+/* Service Save validation is a single, conspicuous dialog collecting every
+   issue; it isn't tucked away under the long service editor. */
+#service-validation-dialog { width: min(640px, calc(100vw - 38px)); }
+#service-validation-dialog .dialog-content { padding-top: 22px; padding-bottom: 22px; }
+#service-validation-dialog .dialog-content p { font-size: 13px; font-weight: 600; }
+.service-validation-list {
+  margin: 12px 0 0;
+  padding-left: 23px;
+  color: #9a3037;
+  font-size: 13px;
+  line-height: 1.65;
+}
+.service-validation-list li + li { margin-top: 6px; }
+#unsaved-service-dialog .dialog-actions { flex-wrap: wrap; }
+/* The absence of validation errors, not form completeness, governs action
+   button availability after the user makes a change. */
+#service-dialog .dialog-actions .btn[hidden] { display: none !important; }
