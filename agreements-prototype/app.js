@@ -45,6 +45,59 @@
     return isoOfDate(date);
   }
 
+
+  /* Calendar-day comparisons use UTC midnights so daylight saving changes
+     cannot produce off-by-one relative descriptions. */
+  function utcDay(iso) {
+    const date = parseLocalDate(iso);
+    return date ? Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) : null;
+  }
+
+  function relativeDateDescription(iso) {
+    if (!iso) return { text: "No end date", past: false };
+    const target = parseLocalDate(iso);
+    if (!target) return { text: "Choose a valid date", past: false };
+    const today = isoOfDate(new Date());
+    const diff = Math.round((utcDay(iso) - utcDay(today)) / 86400000);
+    if (diff < 0) {
+      const days = -diff;
+      return { text: days + " day" + (days === 1 ? "" : "s") + " in the past", past: true };
+    }
+    if (diff === 0) return { text: "Today", past: false };
+    if (diff === 1) return { text: "Tomorrow", past: false };
+    const dow = new Intl.DateTimeFormat("en-GB", { weekday: "long" }).format(target);
+    const mondayUTC = function (timestamp) {
+      const d = new Date(timestamp).getUTCDay();
+      return timestamp - ((d + 6) % 7) * 86400000;
+    };
+    const weeksAway = Math.round((mondayUTC(utcDay(iso)) - mondayUTC(utcDay(today))) / 604800000);
+    if (weeksAway === 0) return { text: "This " + dow, past: false };
+    if (weeksAway === 1) return { text: "Next " + dow, past: false };
+    return { text: dow + " in " + weeksAway + " weeks' time", past: false };
+  }
+
+  function updateDateDescription(id) {
+    const target = $(id + "-description");
+    if (!target) return;
+    const value = $(id).value;
+    const result = relativeDateDescription(value);
+    target.textContent = result.text;
+    target.classList.toggle("is-past", result.past);
+  }
+
+  function updateAllDateDescriptions() {
+    ["job-date", "recurring-start", "recurring-end"].forEach(updateDateDescription);
+  }
+
+  function stepDate(id, amount) {
+    const input = $(id);
+    const baseline = parseLocalDate(input.value) || parseLocalDate(isoOfDate(new Date()));
+    baseline.setDate(baseline.getDate() + amount);
+    input.value = isoOfDate(baseline);
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+    input.focus();
+  }
+
   function exampleServices() {
     return (data.demoServices || []).map(function (entry) {
       const sample = clone(entry);
@@ -701,9 +754,11 @@
 
   function toggleServiceType() {
     const hasService = Boolean($("service-kind").value);
-    const adHoc = hasService && $("service-type").value === "Ad hoc and one-off";
-    const recurring = hasService && $("service-type").value === "Regular, recurring";
-    $("service-detail-fields").hidden = !hasService;
+    const adHoc = $("service-type").value === "Ad hoc and one-off";
+    const recurring = $("service-type").value === "Regular, recurring";
+    // The Add button preselects the type: show its entire layout immediately,
+    // without requiring Service selection or resizing the dialog afterwards.
+    $("service-detail-fields").hidden = !(adHoc || recurring);
     $("ad-hoc-date-fields").hidden = !adHoc;
     $("recurring-date-fields").hidden = !recurring;
     $("frequency-panel").hidden = !recurring;
@@ -810,6 +865,22 @@
     select.classList.remove("invalid");
   }
 
+  function updateRoundViewButton() {
+    const value = $("service-round").value;
+    $("view-round").disabled = !value || value === "unallocated";
+  }
+
+  function viewSelectedRound() {
+    const selected = data.rounds.find(function (round) {
+      return round.id === $("service-round").value;
+    });
+    if (!selected) return;
+    // Opens a separate prototype tab so an unsaved Agreement draft is retained.
+    const url = new URL("../round-planning-prototype/index.html", window.location.href);
+    url.searchParams.set("round", selected.name);
+    window.open(url.href, "_blank", "noopener");
+  }
+
   function toggleSpecificTime() {
     const selected = $("service-timing").value === "Specific time";
     $("specific-time-wrap").hidden = !selected;
@@ -851,7 +922,10 @@
     kind.value = service.service;
     kind.querySelector('option[value=""]')?.remove();
     setServiceType(service.serviceType);
-    $("job-date").value = modalMode === "clone" ? "" : (service.jobDate || "");
+    $("job-date").value = modalMode === "clone"
+      ? (service.jobDate && service.jobDate >= isoOfDate(new Date())
+        ? service.jobDate : isoOfDate(new Date()))
+      : (service.jobDate || "");
     $("recurring-start").value = modalMode === "clone" ? "" : (service.startDate || "");
     $("recurring-end").value = service.endDate || "";
     $("service-quantity").value = service.quantity || "1";
@@ -876,6 +950,7 @@
       monthWeekdayOverridden = true;
     }
     $("service-round").value = service.roundId || "unallocated";
+    updateRoundViewButton();
     $("job-notes").value = service.jobNotes || "";
     fillTimePair("from", service.fromTime);
     refreshToHours();
@@ -890,24 +965,25 @@
     $("reset-service-price").hidden = modalMode === "edit" ||
       priceSuggestion.source === "Agreement rate" || !manuallyPriced;
     renderFrequencyPreview();
+    updateAllDateDescriptions();
   }
 
-  function openAddService(mode, service) {
+  function openAddService(mode, service, requestedType) {
     modalMode = typeof mode === "string" ? mode : "new";
     editingServiceId = modalMode === "edit" && service ? service.id : null;
     dialogForm.reset();
     monthDateOverridden = false;
     monthWeekdayOverridden = false;
     setServiceOptions();
-    setServiceType("");
+    setServiceType(requestedType || "Ad hoc and one-off");
     selectOptions($("service-timing"), data.timingOptions, "Select timing", "Any time");
     setClockOptions($("from-hour"), "hour", 0, false);
     setClockOptions($("from-minute"), "minute", 0, false);
     setClockOptions($("to-hour"), "hour", 0, false);
     setClockOptions($("to-minute"), "minute", 0, false);
     $("service-quantity").value = "1";
-    $("job-date").value = "";
-    $("recurring-start").value = "";
+    $("job-date").value = isoOfDate(new Date());
+    $("recurring-start").value = isoOfDate(new Date());
     $("recurring-end").value = "";
     $("frequency-basis").value = "weekly";
     $("weekly-repeat").value = "1";
@@ -924,6 +1000,7 @@
     });
     $("job-notes").value = "";
     setRoundOptions();
+    updateRoundViewButton();
     dialogForm.querySelectorAll(".invalid").forEach(function (input) {
       input.classList.remove("invalid");
     });
@@ -931,18 +1008,15 @@
     toggleServiceType();
     restoreSuggestedPrice();
     if (service) populateServiceModal(service);
+    else if (requestedType === "Regular, recurring") seedScheduleFromStart();
+    updateAllDateDescriptions();
 
     const locked = modalMode === "edit";
     const cloning = modalMode === "clone";
-    $("service-kind").hidden = cloning;
-    $("service-type").hidden = cloning;
-    $("clone-service-kind").hidden = !cloning;
-    $("clone-service-type").hidden = !cloning;
-    $("clone-service-kind").value = cloning && service ? service.service : "";
-    $("clone-service-type").value = cloning && service ? service.serviceType : "";
-    // Keep the original select values available to the existing save logic.
-    $("service-kind").disabled = locked || cloning;
-    $("service-type").disabled = locked || cloning;
+    // Clone: Service may change (e.g. Deliver -> Collect); Type remains ad hoc.
+    $("service-kind").disabled = locked;
+    $("service-type-field").hidden = cloning;
+    $("service-type").disabled = true;
     $("service-round").disabled = locked;
     $("service-price").disabled = locked;
     $("reset-service-price").hidden = locked || $("reset-service-price").hidden;
@@ -1269,7 +1343,12 @@
   elements.containerSize.addEventListener("change", hideMessage);
   elements.material.addEventListener("change", hideMessage);
 
-  $("add-service").addEventListener("click", openAddService);
+  $("add-ad-hoc-service").addEventListener("click", function () {
+    openAddService("new", null, "Ad hoc and one-off");
+  });
+  $("add-regular-service").addEventListener("click", function () {
+    openAddService("new", null, "Regular, recurring");
+  });
   $("close-service-dialog").addEventListener("click", closeAddService);
   $("cancel-service-dialog").addEventListener("click", closeAddService);
   // Only explicit Close/Cancel (or the browser's Escape key) dismiss the
@@ -1278,13 +1357,21 @@
     const selectedService = this.value;
     // Once a real service is chosen, remove the prompt from the DOM entirely.
     this.querySelector('option[value=""]')?.remove();
-    const adHocServices = ["Deliver", "Collect", "Other"];
-    setServiceType(adHocServices.includes(selectedService)
-      ? "Ad hoc and one-off" : "Regular, recurring");
+    // Service Type is fixed by the Add button (or by the source when cloning).
     toggleServiceType();
     restoreSuggestedPrice();
   });
   $("service-type").addEventListener("change", toggleServiceType);
+  ["job-date", "recurring-start", "recurring-end"].forEach(function (id) {
+    $(id).addEventListener("input", function () { updateDateDescription(id); });
+    $(id).addEventListener("change", function () { updateDateDescription(id); });
+  });
+  dialog.addEventListener("click", function (event) {
+    const button = event.target.closest("button[data-date-target][data-date-step]");
+    if (!button) return;
+    stepDate(button.dataset.dateTarget, Number(button.dataset.dateStep));
+  });
+  $("view-round").addEventListener("click", viewSelectedRound);
   $("service-timing").addEventListener("change", toggleSpecificTime);
   $("recurring-start").addEventListener("change", seedScheduleFromStart);
   $("recurring-end").addEventListener("change", renderFrequencyPreview);
@@ -1314,6 +1401,7 @@
   // Round choices are parent names and do not change with the Job date.
   $("service-round").addEventListener("change", function () {
     this.classList.remove("invalid");
+    updateRoundViewButton();
   });
   $("service-price").addEventListener("focus", function () {
     const parsed = parseMoney(this.value);
