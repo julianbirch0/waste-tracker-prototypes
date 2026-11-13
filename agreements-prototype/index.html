@@ -73,14 +73,19 @@
     <section class="section" aria-labelledby="services-heading">
       <div class="section-heading">
         <h2 id="services-heading">Services</h2>
-        <button type="button" id="add-service" class="btn btn-primary">
-          <span class="plus-icon" aria-hidden="true">+</span> Add service
-        </button>
+        <div class="add-service-actions">
+          <button type="button" id="add-ad-hoc-service" class="btn btn-primary">
+            <span class="plus-icon" aria-hidden="true">+</span> Add Ad Hoc and One-Off Service
+          </button>
+          <button type="button" id="add-regular-service" class="btn btn-primary">
+            <span class="plus-icon" aria-hidden="true">+</span> Add Regular Recurring Service
+          </button>
+        </div>
       </div>
       <div class="section-body services-body" id="service-tables" hidden>
         <div class="service-subsection" id="ad-hoc-services-section" hidden>
-          <h3>Ad hoc and one-off</h3>
-          <div class="service-table-scroll">
+          <h3><button type="button" id="toggle-ad-hoc-services" class="service-collapse-button" aria-expanded="true" aria-controls="ad-hoc-services-content"><span class="service-collapse-chevron" aria-hidden="true">▾</span><span>Ad hoc and one-off</span><span id="ad-hoc-service-counts" class="service-counts"></span></button></h3>
+          <div id="ad-hoc-services-content" class="service-table-scroll">
             <table class="services-table ad-hoc-table">
               <thead>
                 <tr>
@@ -98,8 +103,8 @@
           </div>
         </div>
         <div class="service-subsection" id="regular-services-section" hidden>
-          <h3>Regular, recurring</h3>
-          <div class="service-table-scroll">
+          <h3><button type="button" id="toggle-regular-services" class="service-collapse-button" aria-expanded="true" aria-controls="regular-services-content"><span class="service-collapse-chevron" aria-hidden="true">▾</span><span>Regular, recurring</span><span id="regular-service-counts" class="service-counts"></span></button></h3>
+          <div id="regular-services-content" class="service-table-scroll">
             <table class="services-table recurring-table">
               <thead>
                 <tr>
@@ -162,27 +167,40 @@
           <div class="input-field">
             <label for="service-kind" class="field-label">Service</label>
             <select id="service-kind" class="field" required></select>
-            <input id="clone-service-kind" class="field clone-readonly-field" type="text" readonly hidden aria-label="Service (read-only)">
           </div>
-          <div class="input-field">
+          <div class="input-field" id="service-type-field">
             <label for="service-type" class="field-label">Service Type</label>
             <select id="service-type" class="field" required></select>
-            <input id="clone-service-type" class="field clone-readonly-field" type="text" readonly hidden aria-label="Service Type (read-only)">
           </div>
           <div class="dialog-grid recurring-dates" id="recurring-date-fields" hidden>
             <div class="input-field">
               <label for="recurring-start" class="field-label">Start date</label>
-              <input id="recurring-start" type="date" class="field">
+              <div class="date-stepper">
+                <button type="button" class="date-stepper-button" data-date-target="recurring-start" data-date-step="-1" aria-label="Previous day for start date" title="Previous day">−</button>
+                <input id="recurring-start" type="date" class="field">
+                <button type="button" class="date-stepper-button" data-date-target="recurring-start" data-date-step="1" aria-label="Next day for start date" title="Next day">+</button>
+              </div>
+              <div id="recurring-start-description" class="date-description" aria-live="polite"></div>
             </div>
             <div class="input-field">
               <label for="recurring-end" class="field-label">End date <span class="optional">(optional)</span></label>
-              <input id="recurring-end" type="date" class="field">
+              <div class="date-stepper">
+                <button type="button" class="date-stepper-button" data-date-target="recurring-end" data-date-step="-1" aria-label="Previous day for end date" title="Previous day">−</button>
+                <input id="recurring-end" type="date" class="field">
+                <button type="button" class="date-stepper-button" data-date-target="recurring-end" data-date-step="1" aria-label="Next day for end date" title="Next day">+</button>
+              </div>
+              <div id="recurring-end-description" class="date-description" aria-live="polite"></div>
             </div>
           </div>
           <div id="ad-hoc-date-fields" class="dialog-grid recurring-dates" hidden>
             <div class="input-field">
               <label for="job-date" class="field-label">Job date</label>
-              <input id="job-date" class="field" type="date" required>
+              <div class="date-stepper">
+                <button type="button" class="date-stepper-button" data-date-target="job-date" data-date-step="-1" aria-label="Previous day for job date" title="Previous day">−</button>
+                <input id="job-date" class="field" type="date" required>
+                <button type="button" class="date-stepper-button" data-date-target="job-date" data-date-step="1" aria-label="Next day for job date" title="Next day">+</button>
+              </div>
+              <div id="job-date-description" class="date-description" aria-live="polite"></div>
             </div>
           </div>
         </div>
@@ -334,7 +352,10 @@
             </div>
             <div class="input-field">
               <label for="service-round" class="field-label">Round</label>
-              <select id="service-round" class="field" required></select>
+              <div class="round-picker">
+                <select id="service-round" class="field" required></select>
+                <button type="button" id="view-round" class="btn btn-secondary" disabled>View Round</button>
+              </div>
             </div>
           </div>
 
