@@ -150,6 +150,11 @@
     }
     value.services = Array.isArray(value.services) ? value.services.filter(function (item) {
       return item && typeof item === "object" && typeof item.service === "string";
+    }).map(function (service) {
+      // Older prototype versions stored "Unallocated" as if it were a Round.
+      // It is now represented by the absence of a Round assignment.
+      return service.roundId === "unallocated"
+        ? Object.assign({}, service, { roundId: "", roundName: "" }) : service;
     }) : [];
     return value;
   }
