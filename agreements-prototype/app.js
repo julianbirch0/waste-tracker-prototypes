@@ -1026,7 +1026,9 @@
       : "Existing service: Service, Service Type, Round and Price are fixed. You can edit dates, frequency, quantity, timing and job notes.";
     dialog.querySelector(".rate-hint").hidden = locked;
     $("service-dialog-title").textContent = locked ? "Edit service"
-      : modalMode === "clone" ? "Clone service" : "Add service";
+      : cloning ? "Clone ad hoc service"
+      : requestedType === "Regular, recurring" ? "Add regular recurring service"
+      : "Add ad hoc and one-off service";
     $("confirm-service").textContent = locked ? "Save changes" : "Add service";
     const showHold = locked && !isNew && isRecurring(service) &&
       savedAgreement.services.some(function (item) { return item.id === service.id; });
