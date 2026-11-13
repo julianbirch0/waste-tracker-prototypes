@@ -745,3 +745,74 @@ select.field {
     grid-row: auto; grid-column: auto; width: 100%;
   }
 }
+
+/* The selected Add button fixes Service Type, so the visible top row now has
+   just Service and the relevant date picker(s). */
+.dialog-primary-fields { grid-template-columns: repeat(3, 220px); }
+@media (min-width: 601px) and (max-width: 780px) {
+  .dialog-primary-fields { grid-template-columns: repeat(2, 220px); }
+}
+@media (min-width: 781px) {
+  .dialog-primary-fields { grid-template-columns: repeat(3, 220px); }
+}
+@media (max-width: 600px) {
+  .dialog-primary-fields { grid-template-columns: 1fr; }
+}
+
+/* Give job notes real multi-line editing and keep the two copy actions handy. */
+.job-notes-heading {
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 7px 12px; margin-bottom: 8px;
+}
+.job-notes-heading .field-label { margin-bottom: 0; }
+.job-notes-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
+.job-notes-buttons .btn { min-height: 29px; padding: 4px 10px; }
+.dialog-content textarea#job-notes {
+  display: block; width: 100%;
+  min-height: 86px; height: 86px; max-height: 220px;
+  padding: 8px 10px; line-height: 1.5;
+  resize: vertical; white-space: pre-wrap;
+}
+
+/* Round navigation belongs to each service row rather than the editor. */
+.service-round-details {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 7px;
+}
+.service-view-round, .service-filter-jobs {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: 28px; padding: 4px 9px;
+  border: 1px solid var(--line); border-radius: 5px;
+  background: #fff; color: #476984;
+  font-size: 11.5px; font-weight: 600; line-height: 1.2;
+  white-space: nowrap;
+}
+.service-view-round:hover, .service-filter-jobs:hover {
+  background: #f2f6fa; border-color: #b7c9db;
+}
+.service-filter-jobs[aria-pressed="true"] {
+  border-color: #6ca9a0;
+  background: #eaf6f3; color: #237468;
+}
+.service-actions { flex-wrap: wrap; }
+
+/* Independent service selection combines with the existing Jobs date range. */
+.job-service-filter {
+  display: inline-flex; align-items: center; gap: 9px;
+  min-height: 31px; padding: 4px 5px 4px 10px;
+  border: 1px solid #bacddd; border-radius: 5px;
+  background: #f4f8fb; color: #385675;
+  font-size: 11.5px; font-weight: 600;
+}
+.job-service-filter > button {
+  width: 21px; height: 21px; display: inline-flex;
+  justify-content: center; align-items: center;
+  border: 0; border-radius: 3px;
+  background: transparent; color: #546f89;
+  font-size: 18px; line-height: 1;
+}
+.job-service-filter > button:hover { background: #e1eaf2; color: #253b56; }
+.jobs-filter { flex-wrap: wrap; justify-content: flex-end; }
+@media (max-width: 600px) {
+  .jobs-filter { justify-content: flex-start; }
+  .job-service-filter { max-width: 100%; }
+}
