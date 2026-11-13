@@ -532,6 +532,30 @@
     }
   }
 
+  function jobServiceFilterLabel(service) {
+    const iso = isRecurring(service) ? service.startDate : service.jobDate;
+    const date = formatISODate(iso || "");
+    return service.service + " · " + (date || "No date") +
+      (isRecurring(service) ? " (recurring)" : "");
+  }
+
+  function updateJobServiceFilter() {
+    const service = filteredServiceId && draftServices.find(function (entry) {
+      return entry.id === filteredServiceId;
+    });
+    if (!service) filteredServiceId = null;
+    const chip = $("job-service-filter");
+    chip.hidden = !service;
+    $("job-service-filter-label").textContent = service
+      ? "Service: " + jobServiceFilterLabel(service) : "";
+  }
+
+  function setJobServiceFilter(serviceId) {
+    filteredServiceId = serviceId;
+    renderServices();
+    renderJobs();
+  }
+
   function renderJobs() {
     const body = $("jobs-body");
     body.replaceChildren();
@@ -542,6 +566,7 @@
     }).map(function (job) {
       return {
         status: job.status, id: job.id, service: job.service,
+        serviceId: job.serviceId || null,
         isoDate: isoDaysFromToday(job.daysFromToday)
       };
     });
@@ -551,22 +576,27 @@
       return {
         status: serviceStatus(service) === "Past" ? "Completed" : "Planned",
         id: service.jobId || "JOB-PROTOTYPE",
-        service: service.service, isoDate: service.jobDate || ""
+        service: service.service, serviceId: service.id,
+        isoDate: service.jobDate || ""
       };
     });
     const recurringJobs = draftServices.flatMap(projectedJobsFor);
     const today = isoOfDate(new Date());
     const fourWeeksAgo = isoDaysFromToday(-28);
     const filter = $("jobs-date-filter").value;
+    updateJobServiceFilter();
     const allJobs = staticJobs.concat(oneOffJobs, recurringJobs)
-      .filter(function (job) { return jobMatchesFilter(job, filter, today, fourWeeksAgo); })
+      .filter(function (job) {
+        return (!filteredServiceId || job.serviceId === filteredServiceId) &&
+          jobMatchesFilter(job, filter, today, fourWeeksAgo);
+      })
       .sort(function (a, b) { return (b.isoDate || "").localeCompare(a.isoDate || ""); });
     if (!allJobs.length) {
       const row = document.createElement("tr");
       const cell = document.createElement("td");
       cell.colSpan = 5;
       cell.className = "empty-jobs";
-      cell.textContent = "No jobs in the selected date range.";
+      cell.textContent = "No jobs match the selected filters.";
       row.appendChild(cell);
       body.appendChild(row);
       return;
@@ -667,7 +697,26 @@
       const row = document.createElement("tr");
       cells.forEach(function (value, i) {
         const cell = document.createElement("td");
-        cell.textContent = value || "—";
+        const roundColumn = recurring ? 6 : 4;
+        if (i === roundColumn) {
+          const roundDetails = document.createElement("div");
+          roundDetails.className = "service-round-details";
+          const text = document.createElement("span");
+          text.textContent = value || "Unallocated";
+          roundDetails.appendChild(text);
+          if (data.rounds.some(function (round) { return round.id === service.roundId; })) {
+            const view = document.createElement("button");
+            view.type = "button";
+            view.className = "service-view-round";
+            view.dataset.viewRound = service.roundId;
+            view.title = "Open Round Planning";
+            view.textContent = "View Round";
+            roundDetails.appendChild(view);
+          }
+          cell.appendChild(roundDetails);
+        } else {
+          cell.textContent = value || "—";
+        }
         if (i === 0) cell.className = "service-status " + status.toLowerCase().replaceAll(" ", "-");
         row.appendChild(cell);
       });
@@ -677,6 +726,14 @@
       actions.appendChild(actionButton("Edit", "edit", service));
       if (!recurring) actions.appendChild(actionButton("Clone", "clone", service));
       actions.appendChild(actionButton("Delete", "delete", service));
+      const filterButton = document.createElement("button");
+      filterButton.type = "button";
+      filterButton.className = "service-filter-jobs";
+      filterButton.textContent = "Filter jobs";
+      filterButton.dataset.filterService = service.id;
+      filterButton.title = "Show jobs for this service in the Jobs table";
+      filterButton.setAttribute("aria-pressed", String(filteredServiceId === service.id));
+      actions.appendChild(filterButton);
       cell.appendChild(actions);
       row.appendChild(cell);
       body.appendChild(row);
@@ -684,6 +741,9 @@
   }
 
   function renderServices() {
+    if (filteredServiceId && !draftServices.some(function (service) {
+      return service.id === filteredServiceId;
+    })) filteredServiceId = null;
     renderServiceGroup("ad-hoc", "ad-hoc-services-body", 7);
     renderServiceGroup("recurring", "regular-services-body", 9);
     $("service-tables").hidden = draftServices.length === 0;
@@ -1428,6 +1488,9 @@
     toggleServiceTable("regular");
   });
   $("jobs-date-filter").addEventListener("change", renderJobs);
+  $("clear-job-service-filter").addEventListener("click", function () {
+    setJobServiceFilter(null);
+  });
   $("jobs-body").addEventListener("click", function (event) {
     const button = event.target.closest("button[data-job-id]");
     if (!button) return;
@@ -1437,6 +1500,10 @@
 
   ["ad-hoc-services-body", "regular-services-body"].forEach(function (id) {
     $(id).addEventListener("click", function (event) {
+      const view = event.target.closest("button[data-view-round]");
+      if (view) return viewRound(view.dataset.viewRound);
+      const filter = event.target.closest("button[data-filter-service]");
+      if (filter) return setJobServiceFilter(filter.dataset.filterService);
       const button = event.target.closest("button[data-service-action]");
       if (button) actOnService(button.dataset.serviceAction, button.dataset.serviceId);
     });
