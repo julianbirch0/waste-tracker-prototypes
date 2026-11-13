@@ -35,6 +35,7 @@
   let editingServiceId = null;
   let pendingConfirmation = null;
   let filteredServiceId = null; // Additional Jobs filter; combines with date range.
+  let roundOmissionConfirmed = false;
   let skipUnloadWarning = false;
 
   function clone(value) {
@@ -96,13 +97,14 @@
     ["job-date", "recurring-start", "recurring-end"].forEach(updateDateDescription);
   }
 
-  function stepDate(id, amount) {
+  function stepDate(id, amount, clickedButton) {
     const input = $(id);
     const baseline = parseLocalDate(input.value) || parseLocalDate(isoOfDate(new Date()));
     baseline.setDate(baseline.getDate() + amount);
     input.value = isoOfDate(baseline);
     input.dispatchEvent(new Event("change", { bubbles: true }));
-    input.focus();
+    // The date input must not steal focus from the plus/minus control.
+    if (clickedButton) clickedButton.focus();
   }
 
   function exampleServices() {
@@ -497,13 +499,7 @@
   function seedScheduleFromStart() {
     const date = parseLocalDate($("recurring-start").value);
     if (date) {
-      const days = $("weekday-checkboxes").querySelectorAll('input[type="checkbox"]');
-      if (!Array.from(days).some(function (input) { return input.checked; })) {
-        const selected = Array.from(days).find(function (input) {
-          return Number(input.value) === date.getDay();
-        });
-        if (selected) selected.checked = true;
-      }
+      // Only derive monthly controls. Weekly weekdays must be explicitly ticked.
       if (!monthDateOverridden) $("monthly-day").value = String(date.getDate());
       if (!monthWeekdayOverridden) {
         $("monthly-ordinal").value = String(Math.ceil(date.getDate() / 7));
@@ -911,6 +907,18 @@
     $("service-type").value = value || "";
   }
 
+  function setTimingOptions() {
+    const timing = $("service-timing");
+    timing.replaceChildren();
+    data.timingOptions.forEach(function (value) {
+      const option = document.createElement("option");
+      option.value = value;
+      option.textContent = value;
+      timing.appendChild(option);
+    });
+    timing.value = "Any time";
+  }
+
   function setServiceOptions() {
     selectOptions($("service-kind"), data.services, "Select service", "");
     // The introductory prompt is visible only as the initial display value.
@@ -967,17 +975,14 @@
     select.replaceChildren();
     const prompt = document.createElement("option");
     prompt.value = "";
-    prompt.textContent = "Select round";
-    prompt.disabled = true;
-    prompt.hidden = true;
+    prompt.textContent = "Select round (optional)";
+    // Blank is a legitimate selection: no Round means Unallocated.
+    prompt.disabled = false;
+    prompt.hidden = false;
     select.appendChild(prompt);
 
     // List every parent Round once, irrespective of the selected Job date.
     // Day-of-week mismatch warnings are deferred to production requirements.
-    const unallocated = document.createElement("option");
-    unallocated.value = "unallocated";
-    unallocated.textContent = "Unallocated";
-    select.appendChild(unallocated);
     data.rounds.forEach(function (round) {
       const option = document.createElement("option");
       option.value = round.id;
@@ -1084,7 +1089,9 @@
       monthDateOverridden = true;
       monthWeekdayOverridden = true;
     }
-    $("service-round").value = service.roundId || "unallocated";
+    $("service-round").value = data.rounds.some(function (round) {
+      return round.id === service.roundId;
+    }) ? service.roundId : "";
     $("job-notes").value = service.jobNotes || "";
     fillTimePair("from", service.fromTime);
     refreshToHours();
@@ -1104,13 +1111,14 @@
 
   function openAddService(mode, service, requestedType) {
     modalMode = typeof mode === "string" ? mode : "new";
+    roundOmissionConfirmed = false;
     editingServiceId = modalMode === "edit" && service ? service.id : null;
     dialogForm.reset();
     monthDateOverridden = false;
     monthWeekdayOverridden = false;
     setServiceOptions();
     setServiceType(requestedType || "Ad hoc and one-off");
-    selectOptions($("service-timing"), data.timingOptions, "Select timing", "Any time");
+    setTimingOptions();
     setClockOptions($("from-hour"), "hour", 0, false);
     setClockOptions($("from-minute"), "minute", 0, false);
     setClockOptions($("to-hour"), "hour", 0, false);
@@ -1158,7 +1166,7 @@
     dialog.querySelector(".rate-hint").hidden = locked;
     $("service-dialog-title").textContent = locked ? "Edit service"
       : cloning ? "Clone ad hoc service"
-      : requestedType === "Regular, recurring" ? "Add regular recurring service"
+      : requestedType === "Regular, recurring" ? "Add regular, recurring service"
       : "Add ad hoc and one-off service";
     $("confirm-service").textContent = locked ? "Save changes" : "Add service";
     const showHold = locked && !isNew && isRecurring(service) &&
@@ -1352,7 +1360,8 @@
           return dialogError("Use Every week or Fortnightly for 1 or 2 weeks.", "custom-weeks");
         }
         if (!recurrence.weekdays.length) {
-          return dialogError("Select at least one weekday.", "weekday-checkboxes");
+          $("service-day-dialog").showModal();
+          return;
         }
       } else if (recurrence.basis === "monthly") {
         if (![1, 2, 3, 4].includes(recurrence.every)) {
@@ -1399,9 +1408,8 @@
       }
     }
     const roundId = $("service-round").value;
-    if (!roundId) return dialogError("Please select a Round or Unallocated.", "service-round");
     const round = data.rounds.find(function (item) { return item.id === roundId; });
-    const roundName = round ? round.name : "Unallocated";
+    const roundName = round ? round.name : "";
     const jobNotes = $("job-notes").value.trim();
     const parsedPrice = parseMoney($("service-price").value);
     if (parsedPrice === null) {
@@ -1434,6 +1442,11 @@
         manuallyPriced ? "Agreement rate" : priceSuggestion.source,
       onHold: oldService ? !!oldService.onHold : false
     };
+    if (!roundId && !roundOmissionConfirmed && modalMode !== "edit") {
+      $("service-round-dialog").showModal();
+      return;
+    }
+    roundOmissionConfirmed = false;
     if (oldService) {
       const revised = Object.assign({}, oldService, candidate);
       const apply = function () { replaceService(revised); };
@@ -1508,7 +1521,20 @@
   dialog.addEventListener("click", function (event) {
     const button = event.target.closest("button[data-date-target][data-date-step]");
     if (!button) return;
-    stepDate(button.dataset.dateTarget, Number(button.dataset.dateStep));
+    stepDate(button.dataset.dateTarget, Number(button.dataset.dateStep), button);
+  });
+  $("ok-service-day").addEventListener("click", function () {
+    $("service-day-dialog").close();
+    $("weekday-checkboxes").querySelector('input[type="checkbox"]').focus();
+  });
+  $("keep-editing-service-round").addEventListener("click", function () {
+    $("service-round-dialog").close();
+    $("service-round").focus();
+  });
+  $("save-unallocated-service").addEventListener("click", function () {
+    $("service-round-dialog").close();
+    roundOmissionConfirmed = true;
+    dialogForm.requestSubmit();
   });
   $("copy-customer-notes").addEventListener("click", function () {
     appendToJobNotes($("customer-notes").textContent);
