@@ -1435,14 +1435,22 @@
   }
 
   function addService(event) {
-    event.preventDefault();
+    if (event) event.preventDefault();
     clearDialogError();
+    dialogForm.querySelectorAll(".invalid").forEach(function (field) {
+      field.classList.remove("invalid");
+    });
+
+    const problems = [];
+    const addProblem = function (message, field) {
+      problems.push({ message: message, field: field });
+    };
     const service = $("service-kind").value;
     const serviceType = $("service-type").value;
     const recurring = serviceType === "Regular, recurring";
-    if (!service) return dialogError("Please select a service.", "service-kind");
+    if (!service) addProblem("Select a Service.", "service-kind");
     if (!recurring && serviceType !== "Ad hoc and one-off") {
-      return dialogError("Please choose a Service Type.", "service-type");
+      addProblem("Choose a Service Type.", "service-type");
     }
 
     let jobDate = "";
@@ -1453,82 +1461,114 @@
       recurrence = readRecurrence();
       startDate = recurrence.startDate;
       endDate = recurrence.endDate;
-      if (!parseLocalDate(startDate)) {
-        return dialogError("Please select a Start date.", "recurring-start");
-      }
-      if (endDate && !parseLocalDate(endDate)) {
-        return dialogError("Please enter a valid End date.", "recurring-end");
-      }
-      if (endDate && endDate < startDate) {
-        return dialogError("End date must be on or after Start date.", "recurring-end");
+      const validStart = Boolean(parseLocalDate(startDate));
+      const validEnd = !endDate || Boolean(parseLocalDate(endDate));
+      let validFrequency = true;
+
+      if (!validStart) addProblem("Select a valid Start date.", "recurring-start");
+      if (!validEnd) addProblem("Enter a valid End date.", "recurring-end");
+      if (validStart && validEnd && endDate && endDate < startDate) {
+        addProblem("End date must be on or after Start date.", "recurring-end");
+        validFrequency = false;
       }
       if (recurrence.basis === "weekly") {
         if (!Number.isSafeInteger(recurrence.every) || recurrence.every < 1) {
-          return dialogError("Choose a positive whole-number weekly interval.", "custom-weeks");
-        }
-        if ($("weekly-repeat").value === "n" && recurrence.every < 3) {
-          return dialogError("Use Every week or Fortnightly for 1 or 2 weeks.", "custom-weeks");
+          addProblem("Choose a positive whole-number weekly interval.", "custom-weeks");
+          validFrequency = false;
+        } else if ($("weekly-repeat").value === "n" && recurrence.every < 3) {
+          addProblem("Use Every week or Fortnightly for an interval of 1 or 2 weeks.", "custom-weeks");
+          validFrequency = false;
         }
         if (!recurrence.weekdays.length) {
-          $("service-day-dialog").showModal();
-          return;
+          addProblem("Select at least one day of the week.", "weekday-checkboxes");
+          validFrequency = false;
         }
       } else if (recurrence.basis === "monthly") {
         if (![1, 2, 3, 4].includes(recurrence.every)) {
-          return dialogError("Please select a monthly frequency.", "monthly-interval");
+          addProblem("Choose a valid monthly frequency.", "monthly-interval");
+          validFrequency = false;
         }
         if (recurrence.monthMethod === "weekday" &&
-            (!Number.isSafeInteger(recurrence.ordinal) || recurrence.ordinal < 1 || recurrence.ordinal > 5)) {
-          return dialogError("Please select a weekday occurrence.", "monthly-ordinal");
+            (!Number.isSafeInteger(recurrence.ordinal) || recurrence.ordinal < 1 ||
+             recurrence.ordinal > 5 || !Number.isInteger(recurrence.weekday) ||
+             recurrence.weekday < 0 || recurrence.weekday > 6)) {
+          addProblem("Select a valid monthly weekday occurrence.", "monthly-ordinal");
+          validFrequency = false;
+        } else if (recurrence.monthMethod === "date" &&
+            (!Number.isSafeInteger(recurrence.monthDay) || recurrence.monthDay < 1 ||
+             recurrence.monthDay > 31)) {
+          addProblem("Select a valid day of the month.", "monthly-day");
+          validFrequency = false;
         }
-        if (recurrence.monthMethod === "date" &&
-            (!Number.isSafeInteger(recurrence.monthDay) || recurrence.monthDay < 1 || recurrence.monthDay > 31)) {
-          return dialogError("Please select a day of the month.", "monthly-day");
-        }
+      } else {
+        addProblem("Choose Weekly or Monthly frequency.", "frequency-basis");
+        validFrequency = false;
       }
-      if (!scheduledDates(recurrence, startDate, 1).length) {
-        return dialogError("There is no scheduled date between the Start and End dates. Please revise the schedule.", "recurring-end");
+
+      if (validStart && validEnd && validFrequency &&
+          !scheduledDates(recurrence, startDate, 1).length) {
+        addProblem("No scheduled dates fall between the Start and End dates. Revise the schedule.",
+          "recurring-end");
       }
     } else {
       jobDate = $("job-date").value;
-      if (!parseLocalDate(jobDate)) return dialogError("Please select a Job date.", "job-date");
+      if (!parseLocalDate(jobDate)) addProblem("Select a valid Job date.", "job-date");
     }
 
     const quantity = Number($("service-quantity").value);
     if (!Number.isSafeInteger(quantity) || quantity < 1) {
-      return dialogError("Please enter a whole-number quantity of at least 1.", "service-quantity");
+      addProblem("Enter a whole-number Quantity of at least 1.", "service-quantity");
     }
     const timing = $("service-timing").value;
     let fromTime = "";
     let toTime = "";
+    if (!timing) addProblem("Select Timing.", "service-timing");
     if (timing === "Specific time") {
-      const fields = [
-        ["from-hour", "Please select the From hour."],
-        ["from-minute", "Please select the From minute."],
-        ["to-hour", "Please select the To hour."],
-        ["to-minute", "Please select the To minute."]
-      ];
-      for (const [id, errorText] of fields) {
-        if (!$(id).value) return dialogError(errorText, id);
+      const fromHour = $("from-hour").value;
+      const fromMinute = $("from-minute").value;
+      const toHour = $("to-hour").value;
+      const toMinute = $("to-minute").value;
+      if (!fromHour || !fromMinute) {
+        addProblem("Select both parts of the From time.", !fromHour ? "from-hour" : "from-minute");
+      } else {
+        fromTime = fromHour + ":" + fromMinute;
       }
-      fromTime = $("from-hour").value + ":" + $("from-minute").value;
-      toTime = $("to-hour").value + ":" + $("to-minute").value;
-      if (toTime <= fromTime) {
-        return dialogError("To time must be later than From time.", "to-hour");
+      if (!toHour || !toMinute) {
+        addProblem("Select both parts of the To time.", !toHour ? "to-hour" : "to-minute");
+      } else {
+        toTime = toHour + ":" + toMinute;
+      }
+      if (fromTime && toTime && toTime <= fromTime) {
+        addProblem("To time must be later than From time.", "to-hour");
       }
     }
+
     const roundId = $("service-round").value;
     const round = data.rounds.find(function (item) { return item.id === roundId; });
     const roundName = round ? round.name : "";
     const jobNotes = $("job-notes").value.trim();
+    if (jobNotes.length > 500) addProblem("Job notes cannot exceed 500 characters.", "job-notes");
     const parsedPrice = parseMoney($("service-price").value);
     if (parsedPrice === null) {
-      return dialogError("Please enter a valid, non-negative price in pounds and pence.", "service-price");
+      addProblem("Enter a valid, non-negative Price in pounds and pence.", "service-price");
     }
+
+    // Never stop at the first error: even a missing Service AND weekday are
+    // reported together in a proper modal, with one clear OK button.
+    if (problems.length) return showServiceValidation(problems);
 
     const oldService = modalMode === "edit"
       ? draftServices.find(function (item) { return item.id === editingServiceId; }) : null;
-    if (modalMode === "edit" && !oldService) return;
+    if (modalMode === "edit" && !oldService) {
+      return showServiceValidation([{ message: "This service can no longer be found. Close and reopen it." }]);
+    }
+
+    if (!roundId && !roundOmissionConfirmed && modalMode !== "edit") {
+      $("service-round-dialog").showModal();
+      return;
+    }
+    roundOmissionConfirmed = false;
+
     const uniqueId = String(Date.now()) + "-" + (idSequence++);
     const candidate = {
       id: oldService ? oldService.id : "service-" + uniqueId,
@@ -1552,11 +1592,7 @@
         manuallyPriced ? "Agreement rate" : priceSuggestion.source,
       onHold: oldService ? !!oldService.onHold : false
     };
-    if (!roundId && !roundOmissionConfirmed && modalMode !== "edit") {
-      $("service-round-dialog").showModal();
-      return;
-    }
-    roundOmissionConfirmed = false;
+
     if (oldService) {
       const revised = Object.assign({}, oldService, candidate);
       const apply = function () { replaceService(revised); };
@@ -1573,11 +1609,9 @@
       }
       return apply();
     }
+
     draftServices.push(candidate);
-    renderServices();
-    renderJobs();
-    hideMessage();
-    closeAddService();
+    finishServiceSave(candidate);
   }
 
   // New Agreements select an existing customer/site; existing Agreements
