@@ -22,6 +22,37 @@
     return td;
   }
 
+  const ACTION_ICONS = {
+    edit: '<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
+    delete: '<path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/>',
+    locked: '<rect x="5" y="11" width="14" height="11" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>'
+  };
+
+  function icon(name) {
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("viewBox", "0 0 24 24");
+    svg.setAttribute("width", "18");
+    svg.setAttribute("height", "18");
+    svg.setAttribute("fill", "none");
+    svg.setAttribute("stroke", "currentColor");
+    svg.setAttribute("stroke-width", "1.8");
+    svg.setAttribute("stroke-linecap", "round");
+    svg.setAttribute("stroke-linejoin", "round");
+    svg.setAttribute("aria-hidden", "true");
+    svg.innerHTML = ACTION_ICONS[name];
+    return svg;
+  }
+
+  function showDeleteNotice(agreementId, hasPlannedJobs) {
+    $("agreement-delete-title").textContent = hasPlannedJobs
+      ? "Agreement cannot be deleted" : "Delete agreement";
+    $("agreement-delete-message").textContent = hasPlannedJobs
+      ? "This agreement still has planned jobs against it."
+      : "Agreement " + agreementId +
+        " has no planned jobs. Deleting agreements is not implemented in this prototype.";
+    $("agreement-delete-dialog").showModal();
+  }
+
   function render() {
     const agreements = store.load().agreements.slice().sort(function (a, b) {
       return (b.id || "").localeCompare(a.id || "", "en", { numeric: true });
@@ -50,7 +81,7 @@
       td.colSpan = 7;
       td.className = "agreements-empty";
       td.textContent = agreements.length ? "No agreements match your search." :
-        "No agreements yet. Select New agreement to get started.";
+        "No agreements yet. Select Add agreement to get started.";
       row.appendChild(td);
       tbody.appendChild(row);
       return;
@@ -76,12 +107,34 @@
       const plannedCell = cell(row, planned, "agreement-planned-count");
       plannedCell.title = "Next 28 days plus any outstanding overdue jobs";
       const action = document.createElement("td");
-      const button = document.createElement("a");
-      button.href = agreementUrl(agreement.id);
-      button.className = "btn btn-secondary agreement-view-link";
-      button.textContent = "View / Edit";
-      button.setAttribute("aria-label", "View or edit agreement " + agreement.id);
-      action.appendChild(button);
+      const actions = document.createElement("div");
+      actions.className = "agreement-row-actions";
+      const edit = document.createElement("a");
+      edit.href = agreementUrl(agreement.id);
+      edit.className = "agreement-icon-action";
+      edit.title = "View / Edit";
+      edit.setAttribute("aria-label", "View or edit agreement " + agreement.id);
+      edit.appendChild(icon("edit"));
+      actions.appendChild(edit);
+      const control = document.createElement("button");
+      control.type = "button";
+      control.className = "agreement-icon-action";
+      control.dataset.agreementId = agreement.id;
+      control.dataset.hasPlannedJobs = String(planned > 0);
+      if (planned === 0) {
+        control.classList.add("agreement-delete-action");
+        control.title = "Delete (prototype)";
+        control.setAttribute("aria-label", "Delete agreement " + agreement.id);
+        control.appendChild(icon("delete"));
+      } else {
+        // Not a delete button: explain why the delete action is unavailable.
+        control.classList.add("agreement-delete-blocked");
+        control.title = "Why can't this agreement be deleted?";
+        control.setAttribute("aria-label", "Explain why agreement " + agreement.id + " cannot be deleted");
+        control.appendChild(icon("locked"));
+      }
+      actions.appendChild(control);
+      action.appendChild(actions);
       row.appendChild(action);
       tbody.appendChild(row);
     });
@@ -89,6 +142,16 @@
 
   $("new-agreement").addEventListener("click", function () {
     window.location.href = agreementUrl(null);
+  });
+  $("agreements-list-body").addEventListener("click", function (event) {
+    const button = event.target.closest("button[data-agreement-id]");
+    if (!button) return;
+    showDeleteNotice(button.dataset.agreementId, button.dataset.hasPlannedJobs === "true");
+  });
+  ["close-agreement-delete", "ok-agreement-delete"].forEach(function (id) {
+    $(id).addEventListener("click", function () {
+      $("agreement-delete-dialog").close();
+    });
   });
   search.addEventListener("input", render);
   // Restore freshly saved records when using browser Back / forward-cache.
