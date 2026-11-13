@@ -458,8 +458,10 @@
       <div class="dialog-actions">
         <button type="button" class="btn btn-secondary btn-hold" id="hold-service" hidden>Put on hold</button>
         <span class="dialog-action-spacer"></span>
-        <button type="button" class="btn btn-secondary" id="cancel-service-dialog">Cancel</button>
-        <button type="submit" class="btn btn-primary" id="confirm-service">Add service</button>
+        <button type="button" class="btn btn-secondary" id="close-service-unchanged">Close</button>
+        <button type="button" class="btn btn-primary" id="save-service" hidden>Save</button>
+        <button type="button" class="btn btn-primary" id="save-close-service" hidden>Save and Close</button>
+        <button type="button" class="btn btn-secondary" id="cancel-service-dialog" hidden>Cancel</button>
       </div>
     </form>
   </dialog>
@@ -481,15 +483,29 @@
       <button type="button" class="btn btn-primary" id="apply-job-confirm">Confirm</button>
     </div>
   </dialog>
-  <dialog id="service-day-dialog" class="confirmation-dialog" aria-labelledby="service-day-dialog-title">
+  <dialog id="service-validation-dialog" class="confirmation-dialog" aria-labelledby="service-validation-title">
     <div class="dialog-header">
-      <h2 id="service-day-dialog-title">Select a day</h2>
+      <h2 id="service-validation-title">Service needs attention</h2>
     </div>
     <div class="dialog-content">
-      <p>Please select at least one day of the week for this regular, recurring service.</p>
+      <p>Please correct the following before saving:</p>
+      <ul id="service-validation-list" class="service-validation-list"></ul>
     </div>
     <div class="dialog-actions">
-      <button type="button" id="ok-service-day" class="btn btn-primary">OK</button>
+      <button type="button" id="ok-service-validation" class="btn btn-primary">OK</button>
+    </div>
+  </dialog>
+  <dialog id="unsaved-service-dialog" class="confirmation-dialog" aria-labelledby="unsaved-service-title">
+    <div class="dialog-header">
+      <h2 id="unsaved-service-title">Unsaved service changes</h2>
+    </div>
+    <div class="dialog-content">
+      <p>There are unsaved changes to this service. What would you like to do?</p>
+    </div>
+    <div class="dialog-actions">
+      <button type="button" id="keep-editing-service" class="btn btn-secondary">Keep editing</button>
+      <button type="button" id="discard-service-changes" class="btn btn-secondary">Discard changes</button>
+      <button type="button" id="confirm-save-close-service" class="btn btn-primary">Save and Close</button>
     </div>
   </dialog>
   <dialog id="service-round-dialog" class="confirmation-dialog" aria-labelledby="service-round-dialog-title">
