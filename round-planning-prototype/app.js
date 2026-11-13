@@ -22,7 +22,13 @@
   const msg = $('message');
   let storageAvailable = true;
   let savedOrders = loadOrders();
-  let currentRoundId = data.rounds.length ? data.rounds[0].id : '';
+  // Agreements' View Round links pass the parent Round name via the URL.
+  // Default to its first day-specific Round; the user can then choose a day.
+  const requestedRound = new URLSearchParams(window.location.search).get('round');
+  const linkedRound = requestedRound && data.rounds.find(r =>
+    r.name.toLowerCase() === requestedRound.toLowerCase() || r.id === requestedRound
+  );
+  let currentRoundId = linkedRound ? linkedRound.id : (data.rounds.length ? data.rounds[0].id : '');
   let currentWeek = 1;
   let draft = getOrder(currentRoundId);
   let draggingId = null;
