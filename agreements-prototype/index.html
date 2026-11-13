@@ -22,15 +22,12 @@
       </div>
     </header>
 
-    <div class="agreements-overview" aria-label="Agreement totals">
-      <div class="overview-item"><strong id="agreement-count">0</strong><span>Agreements</span></div>
-      <div class="overview-item"><strong id="recurring-count">0</strong><span>Recurring services</span></div>
-      <div class="overview-item"><strong id="adhoc-count">0</strong><span>Ad hoc services</span></div>
-    </div>
-
     <section class="section" aria-labelledby="agreements-table-heading">
       <div class="section-heading agreements-list-toolbar">
-        <h2 id="agreements-table-heading">Existing agreements</h2>
+        <div class="agreements-title-group">
+          <h2 id="agreements-table-heading">Existing agreements</h2>
+          <span id="list-agreement-count" class="list-agreement-count"></span>
+        </div>
         <div class="agreements-search">
           <label for="agreement-search" class="field-label">Search</label>
           <input id="agreement-search" class="field" type="search" placeholder="Agreement, customer, site, material…" autocomplete="off">
@@ -45,7 +42,7 @@
               <th scope="col">Site</th>
               <th scope="col">Container</th>
               <th scope="col">Material</th>
-              <th scope="col">Services</th>
+              <th scope="col" title="Jobs scheduled in the next four weeks, plus outstanding overdue jobs">Planned jobs</th>
               <th scope="col">Action</th>
             </tr>
           </thead>
@@ -109,18 +106,22 @@
         <div class="input-field">
           <label class="field-label" for="container-type">Container type</label>
           <select class="field" id="container-type"></select>
+          <input class="field agreement-readonly-value" id="container-type-readonly" type="text" readonly hidden aria-label="Container type (read-only)">
         </div>
         <div class="input-field">
           <label class="field-label" for="container-size">Container size</label>
           <select class="field" id="container-size"></select>
+          <input class="field agreement-readonly-value" id="container-size-readonly" type="text" readonly hidden aria-label="Container size (read-only)">
         </div>
         <div class="input-field">
           <label class="field-label" for="material-type">Material type</label>
           <select class="field" id="material-type"></select>
+          <input class="field agreement-readonly-value" id="material-type-readonly" type="text" readonly hidden aria-label="Material type (read-only)">
         </div>
         <div class="input-field">
           <label class="field-label" for="material">Material</label>
           <select class="field" id="material"></select>
+          <input class="field agreement-readonly-value" id="material-readonly" type="text" readonly hidden aria-label="Material (read-only)">
         </div>
       </div>
     </section>
@@ -496,6 +497,7 @@
   </script>
   <script src="data.js"></script>
   <script src="agreements-store.js"></script>
+  <script src="schedule-utils.js"></script>
   <script src="list.js"></script>
   <script src="app.js"></script>
 </body>
