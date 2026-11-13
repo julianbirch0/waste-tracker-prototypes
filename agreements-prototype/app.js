@@ -218,7 +218,7 @@
     $("customer-select").hidden = !isNew;
     $("site-select").hidden = !isNew;
     $("page-subtitle").textContent = isNew ? "New agreement" :
-      "Edit " + (currentAgreementId || "agreement");
+      (currentAgreementId || "Agreement");
   }
 
   function selectOptions(element, options, placeholder, currentValue) {
