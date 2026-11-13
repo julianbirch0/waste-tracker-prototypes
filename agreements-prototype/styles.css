@@ -962,9 +962,6 @@ select.field {
 .agreement-delete-blocked:hover { color: #637a91; }
 /* Deliberately prominent validation dialog, rather than a discreet message
    at the bottom of the long Add Service popup. */
-#service-day-dialog { width: min(570px, calc(100vw - 38px)); }
-#service-day-dialog .dialog-content { padding-top: 23px; padding-bottom: 18px; }
-#service-day-dialog .dialog-content p { font-size: 14px; line-height: 1.5; }
 #service-round-dialog { width: min(620px, calc(100vw - 38px)); }
 
 /* List screen super-sticky header: exact same fixed content position as the
