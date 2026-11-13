@@ -887,3 +887,28 @@ select.field {
   .overview-item + .overview-item { border-left: 0; padding-left: 0; }
   .overview-item strong { font-size: 18px; }
 }
+
+/* Agreement editor: full-size header stays visible throughout the page.
+   Never shrink the heading or buttons on scroll. */
+.agreement-editor-page > .editor-page-header {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: #fff;
+  transition: box-shadow .14s ease;
+}
+.agreement-editor-page > .editor-page-header.is-scrolled {
+  box-shadow: 0 8px 15px -14px rgba(30, 49, 72, .55);
+  border-bottom: 1px solid var(--line-soft);
+}
+.editor-page-header .header-actions {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+@media (max-width: 570px) {
+  .editor-page-header { flex-wrap: wrap; }
+  .editor-page-header .header-actions { width: 100%; justify-content: flex-start; }
+}
+/* The existing confirmation-dialog styling also covers the unsaved
+   Agreement prompt: keep its three choices together when space permits. */
+#unsaved-agreement-dialog .dialog-actions { flex-wrap: wrap; }
