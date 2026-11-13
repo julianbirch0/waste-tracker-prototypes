@@ -63,16 +63,16 @@
       const days = -diff;
       return { text: days + " day" + (days === 1 ? "" : "s") + " in the past", past: true };
     }
-    if (diff === 0) return { text: "Today", past: false };
-    if (diff === 1) return { text: "Tomorrow", past: false };
+    if (diff === 0) return { text: "today", past: false };
+    if (diff === 1) return { text: "tomorrow", past: false };
     const dow = new Intl.DateTimeFormat("en-GB", { weekday: "long" }).format(target);
     const mondayUTC = function (timestamp) {
       const d = new Date(timestamp).getUTCDay();
       return timestamp - ((d + 6) % 7) * 86400000;
     };
     const weeksAway = Math.round((mondayUTC(utcDay(iso)) - mondayUTC(utcDay(today))) / 604800000);
-    if (weeksAway === 0) return { text: "This " + dow, past: false };
-    if (weeksAway === 1) return { text: "Next " + dow, past: false };
+    if (weeksAway === 0) return { text: "this " + dow, past: false };
+    if (weeksAway === 1) return { text: "next " + dow, past: false };
     return { text: dow + " in " + weeksAway + " weeks' time", past: false };
   }
 
