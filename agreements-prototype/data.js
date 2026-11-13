@@ -54,6 +54,40 @@ window.AgreementPrototypeData = {
     notes: "Please quote the customer purchase order number on all invoices.",
     siteNotes: "Use the south entrance. Report to the site office before entering the works area."
   },
+  // Customer/site fixtures for exploring creation of an Agreement from scratch.
+  // An Agreement is linked to exactly one customer site.
+  customers: [
+    {
+      id: "customer-oakfield", type: "Business", name: "Oakfield Construction Ltd",
+      notes: "Please quote the customer purchase order number on all invoices.",
+      sites: [
+        { id: "site-oakfield-phase2", name: "Oakfield Business Park – Phase 2",
+          notes: "Use the south entrance. Report to the site office before entering the works area." },
+        { id: "site-oakfield-warehouse", name: "Oakfield Distribution Warehouse",
+          notes: "Security desk is staffed from 07:00. No collections during shift change." }
+      ]
+    },
+    {
+      id: "customer-riverside", type: "Business", name: "Riverside Property Management",
+      notes: "Invoice against the site reference on the purchase order.",
+      sites: [
+        { id: "site-riverside-centre", name: "Riverside Business Centre",
+          notes: "Vehicle access via service yard. Call reception on arrival." },
+        { id: "site-riverside-depot", name: "Riverside Industrial Depot",
+          notes: "Use the marked loading bays; avoid the main visitor entrance." }
+      ]
+    },
+    {
+      id: "customer-westbrook", type: "Business", name: "Westbrook Facilities Ltd",
+      notes: "Contact the facilities team for any access issues.",
+      sites: [
+        { id: "site-westbrook-east", name: "East Campus",
+          notes: "Deliveries and collections between 08:00 and 16:00 only." },
+        { id: "site-westbrook-west", name: "West Campus",
+          notes: "Access via the staff car park. Vehicles must report to security." }
+      ]
+    }
+  ],
   existingAgreement: {
     containerType: "Skip",
     containerSize: "10 yd",
