@@ -402,7 +402,9 @@
       return (service.jobDate || "") >= isoOfDate(new Date()) ? "Future" : "Past";
     }
     if (service.onHold) return "On hold";
-    if (service.endDate && service.endDate < isoOfDate(new Date())) return "Expired";
+    const today = isoOfDate(new Date());
+    if (service.endDate && service.endDate < today) return "Expired";
+    if (service.startDate && service.startDate > today) return "Future";
     return "Live";
   }
 
@@ -524,7 +526,7 @@
       const goToJob = document.createElement("button");
       goToJob.type = "button";
       goToJob.className = "go-to-job";
-      goToJob.textContent = "Go to job";
+      goToJob.textContent = "View job";
       goToJob.dataset.jobId = job.id;
       goToJob.title = "Job navigation is not implemented in this prototype";
       actions.appendChild(goToJob);
@@ -573,8 +575,20 @@
       const bDate = recurring ? (b.startDate || "") : (b.jobDate || "");
       return bDate.localeCompare(aDate);
     });
+    const prefix = recurring ? "regular" : "ad-hoc";
     $(recurring ? "regular-services-section" : "ad-hoc-services-section").hidden =
       services.length === 0;
+    const countOrder = recurring
+      ? ["Future", "Live", "Expired", "On hold"] : ["Future", "Past"];
+    const counts = countOrder.map(function (status) {
+      const count = services.filter(function (service) {
+        return serviceStatus(service) === status;
+      }).length;
+      return count + " " + status.toLowerCase() + " service" + (count === 1 ? "" : "s");
+    });
+    $(prefix + "-service-counts").textContent = counts.join(" · ");
+    const toggle = $("toggle-" + prefix + "-services");
+    $(prefix + "-services-content").hidden = toggle.getAttribute("aria-expanded") !== "true";
     if (!services.length) return;
     services.forEach(function (service) {
       const status = serviceStatus(service);
@@ -616,6 +630,13 @@
     renderServiceGroup("ad-hoc", "ad-hoc-services-body", 7);
     renderServiceGroup("recurring", "regular-services-body", 9);
     $("service-tables").hidden = draftServices.length === 0;
+  }
+
+  function toggleServiceTable(prefix) {
+    const button = $("toggle-" + prefix + "-services");
+    const expanded = button.getAttribute("aria-expanded") !== "true";
+    button.setAttribute("aria-expanded", String(expanded));
+    $(prefix + "-services-content").hidden = !expanded;
   }
 
   function parseMoney(raw) {
@@ -1310,11 +1331,17 @@
   $("reset-service-price").addEventListener("click", restoreSuggestedPrice);
   dialogForm.addEventListener("submit", addService);
 
+  $("toggle-ad-hoc-services").addEventListener("click", function () {
+    toggleServiceTable("ad-hoc");
+  });
+  $("toggle-regular-services").addEventListener("click", function () {
+    toggleServiceTable("regular");
+  });
   $("jobs-date-filter").addEventListener("change", renderJobs);
   $("jobs-body").addEventListener("click", function (event) {
     const button = event.target.closest("button[data-job-id]");
     if (!button) return;
-    showMessage("Go to job: " + button.dataset.jobId +
+    showMessage("View job: " + button.dataset.jobId +
       ". Navigation is not part of this prototype.", "info");
   });
 
