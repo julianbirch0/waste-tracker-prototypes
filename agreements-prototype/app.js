@@ -246,6 +246,9 @@
       element.appendChild(option);
     });
     element.value = options.includes(currentValue) ? currentValue : "";
+    // After a real choice exists, remove the hint entirely from the DOM.
+    // This also prevents it reappearing among browser-native options.
+    if (element.value) placeholderOption.remove();
   }
 
   function updateServiceAddButtons() {
@@ -276,6 +279,10 @@
   function updateMaterialFieldsMode() {
     // The four fields define the Agreement and must not be changed after
     // creation. Keep the select values for pricing and agreement serialization.
+    // JIRA (production only): when the organisation handles exclusively Waste
+    // or exclusively Non-waste, render Material Type as read-only text and
+    // enable Material without requiring the user to choose its only type.
+    // This single-organisation prototype deliberately offers both types.
     fieldNames.forEach(function (name) {
       const select = elements[name];
       const display = $(fieldIds[name] + "-readonly");
@@ -1528,6 +1535,14 @@
   elements.material.addEventListener("change", function () {
     updateServiceAddButtons();
     hideMessage();
+  });
+  // Remove the prompt after choosing a real value, rather than keeping a
+  // redundant "Select ..." entry in the native dropdown.
+  fieldNames.forEach(function (name) {
+    elements[name].addEventListener("change", function () {
+      const prompt = this.querySelector('option[value=""]');
+      if (prompt && this.value) prompt.remove();
+    });
   });
 
   $("add-ad-hoc-service").addEventListener("click", function () {
