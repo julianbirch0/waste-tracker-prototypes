@@ -890,16 +890,24 @@ select.field {
 
 /* Agreement editor: full-size header stays visible throughout the page.
    Never shrink the heading or buttons on scroll. */
+/* Put the header's white surface at the viewport edge, but retain its
+   original 26px CONTENT inset. That means zero vertical movement on scroll. */
+.agreement-editor-page { --editor-header-inset: 26px; }
 .agreement-editor-page > .editor-page-header {
   position: sticky;
   top: 0;
   z-index: 30;
+  margin-top: calc(-1 * var(--editor-header-inset));
+  padding-top: var(--editor-header-inset);
+  min-height: calc(74px + var(--editor-header-inset));
   background: #fff;
   transition: box-shadow .14s ease;
 }
 .agreement-editor-page > .editor-page-header.is-scrolled {
   box-shadow: 0 8px 15px -14px rgba(30, 49, 72, .55);
-  border-bottom: 1px solid var(--line-soft);
+}
+@media (max-width: 480px) {
+  .agreement-editor-page { --editor-header-inset: 18px; }
 }
 .editor-page-header .header-actions {
   flex-wrap: wrap;
@@ -912,3 +920,17 @@ select.field {
 /* The existing confirmation-dialog styling also covers the unsaved
    Agreement prompt: keep its three choices together when space permits. */
 #unsaved-agreement-dialog .dialog-actions { flex-wrap: wrap; }
+
+/* Subtle agreement count replaces the large overview panel. */
+.agreements-title-group { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.list-agreement-count { color: var(--muted); font-size: 12px; font-weight: 500; }
+.agreement-planned-count { font-variant-numeric: tabular-nums; font-weight: 650; }
+
+/* Existing Agreements fix the container and material selection.
+   Read-only boxes deliberately match the dropdowns' width and height. */
+.agreement-readonly-value[readonly] {
+  background: #f2f5f8;
+  color: var(--text);
+  cursor: default;
+  padding-right: 10px;
+}
