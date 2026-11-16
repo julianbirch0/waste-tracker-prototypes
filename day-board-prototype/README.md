@@ -1,4 +1,4 @@
-# Day Board prototype — V00002
+# Day Board prototype — V00003
 
 A standalone, local-file-friendly WasteTracker Day Board prototype.
 
@@ -18,7 +18,8 @@ There is **no localhost, build step, framework, CDN or web service**. Keep index
 - An **always-visible sticky Unsequenced area** immediately below each Trip header, including a compact empty drop target when there are no unsequenced Jobs.
 - A horizontal scrollbar at the **bottom of the board's fixed-height scrolling area**, always accessible while scrolling up/down through Jobs.
 - One shared vertical scroll for every column.
-- Pick up a Job using its **six-dot handle**. The card stays fully opaque under your pointer, while a full-sized gap moves through the list and neighbouring cards slide smoothly out of its way. Drop within a Trip, between Trips, into or out of Unsequenced, or back to Unallocated.
+- **Click a Job card once to select it** (prominent, 4 px teal border). **Press it again and drag anywhere on the selected card** to lift it. Selection and dragging are deliberately separate gestures, so the first click cannot accidentally move a Job. The card stays fully opaque under your pointer, while a full-sized gap moves through the list and neighbouring cards slide smoothly out of its way. Drop within a Trip, between Trips, into or out of Unsequenced, or back to Unallocated.
+- Selecting a different card moves the selection; clicking empty board space or pressing **Escape** clears it. Selection remains on the moved Job after drop. Selection does not change the Job data or create an Undo step.
 - A muted amber Unsequenced treatment; otherwise neutral cards.
 - Round-specific sample work: skip Rounds show skips, bin Rounds show bins, RoRo shows RoRos, Muck Away shows loose loads, and so on. Unallocated remains mixed.
 - Subtle sequence positions (**01**, **02**, etc.) which are distinct from the Job reference and recalculated after each move.
