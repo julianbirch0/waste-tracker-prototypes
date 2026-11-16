@@ -302,6 +302,23 @@ button:focus-visible, .board-scroll:focus-visible {
   transform: scale(1.016);
   cursor: grabbing;
 }
+/* Multi-selection: a maximum of two real-looking cards peek out
+   behind the card that was grabbed. No badge and no tall ghost. */
+.floating-job .job-card.stack-layer {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  opacity: .94;
+  transform: translate3d(var(--stack-offset), var(--stack-offset), 0);
+  border-color: #77afa5;
+  box-shadow: 0 3px 9px rgba(36,58,84,.15);
+}
+.floating-job > .job-card:not(.stack-layer) {
+  position: relative;
+  z-index: 3;
+}
 .floating-job.is-settling {
   transition: transform 130ms cubic-bezier(.2,.75,.2,1), opacity 130ms ease-out;
   opacity: .96;
