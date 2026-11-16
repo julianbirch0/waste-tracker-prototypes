@@ -1,4 +1,4 @@
-/* Sample data for Day Board V00001.
+/* Sample data for Day Board V00002.
    All data is invented; no calls to WasteTracker or other services. */
 (function () {
   "use strict";
@@ -24,11 +24,26 @@
     "Oak & Stone Ltd", "Central Facilities", "Hilltop Renovations",
     "Town Centre Stores", "Southgate Joinery", "Example Customer"
   ];
-  const activities = [
-    "Collect · 12 yd skip", "Exchange · 10 yd skip",
-    "Deliver · 14 yd skip", "Empty · 1100 L bin",
-    "Collect · Loose load", "Exchange · 660 L bin",
-    "Collect · 20 yd RoRo", "Wait and load"
+  // Keep the containers/vehicle work consistent within each Round.
+  // Unallocated is intentionally mixed because those Jobs have no Round yet.
+  const activitiesByRound = {
+    "skips-1": ["Collect · 10 yd skip", "Exchange · 10 yd skip", "Deliver · 10 yd skip", "Collect · 12 yd skip"],
+    "skips-2": ["Exchange · 12 yd skip", "Collect · 12 yd skip", "Deliver · 14 yd skip", "Exchange · 14 yd skip"],
+    "trade-1": ["Empty · 1100 L bin", "Exchange · 1100 L bin", "Collect · 1100 L bin"],
+    "bins-1": ["Empty · 660 L bin", "Empty · 1100 L bin", "Exchange · 660 L bin"],
+    "roros-1": ["Collect · 20 yd RoRo", "Exchange · 20 yd RoRo", "Deliver · 30 yd RoRo", "Exchange · 30 yd RoRo"],
+    "skips-3": ["Collect · 8 yd skip", "Exchange · 8 yd skip", "Deliver · 10 yd skip", "Collect · 10 yd skip"],
+    "recycling-1": ["Empty · 660 L recycling bin", "Empty · 1100 L recycling bin", "Exchange · 1100 L recycling bin"],
+    "muck-away": ["Collect · Loose soil", "Collect · Loose hardcore", "Collect · Loose rubble"],
+    "bin-deliveries": ["Deliver · 660 L bin", "Deliver · 1100 L bin", "Recover · 660 L bin", "Exchange · 1100 L bin"],
+    "trade-2": ["Empty · 660 L bin", "Exchange · 660 L bin", "Collect · 660 L bin"],
+    "wait-load": ["Wait and load · Loose waste", "Wait and load · 12 yd skip", "Wait and load · 14 yd skip"],
+    "skips-4": ["Collect · 12 yd skip", "Exchange · 12 yd skip", "Deliver · 14 yd skip", "Collect · 14 yd skip"]
+  };
+  const unallocatedActivities = [
+    "Collect · 10 yd skip", "Empty · 660 L bin", "Exchange · 12 yd skip",
+    "Collect · 20 yd RoRo", "Deliver · 1100 L bin", "Collect · Loose soil",
+    "Empty · 1100 L bin", "Exchange · 14 yd skip"
   ];
 
   function makeInitialState() {
@@ -36,28 +51,29 @@
     let number = 1045;
     let sampleIndex = 0;
 
-    function addJob() {
+    function addJob(roundId) {
+      const activityPool = roundId ? activitiesByRound[roundId] : unallocatedActivities;
       const id = "job-" + number;
       jobs[id] = {
         id: id,
         reference: String(number),
         customer: customers[sampleIndex % customers.length],
-        detail: activities[(sampleIndex * 3 + Math.floor(sampleIndex / 4)) % activities.length]
+        detail: activityPool[(sampleIndex * 3 + Math.floor(sampleIndex / 4)) % activityPool.length]
       };
       number += 1;
       sampleIndex += 1;
       return id;
     }
 
-    const unallocated = Array.from({ length: 15 }, addJob);
+    const unallocated = Array.from({ length: 15 }, function () { return addJob(null); });
     const trips = rounds.map(function (round) {
       return {
         id: round.id,
         name: round.name,
         vehicle: round.vehicle,
         driver: round.driver,
-        unsequenced: Array.from({ length: round.unsequenced }, addJob),
-        sequenced: Array.from({ length: round.sequenced }, addJob)
+        unsequenced: Array.from({ length: round.unsequenced }, function () { return addJob(round.id); }),
+        sequenced: Array.from({ length: round.sequenced }, function () { return addJob(round.id); })
       };
     });
     return { jobs: jobs, unallocated: unallocated, trips: trips };
