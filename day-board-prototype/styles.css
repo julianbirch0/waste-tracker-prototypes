@@ -122,6 +122,8 @@ button:focus-visible, .board-scroll:focus-visible {
   border: 1px solid var(--line);
   border-radius: 7px;
   overflow: hidden;
+  display: flex;
+  position: relative;
   background: #fbfcfe;
 }
 .board-scroll {
@@ -376,4 +378,295 @@ button:focus-visible, .board-scroll:focus-visible {
   .prototype-note { text-align: left; }
   .board-tip { display: none; }
   :root { --trip-width: 260px; }
+}
+
+
+/* V00005 — map takes all horizontal space not occupied by the chosen
+   normal-width columns. It slides over the unused full-board columns. */
+.btn-primary {
+  color: #fff;
+  background: var(--teal);
+  border-color: var(--teal);
+}
+.btn-primary:hover:not(:disabled) {
+  background: var(--teal-dark);
+  border-color: var(--teal-dark);
+}
+.board-frame.map-mode { overflow-x: auto; overflow-y: hidden; }
+.board-frame.map-mode .board-scroll {
+  flex: 0 0 var(--grid-pane-width, 574px);
+  width: var(--grid-pane-width, 574px);
+  min-width: 0;
+  overflow-x: hidden;
+  border-right: 1px solid #c9d8e1;
+  transition: none;
+}
+.board-frame.map-mode .board-canvas {
+  min-width: 0;
+}
+.board-frame.map-mode.map-no-grid .board-scroll { display: none; }
+.map-workspace {
+  position: relative;
+  display: flex;
+  flex: 1 0 520px;
+  min-width: 520px;
+  height: 100%;
+  z-index: 60;
+  overflow: hidden;
+  background: #f5f8f8;
+  box-shadow: -4px 0 12px rgba(40,61,80,.10);
+}
+.map-workspace[hidden] { display: none !important; }
+.map-workspace.is-opening {
+  animation: map-slide-in 380ms cubic-bezier(.22,.78,.22,1) both;
+}
+.map-workspace.is-closing {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: max(520px, calc(100% - var(--grid-pane-width, 574px)));
+  animation: map-slide-out 340ms cubic-bezier(.55,.05,.8,.45) both;
+}
+@keyframes map-slide-in {
+  from { transform: translateX(100%); opacity: .75; }
+  to { transform: translateX(0); opacity: 1; }
+}
+@keyframes map-slide-out {
+  from { transform: translateX(0); opacity: 1; }
+  to { transform: translateX(103%); opacity: .70; }
+}
+.map-main {
+  flex: 1 1 auto;
+  min-width: 275px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.map-topline {
+  height: 51px;
+  padding: 10px 15px;
+  flex: 0 0 auto;
+  background: #fff;
+  border-bottom: 1px solid #dce6eb;
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 12px;
+}
+.map-topline strong { color: #30445b; font-size: 13px; font-weight: 650; }
+.map-topline #map-job-total {
+  display: inline-block;
+  margin-left: 8px;
+  color: #7f91a6;
+  font-size: 11px;
+}
+.map-caption { color: #8898aa; font-size: 10px; white-space: nowrap; }
+.map-stage {
+  flex: 1 1 auto;
+  position: relative;
+  min-height: 0;
+  overflow: hidden;
+  background: #f2f7f6;
+}
+#day-map {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+#day-map:active { cursor: grabbing; }
+.map-tools {
+  position: absolute;
+  top: 13px;
+  right: 12px;
+  display: grid;
+  gap: 5px;
+  z-index: 2;
+}
+.map-tools button {
+  min-width: 37px;
+  min-height: 32px;
+  padding: 4px 8px;
+  color: #40556c;
+  background: #fff;
+  border: 1px solid #cfdfe5;
+  border-radius: 5px;
+  box-shadow: 0 1px 4px rgba(35,57,75,.11);
+  font-size: 15px;
+  font-weight: 650;
+}
+.map-tools button:hover { background: #f3f8f7; border-color: #91bbb4; }
+.map-tools #map-fit { font-size: 11px; }
+.map-place-label text {
+  font-size: 14px;
+  font-weight: 650;
+  letter-spacing: 2.3px;
+  fill: #b3c9c5;
+  pointer-events: none;
+}
+.map-road-label text {
+  font-size: 10.5px;
+  font-weight: 650;
+  letter-spacing: 2px;
+  fill: #adbcc0;
+  pointer-events: none;
+}
+.map-route {
+  fill: none;
+  stroke-width: 4;
+  opacity: .69;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+.job-marker { cursor: pointer; outline: none; }
+.job-marker circle { filter: drop-shadow(0 1px 1px rgba(0,0,0,.23)); }
+.job-marker text { pointer-events: none; user-select: none; }
+.job-marker:hover circle:first-child, .job-marker:focus-visible circle:first-child {
+  stroke: #263f59;
+  stroke-width: 4;
+  filter: drop-shadow(0 2px 4px rgba(20,42,60,.4));
+}
+.job-marker.is-marker-selected circle:first-child {
+  stroke: #1f334c;
+  stroke-width: 5;
+  filter: drop-shadow(0 0 3px rgba(26,52,71,.6));
+}
+.map-empty {
+  fill: #8799a6;
+  font-size: 18px;
+  font-weight: 550;
+}
+.map-key {
+  position: absolute;
+  left: 11px;
+  bottom: 11px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 11px;
+  max-width: calc(100% - 24px);
+  border: 1px solid #e4ecef;
+  border-radius: 5px;
+  background: rgba(255,255,255,.93);
+  box-shadow: 0 2px 6px rgba(34,60,82,.07);
+  padding: 7px 10px;
+  color: #61768b;
+  font-size: 10px;
+}
+.map-key > span { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.map-key-dot { width: 10px; height: 10px; display: inline-block; border-radius: 50%; }
+.map-key-unallocated { background: #d79542; border: 1px solid #fff; outline: 1px solid #d79542; }
+.map-key-unsequenced { background: #fff; border: 3px dashed #5378c9; }
+.map-key-line { display: inline-block; width: 19px; height: 0; border-top: 3px solid #319d8f; }
+.map-layers {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 236px;
+  width: 236px;
+  min-width: 236px;
+  background: #fff;
+  border-left: 1px solid #d9e4ec;
+  overflow: hidden;
+}
+.map-layers-header {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+  padding: 12px 11px;
+  min-height: 51px;
+  border-bottom: 1px solid var(--line-soft);
+}
+.map-layers-header strong { font-size: 12.5px; font-weight: 650; }
+.map-layers-header span { font-size: 10.5px; color: #8698aa; }
+.layer-column-labels {
+  display: grid;
+  grid-template-columns: minmax(0,1fr) 38px 38px;
+  gap: 4px;
+  padding: 8px 10px;
+  color: #7287a0;
+  font-size: 10px;
+  font-weight: 700;
+  text-align: center;
+  border-bottom: 1px solid #e2ebf0;
+  background: #f7f9fb;
+}
+.layer-column-labels span:first-child { text-align: left; }
+.map-layer-list { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+.layer-row {
+  display: grid;
+  grid-template-columns: minmax(0,1fr) 38px 38px;
+  gap: 4px;
+  min-height: 43px;
+  align-items: center;
+  padding: 7px 10px;
+  border-bottom: 1px solid #edf1f5;
+}
+.layer-row:hover { background: #fafcfe; }
+.layer-title {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 7px;
+  color: #384d65;
+  font-size: 11px;
+  font-weight: 600;
+}
+.layer-title > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.layer-title small { margin-left: auto; color: #96a5b7; font-size: 10px; font-weight: 500; }
+.layer-swatch { width: 8px; height: 18px; border-radius: 3px; flex: 0 0 8px; }
+.layer-tick { display: grid; place-items: center; cursor: pointer; }
+.layer-tick input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: #269c8d;
+  cursor: pointer;
+}
+.layer-tick input:disabled { cursor: not-allowed; opacity: .45; }
+.layer-tick span { display: none; }
+.grid-cap-caption {
+  flex: 0 0 auto;
+  padding: 10px 11px 12px;
+  border-top: 1px solid #dfe9f0;
+  background: #fafcfd;
+  color: #6f839a;
+  font-size: 10.5px;
+  text-align: center;
+}
+.grid-cap-caption.at-limit { color: #98702f; background: #fffbf4; }
+.map-popup {
+  position: absolute;
+  z-index: 5;
+  min-width: 190px;
+  width: 225px;
+  padding: 13px 14px;
+  color: #354b63;
+  background: #fff;
+  border: 1px solid #cfdae6;
+  border-radius: 7px;
+  box-shadow: 0 8px 22px rgba(39,57,80,.22);
+  pointer-events: auto;
+}
+.map-popup strong { display: block; color: #293e59; font-size: 13px; margin-bottom: 2px; }
+.map-popup span { display: block; font-size: 11px; margin-top: 5px; }
+.map-popup .map-popup-location { color: #479385; font-weight: 650; }
+.map-popup-close {
+  position: absolute;
+  right: 6px;
+  top: 3px;
+  color: #879aaa;
+  font-size: 19px;
+  background: transparent;
+  border: 0;
+  padding: 0 5px;
+}
+.map-popup-close:hover { color: #33455d; }
+@media (prefers-reduced-motion: reduce) {
+  .map-workspace.is-opening, .map-workspace.is-closing { animation: none; }
 }
