@@ -418,7 +418,7 @@ button:focus-visible, .board-scroll:focus-visible {
 }
 .map-workspace[hidden] { display: none !important; }
 .map-workspace.is-opening {
-  animation: map-slide-in 380ms cubic-bezier(.22,.78,.22,1) both;
+  animation: map-slide-in 1140ms cubic-bezier(.22,.78,.22,1) both;
 }
 .map-workspace.is-closing {
   position: absolute;
