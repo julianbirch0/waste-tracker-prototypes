@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Day Board | WasteTracker Prototype V00001</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="page">
+    <header class="page-header">
+      <div class="page-heading">
+        <h1>Day Board <span class="version">V00001</span></h1>
+        <p class="subtitle">Monday 16 November 2026 <span class="date-hint">· Sample day — date filtering to follow</span></p>
+      </div>
+      <div class="header-actions">
+        <button type="button" class="btn btn-secondary" id="undo" title="Undo (Ctrl+Z)" disabled>↶ Undo</button>
+        <button type="button" class="btn btn-secondary" id="redo" title="Redo (Ctrl+Y or Ctrl+Shift+Z)" disabled>↷ Redo</button>
+      </div>
+    </header>
+
+    <section class="board-section" aria-label="Day Board">
+      <div class="board-toolbar">
+        <div class="board-summary" id="board-summary" role="status" aria-live="polite"></div>
+        <div class="board-tools">
+          <span class="board-tip">Drag a job by its <span class="mini-grip" aria-hidden="true">⠿</span> handle</span>
+          <button type="button" class="text-button" id="reset">Reset sample data</button>
+        </div>
+      </div>
+      <div class="board-frame">
+        <div class="board-scroll" id="board-scroll" tabindex="0" aria-label="Scrollable day board. Scroll vertically for more jobs and horizontally for more trips.">
+          <div class="board-canvas" id="board"></div>
+        </div>
+      </div>
+      <div class="board-footnote">
+        <span>Unallocated stays on the left. Trip headers and Unsequenced areas stay at the top while you scroll.</span>
+        <span class="prototype-note">Prototype only · Changes saved in this browser where supported; never sent to WasteTracker</span>
+      </div>
+    </section>
+  </main>
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+  <!-- Local-file friendly: no framework, CDN, imports, fetch or web server. -->
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
