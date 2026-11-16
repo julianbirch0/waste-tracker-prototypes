@@ -1,4 +1,4 @@
-/* WasteTracker Day Board V00006 — standalone illustrative map.
+/* WasteTracker Day Board V00007 — standalone illustrative map.
    No tiles, API keys, map SDK, network requests, or server are needed. */
 (function () {
   "use strict";
