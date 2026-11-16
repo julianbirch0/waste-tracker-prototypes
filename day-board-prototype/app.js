@@ -1,4 +1,4 @@
-/* WasteTracker Day Board V00003
+/* WasteTracker Day Board V00004
    Standalone, file:// compatible. Custom pointer drag-and-drop; no dependencies. */
 (function () {
   "use strict";
@@ -15,7 +15,8 @@
   let state = window.DayBoardData.makeInitialState();
   let undoStack = [];
   let redoStack = [];
-  let selectedJobId = null;
+  let selectedJobIds = new Set();
+  let selectionAnchorId = null;
   let pendingDrag = null;
   let activeDrag = null;
   let targetFrame = 0;
@@ -133,7 +134,7 @@
       '<span class="job-sequence" title="Position on this trip, not job reference">' +
       padNumber(index + 1) + '</span>' : "";
     const ref = escapeHtml(job.reference);
-    const isSelected = selectedJobId === jobId;
+    const isSelected = selectedJobIds.has(jobId);
     return '<article class="job-card' + (isSelected ? ' is-selected' : '') +
       '" data-job-id="' + escapeHtml(jobId) +
       '" role="button" tabindex="0" aria-pressed="' + isSelected +
@@ -231,26 +232,82 @@
     toastTimeout = setTimeout(function () { toastElement.hidden = true; }, 3500);
   }
 
-  // Selecting is deliberately a separate action from dragging:
-  // the first click selects; a fresh pointer press on that selected
-  // card can then lift and move it. No accidental one-gesture moves.
-  function setSelectedJob(jobId) {
-    if (selectedJobId === jobId) return;
-    board.querySelectorAll(".job-card.is-selected").forEach(function (card) {
-      card.classList.remove("is-selected");
-      card.setAttribute("aria-pressed", "false");
-      card.setAttribute("aria-label",
-        "Job " + state.jobs[card.dataset.jobId].reference + ", click to select");
+  // Selection is always restricted to a single Trip (both sequencing
+  // sections count as one column), or to the Unallocated column.
+  function selectionColumn(jobId) {
+    const location = findJob(jobId);
+    if (!location) return null;
+    return location.zone === "unallocated" ? "" : location.tripId;
+  }
+
+  function columnJobOrder(columnId) {
+    if (columnId === "") return state.unallocated.slice();
+    const trip = getTrip(columnId);
+    return trip ? trip.unsequenced.concat(trip.sequenced) : [];
+  }
+
+  function orderedSelection() {
+    if (!selectedJobIds.size) return [];
+    const first = selectedJobIds.values().next().value;
+    return columnJobOrder(selectionColumn(first)).filter(function (id) {
+      return selectedJobIds.has(id);
     });
-    selectedJobId = jobId;
-    if (!jobId) return;
-    const card = board.querySelector('.job-card[data-job-id="' + jobId + '"]');
-    if (card) {
-      card.classList.add("is-selected");
-      card.setAttribute("aria-pressed", "true");
-      card.setAttribute("aria-label",
-        "Job " + state.jobs[jobId].reference + ", selected. Drag to move");
+  }
+
+  function setSelectedJobs(ids, anchorId) {
+    selectedJobIds = new Set(ids);
+    selectionAnchorId = anchorId && selectedJobIds.has(anchorId)
+      ? anchorId
+      : (ids[0] || null);
+
+    board.querySelectorAll(".job-card").forEach(function (card) {
+      const id = card.dataset.jobId;
+      const selected = selectedJobIds.has(id);
+      card.classList.toggle("is-selected", selected);
+      card.setAttribute("aria-pressed", String(selected));
+      const job = state.jobs[id];
+      if (job) {
+        card.setAttribute("aria-label", "Job " + job.reference +
+          (selected ? ", selected. Drag to move" : ", click to select"));
+      }
+    });
+  }
+
+  function changeSelection(jobId, modifiers) {
+    const column = selectionColumn(jobId);
+    if (column === null) return;
+    const firstSelected = selectedJobIds.values().next().value;
+    const existingColumn = firstSelected ? selectionColumn(firstSelected) : null;
+    const shift = Boolean(modifiers.shiftKey);
+    const ctrl = Boolean(modifiers.ctrlKey || modifiers.metaKey);
+
+    // Modified clicks in another column are intentionally ignored,
+    // leaving the existing selection and anchor exactly as they were.
+    if ((shift || ctrl) && selectedJobIds.size && column !== existingColumn) return;
+
+    if (shift && selectedJobIds.size && selectionAnchorId) {
+      const order = columnJobOrder(column);
+      const start = order.indexOf(selectionAnchorId);
+      const finish = order.indexOf(jobId);
+      if (start !== -1 && finish !== -1) {
+        const range = order.slice(Math.min(start, finish), Math.max(start, finish) + 1);
+        const ids = ctrl ? Array.from(new Set([...selectedJobIds, ...range])) : range;
+        setSelectedJobs(ids, selectionAnchorId);
+        return;
+      }
     }
+
+    if (ctrl) {
+      const next = new Set(selectedJobIds);
+      if (next.has(jobId)) next.delete(jobId);
+      else next.add(jobId);
+      const anchor = next.has(jobId) ? jobId
+        : (next.has(selectionAnchorId) ? selectionAnchorId : next.values().next().value);
+      setSelectedJobs(Array.from(next), anchor);
+      return;
+    }
+
+    setSelectedJobs([jobId], jobId);
   }
 
   // Pointer-driven dragging replaces native HTML drag-and-drop. The actual
@@ -260,24 +317,53 @@
   const SLOT_HYSTERESIS_PX = 6;
   const SHIFT_DURATION_MS = 175;
 
-  function acceptMove(jobId, tripId, zone, targetIndex) {
-    const from = findJob(jobId);
+  function acceptMove(jobIds, tripId, zone, targetIndex, grabbedJobId) {
+    if (!Array.isArray(jobIds) || !jobIds.length) return false;
+    const ids = Array.from(new Set(jobIds));
+    const sourceColumn = selectionColumn(ids[0]);
     const target = getList(tripId, zone);
-    if (!from || !target) return false;
+    if (sourceColumn === null || !target ||
+        ids.some(function (id) { return selectionColumn(id) !== sourceColumn; })) {
+      return false;
+    }
 
     const before = getPlacement();
-    const source = getList(from.tripId, from.zone);
-    source.splice(from.index, 1);
+    const selected = new Set(ids);
+    const sourceLists = sourceColumn === ""
+      ? [state.unallocated]
+      : [getTrip(sourceColumn).unsequenced, getTrip(sourceColumn).sequenced];
+
+    // The DOM placeholder position already ignores lifted cards, so first
+    // remove every selected Job from its source list(s), then splice the
+    // whole group into that precise index of the destination list.
+    sourceLists.forEach(function (list) {
+      for (let i = list.length - 1; i >= 0; i -= 1) {
+        if (selected.has(list[i])) list.splice(i, 1);
+      }
+    });
     const index = Math.max(0, Math.min(targetIndex, target.length));
-    target.splice(index, 0, jobId);
+    target.splice(index, 0, ...ids);
 
     const after = getPlacement();
     if (JSON.stringify(before) === JSON.stringify(after)) return false;
-    undoStack.push({ before: before, after: after, jobId: jobId });
+    undoStack.push({
+      before: before,
+      after: after,
+      jobIds: ids,
+      jobId: grabbedJobId || ids[0]
+    });
     if (undoStack.length > MAX_HISTORY) undoStack.shift();
     redoStack = [];
     persistPlacement();
     return true;
+  }
+
+  function moveDescription(ids) {
+    if (!ids.length) return "";
+    const prefix = ids.length === 1
+      ? "Job " + state.jobs[ids[0]].reference
+      : ids.length + " Jobs";
+    return prefix + " → " + describeLocation(findJob(ids[0]));
   }
 
   function findDropZone(x, y) {
@@ -324,6 +410,8 @@
     if (!pending || activeDrag) return;
     const card = pending.card;
     if (!card.isConnected) return;
+    const ids = orderedSelection();
+    if (!ids.includes(pending.jobId)) return;
 
     const rect = card.getBoundingClientRect();
     const placeholder = document.createElement("div");
@@ -339,11 +427,36 @@
     floating.className = "floating-job";
     floating.style.width = rect.width + "px";
     floating.style.height = rect.height + "px";
+    floating.setAttribute("aria-hidden", "true");
     document.body.appendChild(floating);
+
+    // Make a tactile stack rather than a tall group or a count badge.
+    // Two other selected cards peek out behind the grabbed card.
+    if (ids.length > 1) {
+      const backingIds = ids.filter(function (id) { return id !== pending.jobId; }).slice(0, 2);
+      backingIds.reverse().forEach(function (id, index) {
+        const backing = board.querySelector('.job-card[data-job-id="' + id + '"]');
+        if (!backing) return;
+        const layer = backing.cloneNode(true);
+        layer.classList.add("stack-layer");
+        layer.style.setProperty("--stack-offset", (backingIds.length - index) * 6 + "px");
+        layer.removeAttribute("tabindex");
+        layer.removeAttribute("role");
+        floating.appendChild(layer);
+      });
+    }
     floating.appendChild(card);
+
+    // Lift the entire selection out of its original positions. Only one
+    // normal-card-sized placeholder remains, even for a large group.
+    const idSet = new Set(ids);
+    board.querySelectorAll(".job-card").forEach(function (node) {
+      if (idSet.has(node.dataset.jobId)) node.remove();
+    });
 
     const drag = {
       jobId: pending.jobId,
+      jobIds: ids,
       floating: floating,
       placeholder: placeholder,
       zone: zone,
@@ -482,33 +595,39 @@
       const host = drag.placeholder.parentElement;
       const position = placeholderIndex(host, drag.placeholder);
       if (position >= 0) {
-        moved = acceptMove(drag.jobId, drag.zone.dataset.trip,
-          drag.zone.dataset.zone, position);
+        moved = acceptMove(drag.jobIds, drag.zone.dataset.trip,
+          drag.zone.dataset.zone, position, drag.jobId);
       }
     }
     drag.zone.classList.remove("has-placeholder", "is-targeted");
     renderBoard();
     releaseFloatingCard(drag);
-    if (moved) {
-      showToast("Job moved", "Job " + state.jobs[drag.jobId].reference +
-        " → " + describeLocation(findJob(drag.jobId)));
-    }
+    if (moved) showToast("Jobs moved", moveDescription(drag.jobIds));
   }
 
   board.addEventListener("pointerdown", function (event) {
     if (event.button !== 0 || pendingDrag || activeDrag) return;
     const card = event.target.closest(".job-card");
     if (!card || !board.contains(card)) {
-      setSelectedJob(null);
+      if (!event.ctrlKey && !event.metaKey && !event.shiftKey) {
+        setSelectedJobs([], null);
+      }
       return;
     }
     const jobId = card.dataset.jobId;
     if (!state.jobs[jobId]) return;
 
-    if (selectedJobId !== jobId) {
-      // Only select on this press; even moving the pointer while it is
-      // held down cannot start a drag until the *next* press.
-      setSelectedJob(jobId);
+    if (event.ctrlKey || event.metaKey || event.shiftKey) {
+      changeSelection(jobId, event);
+      // Modified selection must never trigger dragging in that gesture.
+      event.preventDefault();
+      return;
+    }
+
+    if (!selectedJobIds.has(jobId)) {
+      // The first press only selects, even if the pointer subsequently
+      // moves while the button stays down. Dragging needs a fresh press.
+      changeSelection(jobId, event);
       return;
     }
 
@@ -519,7 +638,7 @@
       card: card,
       jobId: jobId
     };
-    // The second press is drag-enabled anywhere on the selected card.
+    // Any selected card can lift the whole selection.
     event.preventDefault();
   });
 
@@ -528,7 +647,9 @@
     const card = event.target.closest(".job-card");
     if (!card || !board.contains(card)) return;
     event.preventDefault();
-    setSelectedJob(card.dataset.jobId);
+    if (!event.shiftKey && !event.ctrlKey && !event.metaKey &&
+        selectedJobIds.has(card.dataset.jobId)) return;
+    changeSelection(card.dataset.jobId, event);
   });
 
   document.addEventListener("pointermove", function (event) {
@@ -573,8 +694,9 @@
     applyPlacement(placement);
     persistPlacement();
     renderBoard();
-    const job = state.jobs[entry.jobId];
-    showToast(action, "Job " + job.reference + " → " + describeLocation(findJob(entry.jobId)));
+    const ids = entry.jobIds || [entry.jobId];
+    setSelectedJobs(ids, entry.jobId);
+    showToast(action, moveDescription(ids));
   }
 
   function undo() {
@@ -596,7 +718,8 @@
   document.getElementById("reset").addEventListener("click", function () {
     if (!window.confirm("Reset the Day Board to its original sample Jobs and sequences? This clears Undo/Redo history.")) return;
     state = window.DayBoardData.makeInitialState();
-    selectedJobId = null;
+    selectedJobIds = new Set();
+    selectionAnchorId = null;
     undoStack = [];
     redoStack = [];
     persistPlacement();
@@ -611,9 +734,9 @@
       if (pendingDrag) {
         event.preventDefault();
         completePointerDrag(false);
-      } else if (selectedJobId) {
+      } else if (selectedJobIds.size) {
         event.preventDefault();
-        setSelectedJob(null);
+        setSelectedJobs([], null);
       }
       return;
     }
