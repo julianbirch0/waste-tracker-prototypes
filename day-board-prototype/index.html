@@ -4,17 +4,18 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light">
-  <title>Day Board | WasteTracker Prototype V00004</title>
+  <title>Day Board | WasteTracker Prototype V00005</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <main class="page">
     <header class="page-header">
       <div class="page-heading">
-        <h1>Day Board <span class="version">V00004</span></h1>
+        <h1>Day Board <span class="version">V00005</span></h1>
         <p class="subtitle">Monday 16 November 2026 <span class="date-hint">· Sample day — date filtering to follow</span></p>
       </div>
       <div class="header-actions">
+        <button type="button" class="btn btn-primary" id="toggle-map" aria-expanded="false" aria-controls="map-workspace">Show map</button>
         <button type="button" class="btn btn-secondary" id="undo" title="Undo (Ctrl+Z)" disabled>↶ Undo</button>
         <button type="button" class="btn btn-secondary" id="redo" title="Redo (Ctrl+Y or Ctrl+Shift+Z)" disabled>↷ Redo</button>
       </div>
@@ -32,9 +33,36 @@
         <div class="board-scroll" id="board-scroll" tabindex="0" aria-label="Scrollable day board. Scroll vertically for more jobs and horizontally for more trips.">
           <div class="board-canvas" id="board"></div>
         </div>
+        <section class="map-workspace" id="map-workspace" aria-label="Job location map" hidden>
+          <div class="map-main">
+            <div class="map-topline">
+              <div><strong>Job locations</strong><span id="map-job-total">0 locations</span></div>
+              <span class="map-caption">Illustrative map · Straight lines, not road routes</span>
+            </div>
+            <div class="map-stage" id="day-map-stage">
+              <svg id="day-map" viewBox="0 0 1100 720" role="img" aria-label="Illustrative map showing Job locations and straight lines linking sequenced Jobs"></svg>
+              <div class="map-tools" role="group" aria-label="Map controls">
+                <button type="button" id="map-zoom-in" aria-label="Zoom in" title="Zoom in">+</button>
+                <button type="button" id="map-zoom-out" aria-label="Zoom out" title="Zoom out">−</button>
+                <button type="button" id="map-fit" title="Fit visible Job locations">Fit</button>
+              </div>
+              <div class="map-popup" id="map-popup" role="status" hidden></div>
+              <div class="map-key"><span><i class="map-key-dot map-key-unallocated"></i>Unallocated</span><span><i class="map-key-dot map-key-unsequenced"></i>Unsequenced</span><span><i class="map-key-line"></i>Point-to-point sequence</span></div>
+            </div>
+          </div>
+          <aside class="map-layers" aria-label="Map and grid visibility">
+            <div class="map-layers-header">
+              <strong>Trips &amp; layers</strong>
+              <span>Choose which Jobs to see</span>
+            </div>
+            <div class="layer-column-labels"><span>Round / Trip</span><span>Map</span><span>Grid</span></div>
+            <div id="map-layer-list" class="map-layer-list"></div>
+            <div id="grid-cap-caption" class="grid-cap-caption">0 of 4 grid columns selected</div>
+          </aside>
+        </section>
       </div>
       <div class="board-footnote">
-        <span>Unallocated stays on the left. Trip headers and Unsequenced areas stay at the top while you scroll.</span>
+        <span>Full board: Unallocated stays on the left · Map view: choose up to four grid columns.</span>
         <span class="prototype-note">Prototype only · Changes saved in this browser where supported; never sent to WasteTracker</span>
       </div>
     </section>
@@ -43,6 +71,7 @@
 
   <!-- Local-file friendly: no framework, CDN, imports, fetch or web server. -->
   <script src="data.js"></script>
+  <script src="map.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
