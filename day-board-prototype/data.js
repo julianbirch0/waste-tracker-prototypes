@@ -1,4 +1,4 @@
-/* Sample data for Day Board V00002.
+/* Sample data for Day Board V00005.
    All data is invented; no calls to WasteTracker or other services. */
 (function () {
   "use strict";
@@ -58,7 +58,11 @@
         id: id,
         reference: String(number),
         customer: customers[sampleIndex % customers.length],
-        detail: activityPool[(sampleIndex * 3 + Math.floor(sampleIndex / 4)) % activityPool.length]
+        detail: activityPool[(sampleIndex * 3 + Math.floor(sampleIndex / 4)) % activityPool.length],
+        // Deterministic coordinates on an entirely illustrative local map.
+        // Fixed per Job, so moving a Job between Trips never moves its pin.
+        mapX: 100 + ((sampleIndex * 173 + (sampleIndex % 9) * 31) % 890),
+        mapY: 85 + ((sampleIndex * 107 + (sampleIndex % 11) * 23) % 530)
       };
       number += 1;
       sampleIndex += 1;
