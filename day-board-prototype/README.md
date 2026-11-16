@@ -1,4 +1,4 @@
-# Day Board prototype — V00006
+# Day Board prototype — V00007
 
 A standalone, local-file-friendly WasteTracker Day Board prototype.
 
@@ -8,7 +8,7 @@ A standalone, local-file-friendly WasteTracker Day Board prototype.
 2. Open the **day-board-prototype** folder in your local checkout.
 3. Double-click **index.html** to open it in Edge or Chrome.
 
-There is **no localhost, build step, framework, CDN or web service**. Keep index.html, styles.css, data.js and app.js in the same folder.
+There is **no localhost, build step, framework, CDN or web service**. Keep index.html, styles.css, data.js, map.js and app.js in the same folder.
 
 ## What is included
 
@@ -22,6 +22,8 @@ There is **no localhost, build step, framework, CDN or web service**. Keep index
 - Only Jobs in the **same Trip column** (or all Unallocated) can be selected together. A modified click into another column silently does nothing. An ordinary click in another column replaces the selection.
 - Click to select or **press and drag in one action**; a small movement threshold distinguishes the two. Dragging any Job that is already selected lifts **all selected Jobs**. The floating selection looks like a small stack of up to three fully opaque cards, with no count badge. A **single-card-sized gap** moves through the destination, and its existing cards smoothly move out of the way. On release, all the selected Jobs are inserted there as one contiguous block, in their original top-to-bottom order. All moved Jobs remain highlighted after drop.
 - Clicking a selected card without dragging retains the full selection. Clicking empty board space or pressing **Escape** clears it. Selection itself does not create an Undo step.
+- **Vertical auto-scroll while dragging:** hold a Job near the top of the visible column (just below the sticky header/Unsequenced section) to scroll earlier Sequenced Jobs into view, or near the bottom to reveal later Jobs. Scrolling continues while the pointer stays still, and stops on release/cancel. **No automatic horizontal scrolling** occurs during drags, including drags between columns.
+- **Unsequenced safeguard:** while dragging a Sequenced Job, the sticky Unsequenced section is not a valid drop target until that Trip's **sequence position 01 is fully visible** below the sticky area. If position 01 is part of the dragged selection, the user must scroll all the way to the top. Jobs already in a Trip's Unsequenced section can still be reordered there.
 - Dragging multiple Jobs is **one Undo operation**, including when moving across the Unsequenced/Sequenced divider or between Trips.
 - A muted amber Unsequenced treatment; otherwise neutral cards.
 - Round-specific sample work: skip Rounds show skips, bin Rounds show bins, RoRo shows RoRos, Muck Away shows loose loads, and so on. Unallocated remains mixed.
@@ -33,7 +35,7 @@ There is **no localhost, build step, framework, CDN or web service**. Keep index
 - Browser storage of changed positions when supported by the browser's file:// storage rules. The board still works in memory if browser storage is unavailable.
 - **Reset sample data** to restore the initial positions (also clears Undo/Redo history).
 
-## Map mode (V00006)
+## Map mode (V00007)
 
 - **Show map** slides a self-contained illustrated map in from the right of the Day Board, at one-third of the previous entrance speed (~1.14 seconds); **Hide map** retains its faster exit (~0.34 seconds) and restores the original full grid.
 - The map appears alongside the **selected grid columns**, which retain their normal widths. Adding a grid column shrinks the available map space; removing one expands it. The vertical list of all Trips (plus Unallocated) is always present on the right.
