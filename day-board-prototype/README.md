@@ -1,4 +1,4 @@
-# Day Board prototype — V00004
+# Day Board prototype — V00005
 
 A standalone, local-file-friendly WasteTracker Day Board prototype.
 
@@ -33,6 +33,20 @@ There is **no localhost, build step, framework, CDN or web service**. Keep index
 - Browser storage of changed positions when supported by the browser's file:// storage rules. The board still works in memory if browser storage is unavailable.
 - **Reset sample data** to restore the initial positions (also clears Undo/Redo history).
 
+## Map mode (V00005)
+
+- **Show map** slides a self-contained illustrated map in from the right of the Day Board; **Hide map** slides it back out and restores the original full grid.
+- The map appears alongside the **selected grid columns**, which retain their normal widths. Adding a grid column shrinks the available map space; removing one expands it. The vertical list of all Trips (plus Unallocated) is always present on the right.
+- The default for each opening is **Unallocated + the first Trip** in both the grid and map. If there are no Unallocated Jobs, it instead starts with the **first two Trips**. After opening, users control the visibility themselves, even if the last Unallocated Job is moved.
+- **Map** and **Grid** checkboxes are independent for every Trip and for Unallocated. An unlimited number of Trips can be shown on the map; **only four columns total (including Unallocated)** can be shown in the grid at once. Once four are ticked, unchecked Grid boxes disable until a slot is freed. Grid selections move their columns to the left beside the map; Map-only selections never add columns.
+- A Trip's **Sequenced Jobs** appear as coloured numbered pins joined in order by **straight point-to-point lines**, not road routes. Its Unsequenced Jobs use hollow/dashed pins without connecting lines. Unallocated Jobs use muted-orange pins with no numbers or lines.
+- Map marker positions are **fixed per sample Job**. They are fictional map coordinates (not real sites, postcode lookups or geocoded addresses), and stay fixed when the Job changes Trip.
+- Grid edits (dragging, re-sequencing, Undo/Redo) refresh pins, numbers and connecting lines **without resetting zoom or pan**.
+- Opening the map, changing Map visibility, or changing Grid visibility performs **Fit All**; users can also zoom in/out, mouse-wheel zoom, drag the map to pan, or press **Fit**.
+- Clicking a marker in a **grid-visible** column selects the Job (thick teal border) and smoothly scrolls its card into view where necessary. Clicking a marker whose column is **not grid-visible** opens a small Job popup.
+- The existing selected-Job controls and multi-Job dragging remain available in every grid-visible column.
+- All map artwork, interaction and sample data work when opening `index.html` directly with `file://`, without online tiles or API keys. On narrower screens, selecting many full-width grid columns can require horizontal scrolling of the board frame.
+
 ## Deliberately deferred
 
 - Working date/day filters.
@@ -52,4 +66,5 @@ There is **no localhost, build step, framework, CDN or web service**. Keep index
 | index.html | Page and board container |
 | styles.css | Agreements-inspired design, sticky layout and drag/drop styling |
 | data.js | Deterministic sample Trips and Jobs |
-| app.js | Rendering, drag/drop, sequencing, browser storage and Undo/Redo |
+| app.js | Rendering, drag/drop, sequencing, browser storage, Undo/Redo and map integration |
+| map.js | Animated map mode, layer selectors, SVG map, markers, straight lines, zoom/pan and popup |
