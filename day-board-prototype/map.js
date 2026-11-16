@@ -34,7 +34,7 @@
 
   function escapeHtml(value) {
     return String(value == null ? "" : value).replace(/[&<>"']/g, function (s) {
-      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&quot;", "'": "&#39;" }[s];
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[s];
     });
   }
 
@@ -83,7 +83,10 @@
   }
 
   function updateWidth() {
-    frame.style.setProperty("--visible-grid-count", String(gridColumns.length));
+    // Each grid column keeps exactly its normal width; no squeezing.
+    // Allow for the board's permanently reserved vertical scrollbar.
+    const columnWidth = parseFloat(window.getComputedStyle(frame).getPropertyValue("--trip-width")) || 278;
+    frame.style.setProperty("--grid-pane-width", (columnWidth * gridColumns.length + 18) + "px");
     frame.classList.toggle("map-no-grid", opened && gridColumns.length === 0);
   }
 
