@@ -1,5 +1,5 @@
-/* WasteTracker Day Board V00001
-   Standalone, file:// compatible. Native HTML drag-and-drop; no dependencies. */
+/* WasteTracker Day Board V00002
+   Standalone, file:// compatible. Custom pointer drag-and-drop; no dependencies. */
 (function () {
   "use strict";
 
@@ -15,7 +15,10 @@
   let state = window.DayBoardData.makeInitialState();
   let undoStack = [];
   let redoStack = [];
-  let draggingJobId = null;
+  let pendingDrag = null;
+  let activeDrag = null;
+  let targetFrame = 0;
+  let latestPointer = null;
   let toastTimeout = null;
 
   function escapeHtml(value) {
@@ -130,7 +133,7 @@
       padNumber(index + 1) + '</span>' : "";
     const ref = escapeHtml(job.reference);
     return '<article class="job-card" data-job-id="' + escapeHtml(jobId) + '">' +
-      '<button type="button" class="drag-handle" draggable="true" ' +
+      '<button type="button" class="drag-handle" ' +
         'aria-label="Drag Job ' + ref + ' to a new position or trip" ' +
         'title="Drag Job ' + ref + '">' +
         '<svg width="12" height="16" viewBox="0 0 12 16" fill="currentColor" aria-hidden="true">' +
@@ -232,99 +235,303 @@
     toastTimeout = setTimeout(function () { toastElement.hidden = true; }, 3500);
   }
 
-  function clearDropIndicators() {
-    board.querySelectorAll(".drop-before, .drop-after, .drop-active, .dragging-source").forEach(function (node) {
-      node.classList.remove("drop-before", "drop-after", "drop-active", "dragging-source");
-    });
-  }
+  // Pointer-driven dragging replaces native HTML drag-and-drop. The actual
+  // Job card is lifted into a fixed overlay, while a real-sized slot is
+  // inserted into the live column. The other cards reflow around that slot.
+  const DRAG_THRESHOLD_PX = 5;
+  const SLOT_HYSTERESIS_PX = 6;
+  const SHIFT_DURATION_MS = 175;
 
-  function acceptMove(jobId, tripId, zone, anchorId, insertAfter) {
+  function acceptMove(jobId, tripId, zone, targetIndex) {
     const from = findJob(jobId);
     const target = getList(tripId, zone);
-    if (!from || !target) return;
+    if (!from || !target) return false;
 
     const before = getPlacement();
     const source = getList(from.tripId, from.zone);
     source.splice(from.index, 1);
-    let index = target.length;
-    if (anchorId && anchorId !== jobId) {
-      const anchorIndex = target.indexOf(anchorId);
-      if (anchorIndex !== -1) index = anchorIndex + (insertAfter ? 1 : 0);
-    } else if (anchorId === jobId && from.tripId === tripId && from.zone === zone) {
-      // Dropping a job onto itself should leave it where it was.
-      index = Math.min(from.index, target.length);
-    }
+    const index = Math.max(0, Math.min(targetIndex, target.length));
     target.splice(index, 0, jobId);
 
     const after = getPlacement();
-    if (JSON.stringify(before) === JSON.stringify(after)) return;
+    if (JSON.stringify(before) === JSON.stringify(after)) return false;
     undoStack.push({ before: before, after: after, jobId: jobId });
     if (undoStack.length > MAX_HISTORY) undoStack.shift();
     redoStack = [];
     persistPlacement();
-    renderBoard();
-    showToast("Job moved", "Job " + state.jobs[jobId].reference + " → " + describeLocation(findJob(jobId)));
+    return true;
   }
 
-  board.addEventListener("dragstart", function (event) {
-    const handle = event.target.closest(".drag-handle");
-    if (!handle) {
-      event.preventDefault();
+  function findDropZone(x, y) {
+    const element = document.elementFromPoint(x, y);
+    if (!element) return null;
+    const zone = element.closest(".drop-zone");
+    return zone && board.contains(zone) ? zone : null;
+  }
+
+  function hostForZone(zone) {
+    return zone.classList.contains("job-list")
+      ? zone
+      : zone.querySelector(".job-list");  // Unallocated has a nested list.
+  }
+
+  function jobCards(host) {
+    return Array.from(host.children).filter(function (child) {
+      return child.classList.contains("job-card");
+    });
+  }
+
+  function placeholderIndex(host, placeholder) {
+    const slots = Array.from(host.children).filter(function (child) {
+      return child.classList.contains("job-card") ||
+             child.classList.contains("job-placeholder");
+    });
+    return slots.indexOf(placeholder);
+  }
+
+  function cardMidpoint(card) {
+    const rect = card.getBoundingClientRect();
+    return rect.top + rect.height / 2;
+  }
+
+  function moveFloat(drag, x, y) {
+    const left = x - drag.gripOffsetX;
+    const top = y - drag.gripOffsetY;
+    drag.floating.style.transform =
+      "translate3d(" + left + "px," + top + "px,0)";
+  }
+
+  function beginPointerDrag(event) {
+    const pending = pendingDrag;
+    if (!pending || activeDrag) return;
+    const card = pending.card;
+    if (!card.isConnected) return;
+
+    const rect = card.getBoundingClientRect();
+    const placeholder = document.createElement("div");
+    placeholder.className = "job-placeholder";
+    placeholder.style.height = rect.height + "px";
+    placeholder.setAttribute("aria-hidden", "true");
+
+    const host = card.parentElement;
+    const zone = host.closest(".drop-zone");
+    host.insertBefore(placeholder, card);
+
+    const floating = document.createElement("div");
+    floating.className = "floating-job";
+    floating.style.width = rect.width + "px";
+    floating.style.height = rect.height + "px";
+    document.body.appendChild(floating);
+    floating.appendChild(card);
+
+    const drag = {
+      jobId: pending.jobId,
+      floating: floating,
+      placeholder: placeholder,
+      zone: zone,
+      gripOffsetX: pending.startX - rect.left,
+      gripOffsetY: pending.startY - rect.top
+    };
+    activeDrag = drag;
+    zone.classList.add("has-placeholder", "is-targeted");
+    document.body.classList.add("is-pointer-dragging");
+    moveFloat(drag, event.clientX, event.clientY);
+  }
+
+  function animateDisplacedCards(previousHost, nextHost, performMove) {
+    const nodes = new Set(jobCards(previousHost).concat(jobCards(nextHost)));
+    const before = new Map();
+    nodes.forEach(function (node) {
+      before.set(node, node.getBoundingClientRect());
+      if (node.getAnimations) {
+        node.getAnimations().forEach(function (animation) { animation.cancel(); });
+      }
+    });
+    performMove();
+
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       return;
     }
+    nodes.forEach(function (node) {
+      if (!node.isConnected || !node.animate) return;
+      const old = before.get(node);
+      const current = node.getBoundingClientRect();
+      const distance = old.top - current.top;
+      if (Math.abs(distance) > 1) {
+        node.animate([
+          { transform: "translateY(" + distance + "px)" },
+          { transform: "translateY(0)" }
+        ], {
+          duration: SHIFT_DURATION_MS,
+          easing: "cubic-bezier(.2,.75,.2,1)"
+        });
+      }
+    });
+  }
+
+  function placeSlot(x, y) {
+    const drag = activeDrag;
+    if (!drag) return null;
+    const zone = findDropZone(x, y);
+    if (!zone) {
+      drag.zone.classList.remove("is-targeted");
+      return null;
+    }
+    const host = hostForZone(zone);
+    if (!host) return null;
+
+    const currentHost = drag.placeholder.parentElement;
+    const sameHost = currentHost === host;
+    const cards = jobCards(host);
+    let targetIndex;
+
+    if (sameHost) {
+      // Direction-sensitive midpoint crossing: the cards either side of
+      // the gap are different, avoiding a jittery flip-flop at boundaries.
+      targetIndex = placeholderIndex(host, drag.placeholder);
+      while (targetIndex < cards.length &&
+             y > cardMidpoint(cards[targetIndex]) + SLOT_HYSTERESIS_PX) {
+        targetIndex += 1;
+      }
+      while (targetIndex > 0 &&
+             y < cardMidpoint(cards[targetIndex - 1]) - SLOT_HYSTERESIS_PX) {
+        targetIndex -= 1;
+      }
+      if (targetIndex === placeholderIndex(host, drag.placeholder)) {
+        zone.classList.add("is-targeted");
+        return zone;
+      }
+    } else {
+      // A newly entered column gets a gap next to the nearest Job.
+      targetIndex = cards.findIndex(function (card) { return y < cardMidpoint(card); });
+      if (targetIndex < 0) targetIndex = cards.length;
+    }
+
+    const oldZone = drag.zone;
+    const beforeCard = cards[targetIndex] || null;
+    animateDisplacedCards(currentHost, host, function () {
+      if (oldZone !== zone) {
+        oldZone.classList.remove("has-placeholder", "is-targeted");
+      }
+      host.insertBefore(drag.placeholder, beforeCard);
+      zone.classList.add("has-placeholder", "is-targeted");
+      drag.zone = zone;
+    });
+    return zone;
+  }
+
+  function scheduleSlotPosition(x, y) {
+    latestPointer = { x: x, y: y };
+    if (targetFrame) return;
+    // Frame-throttled instead of a long debounce: immediate feedback,
+    // without updating the DOM multiple times per display refresh.
+    targetFrame = window.requestAnimationFrame(function () {
+      targetFrame = 0;
+      if (!activeDrag || !latestPointer) return;
+      placeSlot(latestPointer.x, latestPointer.y);
+    });
+  }
+
+  function releaseFloatingCard(drag) {
+    // After rendering the committed/cancelled placement, fly the lifted
+    // card the final few pixels into its resting position.
+    const settledCard = board.querySelector('.job-card[data-job-id="' + drag.jobId + '"]');
+    if (!settledCard) {
+      drag.floating.remove();
+      return;
+    }
+    const rect = settledCard.getBoundingClientRect();
+    drag.floating.classList.add("is-settling");
+    drag.floating.style.transform =
+      "translate3d(" + rect.left + "px," + rect.top + "px,0)";
+    window.setTimeout(function () { drag.floating.remove(); }, 150);
+  }
+
+  function completePointerDrag(shouldCommit) {
+    const drag = activeDrag;
+    pendingDrag = null;
+    latestPointer = null;
+    if (targetFrame) {
+      window.cancelAnimationFrame(targetFrame);
+      targetFrame = 0;
+    }
+    if (!drag) return;
+    activeDrag = null;
+    document.body.classList.remove("is-pointer-dragging");
+
+    let moved = false;
+    if (shouldCommit) {
+      const host = drag.placeholder.parentElement;
+      const position = placeholderIndex(host, drag.placeholder);
+      if (position >= 0) {
+        moved = acceptMove(drag.jobId, drag.zone.dataset.trip,
+          drag.zone.dataset.zone, position);
+      }
+    }
+    drag.zone.classList.remove("has-placeholder", "is-targeted");
+    renderBoard();
+    releaseFloatingCard(drag);
+    if (moved) {
+      showToast("Job moved", "Job " + state.jobs[drag.jobId].reference +
+        " → " + describeLocation(findJob(drag.jobId)));
+    }
+  }
+
+  board.addEventListener("pointerdown", function (event) {
+    if (event.button !== 0 || pendingDrag || activeDrag) return;
+    const handle = event.target.closest(".drag-handle");
+    if (!handle) return;
     const card = handle.closest(".job-card");
     if (!card || !state.jobs[card.dataset.jobId]) return;
-    draggingJobId = card.dataset.jobId;
-    event.dataTransfer.effectAllowed = "move";
-    event.dataTransfer.setData("text/plain", draggingJobId);
-    if (event.dataTransfer.setDragImage) {
-      event.dataTransfer.setDragImage(card, 18, 20);
-    }
-    requestAnimationFrame(function () {
-      if (card.isConnected) card.classList.add("dragging-source");
-    });
-  });
-
-  board.addEventListener("dragover", function (event) {
-    if (!draggingJobId) return;
-    const zone = event.target.closest(".drop-zone");
-    if (!zone) return;
+    const rect = card.getBoundingClientRect();
+    pendingDrag = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      card: card,
+      jobId: card.dataset.jobId
+    };
+    // Prevent text selection, browser drag ghosts and touch scrolling on the handle.
     event.preventDefault();
-    event.dataTransfer.dropEffect = "move";
-    clearDropIndicators();
-    const card = event.target.closest(".job-card");
-    if (card && zone.contains(card) && card.dataset.jobId !== draggingJobId) {
-      const rect = card.getBoundingClientRect();
-      card.classList.add(event.clientY < rect.top + rect.height / 2 ? "drop-before" : "drop-after");
-    } else {
-      zone.classList.add("drop-active");
-    }
-    const sourceCard = board.querySelector('.job-card[data-job-id="' + draggingJobId + '"]');
-    if (sourceCard) sourceCard.classList.add("dragging-source");
   });
 
-  board.addEventListener("drop", function (event) {
-    const zone = event.target.closest(".drop-zone");
-    if (!draggingJobId || !zone) return;
+  document.addEventListener("pointermove", function (event) {
+    if (!pendingDrag || event.pointerId !== pendingDrag.pointerId) return;
+    if (!activeDrag) {
+      const dx = event.clientX - pendingDrag.startX;
+      const dy = event.clientY - pendingDrag.startY;
+      if (Math.hypot(dx, dy) < DRAG_THRESHOLD_PX) return;
+      beginPointerDrag(event);
+    }
+    if (!activeDrag) return;
+    moveFloat(activeDrag, event.clientX, event.clientY);
+    scheduleSlotPosition(event.clientX, event.clientY);
     event.preventDefault();
-    const card = event.target.closest(".job-card");
-    let anchorId = null;
-    let insertAfter = false;
-    if (card && zone.contains(card)) {
-      anchorId = card.dataset.jobId;
-      const rect = card.getBoundingClientRect();
-      insertAfter = event.clientY >= rect.top + rect.height / 2;
+  }, { passive: false });
+
+  document.addEventListener("pointerup", function (event) {
+    if (!pendingDrag || event.pointerId !== pendingDrag.pointerId) return;
+    if (!activeDrag) {
+      pendingDrag = null;
+      return;
     }
-    const jobId = draggingJobId;
-    draggingJobId = null;
-    clearDropIndicators();
-    acceptMove(jobId, zone.dataset.trip, zone.dataset.zone, anchorId, insertAfter);
+    moveFloat(activeDrag, event.clientX, event.clientY);
+    const validZone = placeSlot(event.clientX, event.clientY);
+    completePointerDrag(Boolean(validZone));
+    event.preventDefault();
   });
 
-  board.addEventListener("dragend", function () {
-    draggingJobId = null;
-    clearDropIndicators();
+  document.addEventListener("pointercancel", function (event) {
+    if (!pendingDrag || event.pointerId !== pendingDrag.pointerId) return;
+    completePointerDrag(false);
   });
+
+  window.addEventListener("blur", function () {
+    if (pendingDrag) completePointerDrag(false);
+  });
+
+  // No native drag/drop: the floating card is always rendered at full opacity.
+  board.addEventListener("dragstart", function (event) { event.preventDefault(); });
 
   function restoreHistory(entry, placement, action) {
     applyPlacement(placement);
@@ -363,6 +570,11 @@
   });
 
   document.addEventListener("keydown", function (event) {
+    if (event.key === "Escape" && pendingDrag) {
+      event.preventDefault();
+      completePointerDrag(false);
+      return;
+    }
     if (!(event.ctrlKey || event.metaKey) || event.altKey) return;
     const tag = document.activeElement && document.activeElement.tagName;
     if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
