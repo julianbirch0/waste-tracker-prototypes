@@ -1,4 +1,4 @@
-# Day Board prototype — V00001
+# Day Board prototype — V00002
 
 A standalone, local-file-friendly WasteTracker Day Board prototype.
 
@@ -18,8 +18,9 @@ There is **no localhost, build step, framework, CDN or web service**. Keep index
 - An **always-visible sticky Unsequenced area** immediately below each Trip header, including a compact empty drop target when there are no unsequenced Jobs.
 - A horizontal scrollbar at the **bottom of the board's fixed-height scrolling area**, always accessible while scrolling up/down through Jobs.
 - One shared vertical scroll for every column.
-- Drag the **six-dot handle** on a Job card to move it within a Trip, between Trips, into or out of the Unsequenced area, or back to Unallocated.
+- Pick up a Job using its **six-dot handle**. The card stays fully opaque under your pointer, while a full-sized gap moves through the list and neighbouring cards slide smoothly out of its way. Drop within a Trip, between Trips, into or out of Unsequenced, or back to Unallocated.
 - A muted amber Unsequenced treatment; otherwise neutral cards.
+- Round-specific sample work: skip Rounds show skips, bin Rounds show bins, RoRo shows RoRos, Muck Away shows loose loads, and so on. Unallocated remains mixed.
 - Subtle sequence positions (**01**, **02**, etc.) which are distinct from the Job reference and recalculated after each move.
 - Immediate application of each move, without Save/Discard.
 - Multiple levels of **Undo/Redo** (up to 100 moves), with a brief confirmation toast.
@@ -33,7 +34,7 @@ There is **no localhost, build step, framework, CDN or web service**. Keep index
 - Working date/day filters.
 - Editing Vehicle or Driver assignments.
 - Temporarily pinning a Trip column after Unallocated.
-- Auto-scrolling at the edge while dragging.
+- Auto-scrolling at the edge while dragging. The cursor must be over a visible valid drop zone.
 - Job detail controls, real statuses and completion workflow.
 - Live data, APIs and server-side persistence.
 - Multiple Trips for the same Round/date.
