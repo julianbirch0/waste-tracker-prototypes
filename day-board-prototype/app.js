@@ -1,4 +1,4 @@
-/* WasteTracker Day Board V00002
+/* WasteTracker Day Board V00003
    Standalone, file:// compatible. Custom pointer drag-and-drop; no dependencies. */
 (function () {
   "use strict";
@@ -15,6 +15,7 @@
   let state = window.DayBoardData.makeInitialState();
   let undoStack = [];
   let redoStack = [];
+  let selectedJobId = null;
   let pendingDrag = null;
   let activeDrag = null;
   let targetFrame = 0;
@@ -132,16 +133,11 @@
       '<span class="job-sequence" title="Position on this trip, not job reference">' +
       padNumber(index + 1) + '</span>' : "";
     const ref = escapeHtml(job.reference);
-    return '<article class="job-card" data-job-id="' + escapeHtml(jobId) + '">' +
-      '<button type="button" class="drag-handle" ' +
-        'aria-label="Drag Job ' + ref + ' to a new position or trip" ' +
-        'title="Drag Job ' + ref + '">' +
-        '<svg width="12" height="16" viewBox="0 0 12 16" fill="currentColor" aria-hidden="true">' +
-          '<circle cx="3" cy="3" r="1.45"/><circle cx="9" cy="3" r="1.45"/>' +
-          '<circle cx="3" cy="8" r="1.45"/><circle cx="9" cy="8" r="1.45"/>' +
-          '<circle cx="3" cy="13" r="1.45"/><circle cx="9" cy="13" r="1.45"/>' +
-        '</svg>' +
-      '</button>' +
+    const isSelected = selectedJobId === jobId;
+    return '<article class="job-card' + (isSelected ? ' is-selected' : '') +
+      '" data-job-id="' + escapeHtml(jobId) +
+      '" role="button" tabindex="0" aria-pressed="' + isSelected +
+      '" aria-label="Job ' + ref + (isSelected ? ', selected. Drag to move' : ', click to select') + '">' +
       '<div class="job-info">' +
         '<div class="job-line"><span class="job-ref">Job ' + ref + '</span>' + marker + '</div>' +
         '<div class="job-customer" title="' + escapeHtml(job.customer) + '">' + escapeHtml(job.customer) + '</div>' +
@@ -233,6 +229,28 @@
     toastElement.innerHTML = '<strong>' + escapeHtml(title) + '</strong><span>' + escapeHtml(detail) + '</span>';
     toastElement.hidden = false;
     toastTimeout = setTimeout(function () { toastElement.hidden = true; }, 3500);
+  }
+
+  // Selecting is deliberately a separate action from dragging:
+  // the first click selects; a fresh pointer press on that selected
+  // card can then lift and move it. No accidental one-gesture moves.
+  function setSelectedJob(jobId) {
+    if (selectedJobId === jobId) return;
+    board.querySelectorAll(".job-card.is-selected").forEach(function (card) {
+      card.classList.remove("is-selected");
+      card.setAttribute("aria-pressed", "false");
+      card.setAttribute("aria-label",
+        "Job " + state.jobs[card.dataset.jobId].reference + ", click to select");
+    });
+    selectedJobId = jobId;
+    if (!jobId) return;
+    const card = board.querySelector('.job-card[data-job-id="' + jobId + '"]');
+    if (card) {
+      card.classList.add("is-selected");
+      card.setAttribute("aria-pressed", "true");
+      card.setAttribute("aria-label",
+        "Job " + state.jobs[jobId].reference + ", selected. Drag to move");
+    }
   }
 
   // Pointer-driven dragging replaces native HTML drag-and-drop. The actual
@@ -479,20 +497,38 @@
 
   board.addEventListener("pointerdown", function (event) {
     if (event.button !== 0 || pendingDrag || activeDrag) return;
-    const handle = event.target.closest(".drag-handle");
-    if (!handle) return;
-    const card = handle.closest(".job-card");
-    if (!card || !state.jobs[card.dataset.jobId]) return;
-    const rect = card.getBoundingClientRect();
+    const card = event.target.closest(".job-card");
+    if (!card || !board.contains(card)) {
+      setSelectedJob(null);
+      return;
+    }
+    const jobId = card.dataset.jobId;
+    if (!state.jobs[jobId]) return;
+
+    if (selectedJobId !== jobId) {
+      // Only select on this press; even moving the pointer while it is
+      // held down cannot start a drag until the *next* press.
+      setSelectedJob(jobId);
+      return;
+    }
+
     pendingDrag = {
       pointerId: event.pointerId,
       startX: event.clientX,
       startY: event.clientY,
       card: card,
-      jobId: card.dataset.jobId
+      jobId: jobId
     };
-    // Prevent text selection, browser drag ghosts and touch scrolling on the handle.
+    // The second press is drag-enabled anywhere on the selected card.
     event.preventDefault();
+  });
+
+  board.addEventListener("keydown", function (event) {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    const card = event.target.closest(".job-card");
+    if (!card || !board.contains(card)) return;
+    event.preventDefault();
+    setSelectedJob(card.dataset.jobId);
   });
 
   document.addEventListener("pointermove", function (event) {
@@ -560,6 +596,7 @@
   document.getElementById("reset").addEventListener("click", function () {
     if (!window.confirm("Reset the Day Board to its original sample Jobs and sequences? This clears Undo/Redo history.")) return;
     state = window.DayBoardData.makeInitialState();
+    selectedJobId = null;
     undoStack = [];
     redoStack = [];
     persistPlacement();
@@ -570,9 +607,14 @@
   });
 
   document.addEventListener("keydown", function (event) {
-    if (event.key === "Escape" && pendingDrag) {
-      event.preventDefault();
-      completePointerDrag(false);
+    if (event.key === "Escape") {
+      if (pendingDrag) {
+        event.preventDefault();
+        completePointerDrag(false);
+      } else if (selectedJobId) {
+        event.preventDefault();
+        setSelectedJob(null);
+      }
       return;
     }
     if (!(event.ctrlKey || event.metaKey) || event.altKey) return;
