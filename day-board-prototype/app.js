@@ -1,4 +1,4 @@
-/* WasteTracker Day Board V00004
+/* WasteTracker Day Board V00005
    Standalone, file:// compatible. Custom pointer drag-and-drop; no dependencies. */
 (function () {
   "use strict";
@@ -219,10 +219,22 @@
   function renderBoard() {
     const left = scroller.scrollLeft;
     const top = scroller.scrollTop;
-    board.innerHTML = renderUnallocated() + state.trips.map(renderTrip).join("");
+    const mapColumns = window.DayBoardMap && window.DayBoardMap.visibleColumns();
+    if (mapColumns) {
+      // Map mode renders only chosen columns, including an optional
+      // Unallocated column. Their order follows the user's checkbox choices.
+      board.innerHTML = mapColumns.map(function (id) {
+        if (id === "unallocated") return renderUnallocated();
+        const trip = getTrip(id);
+        return trip ? renderTrip(trip) : "";
+      }).join("");
+    } else {
+      board.innerHTML = renderUnallocated() + state.trips.map(renderTrip).join("");
+    }
     updateSummary();
     scroller.scrollLeft = left;
     scroller.scrollTop = top;
+    if (window.DayBoardMap) window.DayBoardMap.onBoardChange();
   }
 
   function showToast(title, detail) {
@@ -271,6 +283,7 @@
           (selected ? ", selected. Drag to move" : ", click to select"));
       }
     });
+    if (window.DayBoardMap) window.DayBoardMap.onSelectionChange();
   }
 
   function changeSelection(jobId, modifiers) {
@@ -753,6 +766,38 @@
     }
   });
 
+  function scrollToJobFromMap(jobId) {
+    const card = board.querySelector('.job-card[data-job-id="' + jobId + '"]');
+    if (!card) return;
+    const column = card.closest(".trip-column");
+    const header = column && column.querySelector(".column-header");
+    const sticky = column && column.querySelector(".unsequenced-block");
+    const scrollRect = scroller.getBoundingClientRect();
+    const headerHeight = header ? header.getBoundingClientRect().height : 90;
+    const stickyHeight = sticky ? sticky.getBoundingClientRect().height : 0;
+    const safeTop = scrollRect.top + headerHeight + stickyHeight + 14;
+    const safeBottom = scrollRect.bottom - 16;
+    const cardRect = card.getBoundingClientRect();
+
+    // Unsequenced markers already point to sticky visible cards.
+    if (card.closest(".unsequenced-block")) return;
+    let change = 0;
+    if (cardRect.top < safeTop) change = cardRect.top - safeTop;
+    else if (cardRect.bottom > safeBottom) change = cardRect.bottom - safeBottom;
+    if (change) {
+      scroller.scrollTo({ top: Math.max(0, scroller.scrollTop + change), behavior: "smooth" });
+    }
+  }
+
   readSavedPlacement();
   renderBoard();
+  if (window.DayBoardMap) {
+    window.DayBoardMap.bind({
+      getState: function () { return state; },
+      getSelectedIds: function () { return Array.from(selectedJobIds); },
+      renderBoard: renderBoard,
+      selectJob: function (jobId) { setSelectedJobs([jobId], jobId); },
+      scrollToJob: scrollToJobFromMap
+    });
+  }
 }());
