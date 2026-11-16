@@ -112,8 +112,9 @@
     renderLayers();
     draw();
     fitAll();
-    // Refit after the entrance animation to use the final map dimensions.
-    window.setTimeout(function () { if (opened) fitAll(); }, 1140);
+    // The map has its final dimensions before the slide starts. One fit
+    // is enough, and avoids overwriting manual pan/zoom during the slower
+    // entrance animation.
   }
 
   function hideMap() {
