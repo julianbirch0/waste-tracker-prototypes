@@ -1,4 +1,4 @@
-/* WasteTracker Day Board V00006
+/* WasteTracker Day Board V00007
    Standalone, file:// compatible. Custom pointer drag-and-drop; no dependencies. */
 (function () {
   "use strict";
@@ -20,6 +20,7 @@
   let pendingDrag = null;
   let activeDrag = null;
   let targetFrame = 0;
+  let scrollFrame = 0;
   let latestPointer = null;
   let toastTimeout = null;
 
@@ -329,6 +330,8 @@
   const DRAG_THRESHOLD_PX = 5;
   const SLOT_HYSTERESIS_PX = 6;
   const SHIFT_DURATION_MS = 175;
+  const AUTO_SCROLL_EDGE_PX = 70;
+  const AUTO_SCROLL_MAX_STEP_PX = 19;
 
   function acceptMove(jobIds, tripId, zone, targetIndex, grabbedJobId) {
     if (!Array.isArray(jobIds) || !jobIds.length) return false;
@@ -474,7 +477,9 @@
       placeholder: placeholder,
       zone: zone,
       gripOffsetX: pending.startX - rect.left,
-      gripOffsetY: pending.startY - rect.top
+      gripOffsetY: pending.startY - rect.top,
+      sourceZone: zone.dataset.zone,
+      sourceTrip: zone.dataset.trip
     };
     activeDrag = drag;
     zone.classList.add("has-placeholder", "is-targeted");
@@ -513,11 +518,42 @@
     });
   }
 
+  // Unsequenced remains sticky while the sequenced list scrolls underneath
+  // it. A visible Unsequenced heading therefore does not mean the user has
+  // reached the beginning of the Trip's sequenced work.
+  function mayDropIntoUnsequenced(zone) {
+    if (zone.dataset.zone !== "unsequenced" || !activeDrag) return true;
+    if (activeDrag.sourceZone === "unsequenced" &&
+        activeDrag.sourceTrip === zone.dataset.trip) return true;
+
+    const trip = getTrip(zone.dataset.trip);
+    if (!trip || !trip.sequenced.length) return true;
+    const firstId = trip.sequenced[0];
+    const firstCard = board.querySelector('.job-card[data-job-id="' + firstId + '"]');
+
+    // Sequence 01 may itself be in the floating selection. In that case,
+    // the Trip must have genuinely scrolled all the way to the beginning.
+    if (!firstCard) {
+      return activeDrag.sourceTrip === trip.id &&
+        activeDrag.jobIds.includes(firstId) && scroller.scrollTop <= 4;
+    }
+
+    const column = zone.closest(".trip-column");
+    const sticky = column && column.querySelector(".unsequenced-block");
+    const viewport = scroller.getBoundingClientRect();
+    const card = firstCard.getBoundingClientRect();
+    const visibleTop = sticky
+      ? Math.max(viewport.top, sticky.getBoundingClientRect().bottom)
+      : viewport.top;
+    // Entire first sequenced card must be visible BELOW the sticky area.
+    return card.top >= visibleTop - 3 && card.bottom <= viewport.bottom + 3;
+  }
+
   function placeSlot(x, y) {
     const drag = activeDrag;
     if (!drag) return null;
     const zone = findDropZone(x, y);
-    if (!zone) {
+    if (!zone || !mayDropIntoUnsequenced(zone)) {
       drag.zone.classList.remove("is-targeted");
       return null;
     }
@@ -576,6 +612,73 @@
     });
   }
 
+  // The Day Board has one common vertical scroller. Edge scrolling during
+  // dragging moves only scrollTop: scrollLeft is deliberately never advanced.
+  // This is active even if the pointer is stationary at the top/bottom.
+  function dragScrollVelocity(x, y) {
+    const viewport = scroller.getBoundingClientRect();
+    if (x < viewport.left || x > viewport.right ||
+        y < viewport.top - 48 || y > viewport.bottom + 48) return 0;
+
+    // Find the column from X without relying on the pointer's Y being inside
+    // the viewport (it may be just beyond the top or bottom edge).
+    const hitY = Math.min(viewport.bottom - 4, Math.max(viewport.top + 4, y));
+    const under = document.elementFromPoint(x, hitY);
+    const column = under && under.closest(".trip-column");
+    if (!column || !board.contains(column)) return 0;
+
+    const sticky = column.querySelector(".unsequenced-block");
+    const header = column.querySelector(".column-header");
+    const headerBottom = header
+      ? header.getBoundingClientRect().bottom
+      : viewport.top + 90;
+    const stickyBottom = sticky
+      ? sticky.getBoundingClientRect().bottom
+      : headerBottom;
+
+    // Scrolling upwards starts at the top of the *visible sequenced
+    // section*, beneath the pinned Trip header and Unsequenced section.
+    const edgeTop = Math.min(viewport.bottom - 85,
+      Math.max(viewport.top + 32, stickyBottom)) + AUTO_SCROLL_EDGE_PX;
+    const edgeBottom = viewport.bottom - AUTO_SCROLL_EDGE_PX;
+
+    if (y < edgeTop) {
+      const strength = Math.min(1, Math.max(0, (edgeTop - y) / AUTO_SCROLL_EDGE_PX));
+      return -Math.max(2, Math.round(AUTO_SCROLL_MAX_STEP_PX * strength));
+    }
+    if (y > edgeBottom) {
+      const strength = Math.min(1, Math.max(0, (y - edgeBottom) / AUTO_SCROLL_EDGE_PX));
+      return Math.max(2, Math.round(AUTO_SCROLL_MAX_STEP_PX * strength));
+    }
+    return 0;
+  }
+
+  function autoScrollDrag() {
+    scrollFrame = 0;
+    if (!activeDrag || !latestPointer) return;
+    const velocity = dragScrollVelocity(latestPointer.x, latestPointer.y);
+    if (!velocity) return;
+
+    const previousTop = scroller.scrollTop;
+    const previousLeft = scroller.scrollLeft;
+    scroller.scrollTop += velocity;
+    // Never pan the columns horizontally as a side effect of a drag.
+    if (scroller.scrollLeft !== previousLeft) scroller.scrollLeft = previousLeft;
+    if (scroller.scrollTop === previousTop) return;
+
+    // The pointer need not move for the placeholder to keep tracking newly
+    // revealed cards as the vertical scroll progresses.
+    placeSlot(latestPointer.x, latestPointer.y);
+    scrollFrame = window.requestAnimationFrame(autoScrollDrag);
+  }
+
+  function scheduleAutoScroll() {
+    if (!activeDrag || !latestPointer || scrollFrame) return;
+    if (dragScrollVelocity(latestPointer.x, latestPointer.y)) {
+      scrollFrame = window.requestAnimationFrame(autoScrollDrag);
+    }
+  }
+
   function releaseFloatingCard(drag) {
     // After rendering the committed/cancelled placement, fly the lifted
     // card the final few pixels into its resting position.
@@ -598,6 +701,10 @@
     if (targetFrame) {
       window.cancelAnimationFrame(targetFrame);
       targetFrame = 0;
+    }
+    if (scrollFrame) {
+      window.cancelAnimationFrame(scrollFrame);
+      scrollFrame = 0;
     }
     if (!drag) return;
     activeDrag = null;
@@ -675,6 +782,7 @@
     if (!activeDrag) return;
     moveFloat(activeDrag, event.clientX, event.clientY);
     scheduleSlotPosition(event.clientX, event.clientY);
+    scheduleAutoScroll();
     event.preventDefault();
   }, { passive: false });
 
