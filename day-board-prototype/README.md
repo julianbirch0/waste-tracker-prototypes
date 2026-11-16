@@ -1,4 +1,4 @@
-# Day Board prototype — V00005
+# Day Board prototype — V00006
 
 A standalone, local-file-friendly WasteTracker Day Board prototype.
 
@@ -20,8 +20,8 @@ There is **no localhost, build step, framework, CDN or web service**. Keep index
 - One shared vertical scroll for every column.
 - **Click a Job card** to select it. **Shift-click** selects the contiguous range between the previous anchor Job and the clicked Job, including across the Unsequenced/Sequenced divider. **Ctrl-click** adds/removes individual Jobs. Ctrl+Shift-click adds a range to the current selection. Every selected Job has a prominent, 4 px teal border.
 - Only Jobs in the **same Trip column** (or all Unallocated) can be selected together. A modified click into another column silently does nothing. An ordinary click in another column replaces the selection.
-- Mouse down again on **any selected card** and drag to lift **all selected Jobs**. The floating selection looks like a small stack of up to three fully opaque cards, with no count badge. A **single-card-sized gap** moves through the destination, and its existing cards smoothly move out of the way. On release, all the selected Jobs are inserted there as one contiguous block, in their original top-to-bottom order. All moved Jobs remain highlighted after drop.
-- Clicking a selected card again without dragging retains the full selection. Clicking empty board space or pressing **Escape** clears it. Selection itself does not create an Undo step.
+- Click to select or **press and drag in one action**; a small movement threshold distinguishes the two. Dragging any Job that is already selected lifts **all selected Jobs**. The floating selection looks like a small stack of up to three fully opaque cards, with no count badge. A **single-card-sized gap** moves through the destination, and its existing cards smoothly move out of the way. On release, all the selected Jobs are inserted there as one contiguous block, in their original top-to-bottom order. All moved Jobs remain highlighted after drop.
+- Clicking a selected card without dragging retains the full selection. Clicking empty board space or pressing **Escape** clears it. Selection itself does not create an Undo step.
 - Dragging multiple Jobs is **one Undo operation**, including when moving across the Unsequenced/Sequenced divider or between Trips.
 - A muted amber Unsequenced treatment; otherwise neutral cards.
 - Round-specific sample work: skip Rounds show skips, bin Rounds show bins, RoRo shows RoRos, Muck Away shows loose loads, and so on. Unallocated remains mixed.
@@ -33,9 +33,9 @@ There is **no localhost, build step, framework, CDN or web service**. Keep index
 - Browser storage of changed positions when supported by the browser's file:// storage rules. The board still works in memory if browser storage is unavailable.
 - **Reset sample data** to restore the initial positions (also clears Undo/Redo history).
 
-## Map mode (V00005)
+## Map mode (V00006)
 
-- **Show map** slides a self-contained illustrated map in from the right of the Day Board; **Hide map** slides it back out and restores the original full grid.
+- **Show map** slides a self-contained illustrated map in from the right of the Day Board, at one-third of the previous entrance speed (~1.14 seconds); **Hide map** retains its faster exit (~0.34 seconds) and restores the original full grid.
 - The map appears alongside the **selected grid columns**, which retain their normal widths. Adding a grid column shrinks the available map space; removing one expands it. The vertical list of all Trips (plus Unallocated) is always present on the right.
 - The default for each opening is **Unallocated + the first Trip** in both the grid and map. If there are no Unallocated Jobs, it instead starts with the **first two Trips**. After opening, users control the visibility themselves, even if the last Unallocated Job is moved.
 - **Map** and **Grid** checkboxes are independent for every Trip and for Unallocated. An unlimited number of Trips can be shown on the map; **only four columns total (including Unallocated)** can be shown in the grid at once. Once four are ticked, unchecked Grid boxes disable until a slot is freed. Grid selections move their columns to the left beside the map; Map-only selections never add columns.
