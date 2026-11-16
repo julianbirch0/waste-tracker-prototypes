@@ -1,4 +1,4 @@
-/* WasteTracker Day Board V00005
+/* WasteTracker Day Board V00006
    Standalone, file:// compatible. Custom pointer drag-and-drop; no dependencies. */
 (function () {
   "use strict";
@@ -638,10 +638,9 @@
     }
 
     if (!selectedJobIds.has(jobId)) {
-      // The first press only selects, even if the pointer subsequently
-      // moves while the button stays down. Dragging needs a fresh press.
+      // Select immediately, but arm dragging on this very same press.
+      // A short movement threshold distinguishes a click from a drag.
       changeSelection(jobId, event);
-      return;
     }
 
     pendingDrag = {
@@ -651,7 +650,7 @@
       card: card,
       jobId: jobId
     };
-    // Any selected card can lift the whole selection.
+    // A single press can lift a new selection; an existing group moves together.
     event.preventDefault();
   });
 
