@@ -1,9 +1,11 @@
-/* WasteTracker Day Board V00007
+/* WasteTracker Day Board V00008
    Standalone, file:// compatible. Custom pointer drag-and-drop; no dependencies. */
 (function () {
   "use strict";
 
-  const STORAGE_KEY = "wastetracker.dayboard.v00001.placements";
+  // A fresh local key presents V00008's intentionally re-planned sample routes,
+  // rather than carrying over arbitrary Job positions from earlier demos.
+  const STORAGE_KEY = "wastetracker.dayboard.v00008.placements";
   const MAX_HISTORY = 100;
   const board = document.getElementById("board");
   const scroller = document.getElementById("board-scroll");
@@ -11,6 +13,11 @@
   const redoButton = document.getElementById("redo");
   const summary = document.getElementById("board-summary");
   const toastElement = document.getElementById("toast");
+  const groupFilterWrap = document.getElementById("group-filter-wrap");
+  const groupFilterButton = document.getElementById("group-filter-button");
+  const groupFilterPanel = document.getElementById("group-filter-panel");
+  const groups = window.DayBoardData.groups || [];
+  let visibleGroupIds = new Set(groups.map(function (group) { return group.id; }));
 
   let state = window.DayBoardData.makeInitialState();
   let undoStack = [];
@@ -141,7 +148,9 @@
       '" role="button" tabindex="0" aria-pressed="' + isSelected +
       '" aria-label="Job ' + ref + (isSelected ? ', selected. Drag to move' : ', click to select') + '">' +
       '<div class="job-info">' +
-        '<div class="job-line"><span class="job-ref">Job ' + ref + '</span>' + marker + '</div>' +
+        '<div class="job-line"><span class="job-ref">Job ' + ref + '</span>' +
+        '<span class="job-labels"><span class="job-status job-status-planned">' +
+        escapeHtml(job.status || "planned") + '</span>' + marker + '</span></div>' +
         '<div class="job-customer" title="' + escapeHtml(job.customer) + '">' + escapeHtml(job.customer) + '</div>' +
         '<div class="job-detail">' + escapeHtml(job.detail) + '</div>' +
       '</div>' +
@@ -181,7 +190,8 @@
     const driver = trip.driver
       ? escapeHtml(trip.driver)
       : '<span class="column-meta-empty">Not assigned</span>';
-    return '<div class="trip-column">' +
+    return '<div class="trip-column" data-group-id="' + escapeHtml(trip.groupId) +
+      '" title="' + escapeHtml((groups.find(function (group) { return group.id === trip.groupId; }) || {}).name || "") + '">' +
       '<div class="column-header">' +
         '<div class="column-heading-line"><span class="column-name">' + escapeHtml(trip.name) + '</span>' +
           '<span class="column-count">' + total + ' jobs</span></div>' +
@@ -230,13 +240,104 @@
         return trip ? renderTrip(trip) : "";
       }).join("");
     } else {
-      board.innerHTML = renderUnallocated() + state.trips.map(renderTrip).join("");
+      // The full board shows only Trips in the chosen/expanded groups.
+      // Unallocated remains the sticky first column even for "Nothing".
+      board.innerHTML = renderUnallocated() + state.trips.filter(function (trip) {
+        return visibleGroupIds.has(trip.groupId);
+      }).map(renderTrip).join("");
     }
     updateSummary();
     scroller.scrollLeft = left;
     scroller.scrollTop = top;
     if (window.DayBoardMap) window.DayBoardMap.onBoardChange();
   }
+
+  function groupSelectionText() {
+    if (visibleGroupIds.size === groups.length) return "All groups";
+    if (!visibleGroupIds.size) return "Nothing";
+    if (visibleGroupIds.size === 1) {
+      const selected = groups.find(function (group) { return visibleGroupIds.has(group.id); });
+      return selected ? selected.name : "1 group";
+    }
+    return visibleGroupIds.size + " groups";
+  }
+
+  function renderGroupFilter() {
+    groupFilterButton.innerHTML = escapeHtml(groupSelectionText()) +
+      ' <span aria-hidden="true" class="group-filter-chevron">▾</span>';
+    groupFilterPanel.innerHTML =
+      '<div class="group-filter-actions">' +
+        '<button type="button" data-group-action="all">All</button>' +
+        '<button type="button" data-group-action="rest">All the Rest</button>' +
+        '<button type="button" data-group-action="nothing">Nothing</button>' +
+      '</div>' +
+      '<div class="group-filter-options">' + groups.map(function (group) {
+        return '<label class="group-filter-option"><input type="checkbox" data-group-option="' +
+          escapeHtml(group.id) + '"' + (visibleGroupIds.has(group.id) ? ' checked' : '') +
+          '><span>' + escapeHtml(group.name) + '</span>' +
+          '<small>' + state.trips.filter(function (trip) {
+            return trip.groupId === group.id;
+          }).length + '</small></label>';
+      }).join("") + '</div>' +
+      '<div class="group-filter-hint">Expanded groups appear in the full Day Board.</div>';
+  }
+
+  function chooseGroups(ids) {
+    const valid = new Set(groups.map(function (group) { return group.id; }));
+    visibleGroupIds = new Set(ids.filter(function (id) { return valid.has(id); }));
+    renderGroupFilter();
+    if (window.DayBoardMap && window.DayBoardMap.isOpen()) {
+      // Accordion expansion is independent of Map/Grid checkbox choices.
+      window.DayBoardMap.onGroupsChange();
+    } else {
+      const left = scroller.scrollLeft;
+      renderBoard();
+      // Do not retain a huge horizontal offset when most columns disappear.
+      scroller.scrollLeft = Math.min(left, scroller.scrollWidth - scroller.clientWidth);
+    }
+  }
+
+  function toggleGroup(groupId, expanded) {
+    const ids = new Set(visibleGroupIds);
+    if (expanded) ids.add(groupId); else ids.delete(groupId);
+    chooseGroups(Array.from(ids));
+  }
+
+  function closeGroupFilter() {
+    groupFilterPanel.hidden = true;
+    groupFilterButton.setAttribute("aria-expanded", "false");
+  }
+
+  groupFilterButton.addEventListener("click", function () {
+    const show = groupFilterPanel.hidden;
+    groupFilterPanel.hidden = !show;
+    groupFilterButton.setAttribute("aria-expanded", String(show));
+  });
+  groupFilterPanel.addEventListener("click", function (event) {
+    const quick = event.target.closest("button[data-group-action]");
+    if (!quick) return;
+    const action = quick.dataset.groupAction;
+    const current = new Set(visibleGroupIds);
+    if (action === "all") {
+      chooseGroups(groups.map(function (group) { return group.id; }));
+    } else if (action === "rest") {
+      chooseGroups(groups.filter(function (group) {
+        return !current.has(group.id);
+      }).map(function (group) { return group.id; }));
+    } else if (action === "nothing") {
+      chooseGroups([]);
+    }
+  });
+  groupFilterPanel.addEventListener("change", function (event) {
+    const input = event.target.closest('input[data-group-option]');
+    if (!input) return;
+    toggleGroup(input.dataset.groupOption, input.checked);
+  });
+  document.addEventListener("pointerdown", function (event) {
+    if (!groupFilterPanel.hidden && !groupFilterWrap.contains(event.target)) {
+      closeGroupFilter();
+    }
+  });
 
   function showToast(title, detail) {
     clearTimeout(toastTimeout);
@@ -851,6 +952,12 @@
 
   document.addEventListener("keydown", function (event) {
     if (event.key === "Escape") {
+      if (!groupFilterPanel.hidden) {
+        event.preventDefault();
+        closeGroupFilter();
+        groupFilterButton.focus();
+        return;
+      }
       if (pendingDrag) {
         event.preventDefault();
         completePointerDrag(false);
@@ -897,12 +1004,15 @@
   }
 
   readSavedPlacement();
+  renderGroupFilter();
   renderBoard();
   if (window.DayBoardMap) {
     window.DayBoardMap.bind({
       getState: function () { return state; },
       getSelectedIds: function () { return Array.from(selectedJobIds); },
       renderBoard: renderBoard,
+      getVisibleGroupIds: function () { return Array.from(visibleGroupIds); },
+      toggleGroup: toggleGroup,
       selectJob: function (jobId) { setSelectedJobs([jobId], jobId); },
       scrollToJob: scrollToJobFromMap
     });
