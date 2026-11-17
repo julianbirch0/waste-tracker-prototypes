@@ -1542,7 +1542,13 @@
       getState: function () { return state; },
       getSelectedIds: function () { return Array.from(selectedJobIds); },
       renderBoard: renderBoard,
-      getVisibleGroupIds: function () { return Array.from(visibleGroupIds); },
+      getVisibleGroupIds: function () {
+        return activeWarningFilter
+          ? Array.from(new Set(sortedWarningTrips(activeWarningFilter).map(function (trip) {
+              return trip.groupId;
+            })))
+          : Array.from(visibleGroupIds);
+      },
       getVisibleTripIds: function () {
         return activeWarningFilter
           ? sortedWarningTrips(activeWarningFilter).map(function (trip) { return trip.id; })
