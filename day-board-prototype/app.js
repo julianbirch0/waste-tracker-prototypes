@@ -190,10 +190,11 @@
     const driver = trip.driver
       ? escapeHtml(trip.driver)
       : '<span class="column-meta-empty">Not assigned</span>';
-    return '<div class="trip-column" data-group-id="' + escapeHtml(trip.groupId) +
-      '" title="' + escapeHtml((groups.find(function (group) { return group.id === trip.groupId; }) || {}).name || "") + '">' +
+    const group = groups.find(function (item) { return item.id === trip.groupId; });
+    return '<div class="trip-column" data-group-id="' + escapeHtml(trip.groupId) + '">' +
       '<div class="column-header">' +
-        '<div class="column-heading-line"><span class="column-name">' + escapeHtml(trip.name) + '</span>' +
+        '<div class="column-heading-line"><span class="column-name" title="Group: ' +
+          escapeHtml(group ? group.name : "Unassigned") + '">' + escapeHtml(trip.name) + '</span>' +
           '<span class="column-count">' + total + ' jobs</span></div>' +
         '<div class="column-meta"><span class="meta-label">Vehicle:</span> ' + vehicle + '</div>' +
         '<div class="column-meta"><span class="meta-label">Driver:</span> ' + driver + '</div>' +
