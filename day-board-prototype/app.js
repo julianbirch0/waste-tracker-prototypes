@@ -677,6 +677,23 @@
     closeGroupFilter();
   });
 
+  function displayTripsInOrder() {
+    const trips = activeWarningFilter
+      ? sortedWarningTrips(activeWarningFilter)
+      : state.trips.filter(function (trip) { return visibleTripIds.has(trip.id); });
+    if (isRangeView()) {
+      const compare = function (a, b) {
+        return a.localeCompare(b, "en-GB", { sensitivity: "base", numeric: true });
+      };
+      trips.sort(function (a, b) {
+        return dateSelection.order === "date-round"
+          ? compare(a.date, b.date) || compare(a.name, b.name)
+          : compare(a.name, b.name) || compare(a.date, b.date);
+      });
+    }
+    return trips;
+  }
+
   function renderBoard() {
     syncWarningFilter();
     // Warning group memberships and counts respond to driver Save/Undo/Redo.
@@ -696,19 +713,7 @@
     } else {
       // The full board shows only Trips in the chosen/expanded groups.
       // Unallocated remains the sticky first column even for "Nothing".
-      const shownTrips = activeWarningFilter
-        ? sortedWarningTrips(activeWarningFilter)
-        : state.trips.filter(function (trip) { return visibleTripIds.has(trip.id); });
-      if (isRangeView()) {
-        const compare = function (a, b) {
-          return a.localeCompare(b, "en-GB", { sensitivity: "base", numeric: true });
-        };
-        shownTrips.sort(function (a, b) {
-          return dateSelection.order === "date-round"
-            ? compare(a.date, b.date) || compare(a.name, b.name)
-            : compare(a.name, b.name) || compare(a.date, b.date);
-        });
-      }
+      const shownTrips = displayTripsInOrder();
       const showAvailable = !activeWarningFilter && showUnallocated;
       board.innerHTML = (showAvailable ? renderUnallocated() : "") +
         shownTrips.map(renderTrip).join("");
@@ -2339,6 +2344,9 @@
       isUnallocatedSelected: function () { return !activeWarningFilter && showUnallocated; },
       isRangeView: isRangeView,
       formatTripDate: shortDate,
+      getDisplayTripIds: function () {
+        return displayTripsInOrder().map(function (trip) { return trip.id; });
+      },
       toggleGroup: toggleGroup,
       selectJob: function (jobId) { setSelectedJobs([jobId], jobId); },
       scrollToJob: scrollToJobFromMap
