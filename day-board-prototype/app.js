@@ -489,6 +489,7 @@
         '<div class="driver-row-actions">' + actions + '</div>' +
       '</div>';
     }).join("");
+    const previousScrollTop = driverDialogList.scrollTop;
     driverDialogList.innerHTML =
       '<section class="driver-dialog-section">' +
         '<h3>Unassigned drivers <span>' + lists.unassigned.length + '</span></h3>' +
@@ -498,6 +499,7 @@
         '<h3>Assigned drivers <span>' + lists.assigned.length + ' allocations</span></h3>' +
         (occupiedRows || '<p class="driver-dialog-empty">No other drivers currently assigned.</p>') +
       '</section>';
+    driverDialogList.scrollTop = previousScrollTop;
   }
 
   function openDriverDialog(tripId) {
