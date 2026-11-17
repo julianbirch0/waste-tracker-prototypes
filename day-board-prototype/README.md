@@ -1,4 +1,4 @@
-# Day Board prototype — V00010
+# Day Board prototype — V00011
 
 A standalone, local-file-friendly WasteTracker Day Board prototype.
 
@@ -14,7 +14,7 @@ There is **no localhost, build step, framework, CDN or web service**. Keep index
 
 - 12 Trip columns, each showing the **parent Round name only**, with Vehicle displayed as read-only text and Driver changed through the ⇄ dialog.
 - **Round groups** are represented by four invented operational groups: Skips Team, Trade & Bins, Recycling & Deliveries, and Specialist Fleet. These are mock assignments independent of the existing Round Definition prototype.
-- **Groups multi-select** above the Day Board defaults to all groups selected. A single **Select All** checkbox appears above a subtle divider and the individual group checkboxes. Select All ticks or unticks every group, shows a mixed state if only some groups are selected, and the sticky Unallocated column remains visible even when all groups are unticked. These selections filter which Trip columns appear in the full-width Day Board.
+- The **Groups and Trips** multi-select above the Day Board defaults to everything selected. A **Select All** checkbox is followed by a subtle divider, a non-expandable **Unallocated** entry, and four expandable group entries containing **individual Trip checkboxes**. A group checkbox selects/deselects all its Trips; partial selections show a mixed state at group level and Select All level. Unallocated can now be independently hidden in the full-width grid. The group chevrons expand/collapse the selector's rows without changing selected Trips.
 - Every Job card now has a subtle light-blue **planned** status pill; this is a placeholder for future Job status workflows.
 - A **horizontally sticky Unallocated column** on the left.
 - Trip headers that remain visible when scrolling vertically.
@@ -35,32 +35,32 @@ There is **no localhost, build step, framework, CDN or web service**. Keep index
 - Multiple levels of **Undo/Redo** (up to 100 moves), with a brief confirmation toast.
 - Shortcuts: **Ctrl+Z** (Undo), **Ctrl+Y** or **Ctrl+Shift+Z** (Redo).
 - Invented sample data: **208 Jobs** across **12 Trips** and **15 initially Unallocated Jobs**. There are enough Jobs and Trips to force both scroll directions at typical desktop sizes.
-- V00010 replaces the random sample coordinates with a **sensible pre-planned serpentine visiting order for every Trip**. Unsequenced Jobs appear near likely insertion points in their Trip, and Unallocated Jobs are near appropriate Trips with matching service types. Coordinates are still fictional, not real postcode locations.
-- The demonstration data uses a **new V00010 browser storage key**, ensuring these re-planned sample sequences appear as the starting position after the update. Older V00007 edits are not imported.
+- V00008 replaces the random sample coordinates with a **sensible pre-planned serpentine visiting order for every Trip**. Unsequenced Jobs appear near likely insertion points in their Trip, and Unallocated Jobs are near appropriate Trips with matching service types. Coordinates are still fictional, not real postcode locations.
+- The demonstration data uses the **V00008 browser storage key**, ensuring these re-planned sample sequences appear as the starting position after the update. Older V00007 edits are not imported.
 - Browser storage of changed positions when supported by the browser's file:// storage rules. The board still works in memory if browser storage is unavailable.
 - **Reset sample data** to restore the initial positions (also clears Undo/Redo history).
 
-## Driver assignment and swapping (V00010)
+## Driver assignment and swapping (V00011)
 
 - A small **⇄** button beside the driver in each Trip heading opens **Change driver**. This works in both the full Day Board and the map's visible grid columns.
-- The dialog displays **Trip (Round)**, the fixed sample date **Monday, 16/Nov**, and the current **Assigned driver** (or **Unassigned**) with an **Unassign** button when a driver exists.
+- The dialog displays **Trip (Round)**, the fixed sample date **Monday, 16-Nov** (`dddd, dd-mmm`), and the current **Assigned driver** (or **Unassigned**) with an **Unassign** button when a driver exists.
 - The first list contains **Unassigned drivers**, sorted alphabetically, with only **Assign** buttons. These are genuinely free drivers with no Trip allocations in the proposed working copy.
 - The second list contains **Assigned drivers**, sorted by driver name and then Trip name, showing **one row for every driver–Trip allocation**. A driver allocated to two Trips appears twice. The Trip being edited is represented at the top rather than listed again.
 - **Assign** makes that driver responsible for the current Trip but deliberately leaves their other Trip allocations untouched. The old driver is no longer assigned to the edited Trip and appears as Unassigned if they have no other allocation.
 - **Swap** exchanges the current Trip driver with the driver on **that specific allocated Trip row**, preserving any other Trips belonging to either driver. Swap is shown only when the edited Trip already has a driver. An unassigned driver's row has **Assign** only.
 - The dialog operates on a **provisional working copy**: Unassign, Assign and Swap immediately refresh its two lists, but **Cancel** or Escape discards all changes. **Save and Close always refreshes** the Day Board, driver names, and warnings, and persists changes locally. Clicking outside the dialog also cancels.
 - Every Save and Close that actually changes allocations creates **one Undo/Redo history step**, even if several drivers were changed within the dialog. Job moves share the same history and are unaffected. An unchanged Save still refreshes but adds no redundant Undo step.
-- Two subtle **amber warning pills** appear above the Day Board when applicable: **N trips with no driver assigned** and **N drivers assigned to multiple trips**. Hover to see the affected Trip names or each multiply assigned driver's Trips. All Trips are included in the warning counts, even if their group is currently filtered out.
+- Two subtle **amber warning pills** appear **in the same toolbar row immediately after the Job/Trip/Unallocated/Unsequenced totals** when applicable: **N trips with no driver assigned** and **N drivers assigned to multiple trips**. Each now includes a small **Show** button rather than hover details. Clicking Show filters the **full-width grid to exactly the Trips affected by that warning** (the missing-driver Trips, or all Trips allocated to a multiply assigned driver). It deselects Unallocated and any other Trips, and closes the map first if necessary. Warning counts always include every Trip regardless of the current filter.
 - The sample starts with **two unassigned Trips** (Recycling 1 and Bin Deliveries), **one driver on two Trips** (Lisa Walker on Skips 2 and Skips 4), and **five unassigned drivers**. The new driver assignments are saved alongside existing Job placements in the same browser storage key, with backwards compatibility for older saved placements.
 - **Reset sample data** restores both the pre-planned Job placements and the original driver assignments, and clears Undo/Redo.
 
-## Map mode (V00010)
+## Map mode (V00011)
 
 - **Show map** slides a self-contained illustrated map in from the right of the Day Board, at one-third of the previous entrance speed (~1.14 seconds); **Hide map** retains its faster exit (~0.34 seconds) and restores the original full grid.
 - The map appears alongside the **selected grid columns**, which retain their normal widths. Adding a grid column shrinks the available map space; removing one expands it. The vertical list of all Trips (plus Unallocated) is always present on the right.
 - The map's right-hand list is organised into **expandable/collapsible group sections**, with Unallocated separate at the top. Every Trip retains independent Map and Grid checkboxes, and collapsing a group hides only its list entries, **not** its map markers or grid columns.
-- **Expanded map groups and the main group filter are synchronised.** On closing the map, the full-width Day Board shows only the Trips belonging to groups left expanded; opening the map defaults to the first visible Trip(s) according to the group filter. Map/Grid checkbox selections remain independent of group expansion.
-- The default for each opening is **Unallocated + the first Trip** in both the grid and map. If there are no Unallocated Jobs, it instead starts with the **first two Trips**. After opening, users control the visibility themselves, even if the last Unallocated Job is moved.
+- **Expanded map groups and the main Group/Trip filter are synchronised.** Expanding a map group selects all its Trips in the full grid; collapsing it deselects them. On closing the map, the full-width Day Board shows **exactly the selected Trips**, including any individual Trip exclusions made in the dropdown. Opening the map defaults to the first selected Trip(s), while Map/Grid checkbox selections remain independent.
+- The default for each opening is **Unallocated + the first selected Trip** in both the grid and map, provided Unallocated is selected and contains Jobs. If Unallocated is empty or deselected, it instead starts with the **first two selected Trips**. After opening, users control the visibility themselves, even if the last Unallocated Job is moved.
 - **Map** and **Grid** checkboxes are independent for every Trip and for Unallocated. An unlimited number of Trips can be shown on the map; **only four columns total (including Unallocated)** can be shown in the grid at once. Once four are ticked, unchecked Grid boxes disable until a slot is freed. Grid selections move their columns to the left beside the map; Map-only selections never add columns.
 - A Trip's **Sequenced Jobs** appear as coloured numbered pins joined in order by **straight point-to-point lines**, not road routes. Its Unsequenced Jobs use hollow/dashed pins without connecting lines. Unallocated Jobs use muted-orange pins with no numbers or lines.
 - Map marker positions are **fixed per sample Job**. They are fictional map coordinates (not real sites, postcode lookups or geocoded addresses), and stay fixed when the Job changes Trip.
