@@ -1,4 +1,4 @@
-/* Sample data for Day Board V00009.
+/* Sample data for Day Board V00010.
    All data is invented; no calls to WasteTracker or other services. */
 (function () {
   "use strict";
@@ -24,7 +24,17 @@
     { id: "bin-deliveries", groupId: "recycling", routeCenter: [245, 565], name: "Bin Deliveries", vehicle: "LE69 NBG", driver: "", unsequenced: 0, sequenced: 14 },
     { id: "trade-2", groupId: "commercial", routeCenter: [465, 565], name: "Trade Waste 2", vehicle: "MP74 ACV", driver: "Amy Taylor", unsequenced: 2, sequenced: 16 },
     { id: "wait-load", groupId: "specialist", routeCenter: [690, 565], name: "Wait and Load", vehicle: "", driver: "Peter Lewis", unsequenced: 0, sequenced: 11 },
-    { id: "skips-4", groupId: "skips", routeCenter: [910, 565], name: "Skips 4", vehicle: "RD72 HBE", driver: "Ben Clarke", unsequenced: 1, sequenced: 15 }
+    { id: "skips-4", groupId: "skips", routeCenter: [910, 565], name: "Skips 4", vehicle: "RD72 HBE", driver: "Lisa Walker", unsequenced: 1, sequenced: 15 }
+  ];
+
+  // All available drivers, whether assigned to zero, one or several Trips.
+  // Lisa intentionally covers two Trips in the demonstration; Ben and the
+  // additional staff below are unassigned and available to allocate.
+  const drivers = [
+    "Amy Taylor", "Ben Clarke", "Charlotte Reed", "Chris Turner",
+    "Dave Roberts", "James Patel", "John Harris", "Lisa Walker",
+    "Michael Evans", "Olivia Moore", "Peter Lewis", "Sarah Price",
+    "Sophie Bennett", "Tom Fisher"
   ];
 
   const customers = [
@@ -142,5 +152,5 @@
       jobs: jobs, unallocated: unallocated, trips: trips };
   }
 
-  window.DayBoardData = { groups: groups, makeInitialState: makeInitialState };
+  window.DayBoardData = { groups: groups, drivers: drivers, makeInitialState: makeInitialState };
 }());
