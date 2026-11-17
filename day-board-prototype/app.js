@@ -479,9 +479,12 @@
     const group = groups.find(function (item) { return item.id === trip.groupId; });
     return '<div class="trip-column" data-group-id="' + escapeHtml(trip.groupId) + '">' +
       '<div class="column-header">' +
-        '<div class="column-heading-line"><span class="column-name" title="Group: ' +
+        '<div class="column-heading-line"><span class="column-trip-title">' +
+          '<span class="column-name" title="Group: ' +
           escapeHtml(group ? group.name : "Unassigned") + '">' + escapeHtml(trip.name) + '</span>' +
-          '<span class="column-count">' + total + ' jobs</span></div>' +
+          (isRangeView() && trip.date ?
+            '<span class="column-trip-date">' + escapeHtml(shortDate(trip.date)) + '</span>' : '') +
+          '</span><span class="column-count">' + total + ' jobs</span></div>' +
         '<div class="column-meta column-driver-meta"><span class="meta-label">Vehicle:</span> ' +
           '<span class="column-driver-name">' + vehicle + '</span>' +
           '<button type="button" class="driver-change-button vehicle-change-button" data-vehicle-trip="' +
@@ -510,7 +513,9 @@
     const unsequenced = state.trips.reduce(function (n, t) { return n + t.unsequenced.length; }, 0);
     const jobs = Object.keys(state.jobs).length;
     summary.innerHTML =
-      '<span class="summary-item"><strong>' + jobs + '</strong> jobs today</span>' +
+      '<span class="summary-item"><strong>' + jobs + '</strong> ' +
+        (isRangeView() ? 'jobs in range' : dateSelection.day === todayKey ? 'jobs today' : 'jobs on day') +
+        '</span>' +
       '<span class="summary-dot"></span>' +
       '<span class="summary-item"><strong>' + state.trips.length + '</strong> trips</span>' +
       '<span class="summary-dot"></span>' +
@@ -620,6 +625,13 @@
   }
 
   function updateAllocationWarnings() {
+    // A multi-day board naturally has repeat vehicles/drivers across dated
+    // instances, so single-day allocation warnings would be misleading.
+    if (isRangeView()) {
+      driverWarnings.innerHTML = "";
+      driverWarnings.hidden = true;
+      return;
+    }
     const warnings = [];
     [
       { kind: "missing", noun: "driver" },
@@ -685,6 +697,16 @@
       const shownTrips = activeWarningFilter
         ? sortedWarningTrips(activeWarningFilter)
         : state.trips.filter(function (trip) { return visibleTripIds.has(trip.id); });
+      if (isRangeView()) {
+        const compare = function (a, b) {
+          return a.localeCompare(b, "en-GB", { sensitivity: "base", numeric: true });
+        };
+        shownTrips.sort(function (a, b) {
+          return dateSelection.order === "date-round"
+            ? compare(a.date, b.date) || compare(a.name, b.name)
+            : compare(a.name, b.name) || compare(a.date, b.date);
+        });
+      }
       const showAvailable = !activeWarningFilter && showUnallocated;
       board.innerHTML = (showAvailable ? renderUnallocated() : "") +
         shownTrips.map(renderTrip).join("");
@@ -735,8 +757,8 @@
             '<span>Unallocated</span><small>' + state.unallocated.length + '</small>' +
           '</label>' +
         '</div>' +
-        '<div class="group-filter-specials">' +
-          warningKinds.map(function (kind) {
+        '<div class="group-filter-specials"' + (isRangeView() ? ' hidden' : '') + '>' +
+          (isRangeView() ? [] : warningKinds).map(function (kind) {
             const affected = sortedWarningTrips(kind);
             const active = activeWarningFilter === kind;
             const expanded = expandedWarningGroups.has(kind);
@@ -796,7 +818,9 @@
                 return '<label class="group-filter-trip"><input type="checkbox" data-trip-option="' +
                   escapeHtml(trip.id) + '"' +
                   (ordinary && visibleTripIds.has(trip.id) ? ' checked' : '') + '>' +
-                  '<span>' + escapeHtml(trip.name) + '</span></label>';
+                  '<span>' + escapeHtml(trip.name) +
+                    (isRangeView() ? ' · ' + escapeHtml(shortDate(trip.date)) : '') +
+                    '</span></label>';
               }).join("") +
             '</div>' +
           '</section>';
@@ -967,6 +991,11 @@
     driverDialogCurrent.textContent = currentDriver || "Unassigned";
     driverDialogCurrent.classList.toggle("is-unassigned", !currentDriver);
     driverDialogUnassign.hidden = !currentDriver;
+    document.getElementById("driver-dialog-date").textContent =
+      shortDate(trip.date || dateSelection.day).replace(/^([A-Za-z]{3})/, function (_, dow) {
+        return { Mon:"Monday", Tue:"Tuesday", Wed:"Wednesday", Thu:"Thursday",
+          Fri:"Friday", Sat:"Saturday", Sun:"Sunday" }[dow];
+      });
     const lists = driverDialogRows();
 
     const freeRows = lists.unassigned.map(function (name) {
@@ -1132,6 +1161,11 @@
     vehicleDialogCurrent.textContent = currentVehicle || "Unassigned";
     vehicleDialogCurrent.classList.toggle("is-unassigned", !currentVehicle);
     vehicleDialogUnassign.hidden = !currentVehicle;
+    document.getElementById("vehicle-dialog-date").textContent =
+      shortDate(trip.date || dateSelection.day).replace(/^([A-Za-z]{3})/, function (_, dow) {
+        return { Mon:"Monday", Tue:"Tuesday", Wed:"Wednesday", Thu:"Thursday",
+          Fri:"Friday", Sat:"Saturday", Sun:"Sunday" }[dow];
+      });
     const lists = vehicleDialogRows();
 
     const freeRows = lists.unassigned.map(function (name) {
@@ -1868,7 +1902,13 @@
   redoButton.addEventListener("click", redo);
   document.getElementById("reset").addEventListener("click", function () {
     if (!window.confirm("Reset the Day Board to its original sample Jobs, sequences, driver assignments and vehicle assignments? This clears Undo/Redo history.")) return;
-    state = window.DayBoardData.makeInitialState();
+    dayStore.clear();
+    state = buildView();
+    activeWarningFilter = null;
+    savedFilterBeforeWarning = null;
+    visibleTripIds = new Set(state.trips.map(function (trip) { return trip.id; }));
+    visibleGroupIds = new Set(groups.map(function (group) { return group.id; }));
+    showUnallocated = true;
     selectedJobIds = new Set();
     selectionAnchorId = null;
     undoStack = [];
@@ -1877,7 +1917,7 @@
     scroller.scrollLeft = 0;
     scroller.scrollTop = 0;
     renderBoard();
-    showToast("Sample data reset", "Jobs, drivers and vehicles restored.");
+    showToast("Sample data reset", "All dated Jobs, drivers and vehicles restored.");
   });
 
   document.addEventListener("keydown", function (event) {
