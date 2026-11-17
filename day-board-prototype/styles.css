@@ -1145,17 +1145,17 @@ button:focus-visible, .board-scroll:focus-visible {
 .board-summary-line {
   display: flex;
   align-items: center;
-  flex: 1 1 auto;
-  min-width: 0;
+  flex: 0 0 auto;
   gap: 8px 13px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 .board-summary-line .board-summary { flex: 0 0 auto; }
 .board-summary-line .driver-warnings {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  flex: 0 1 auto;
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
   gap: 7px;
   padding: 0;
 }
@@ -1297,4 +1297,9 @@ button:focus-visible, .board-scroll:focus-visible {
 }
 @media (prefers-reduced-motion: reduce) {
   .group-filter-expand span { transition: none; }
+}
+
+@media (max-width: 1050px) {
+  .board-summary-line { flex: 1 1 100%; flex-wrap: wrap; }
+  .board-summary-line .driver-warnings { flex-wrap: wrap; }
 }
