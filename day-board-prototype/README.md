@@ -1,4 +1,4 @@
-# Day Board prototype — V00007
+# Day Board prototype — V00008
 
 A standalone, local-file-friendly WasteTracker Day Board prototype.
 
@@ -13,6 +13,9 @@ There is **no localhost, build step, framework, CDN or web service**. Keep index
 ## What is included
 
 - 12 Trip columns, each showing the **parent Round name only**, with Vehicle and Driver displayed as read-only text.
+- **Round groups** are represented by four invented operational groups: Skips Team, Trade & Bins, Recycling & Deliveries, and Specialist Fleet. These are mock assignments independent of the existing Round Definition prototype.
+- **Groups multi-select** above the Day Board defaults to **All**. Tick any combination of groups, use **All** (all groups), **All the Rest** (invert the current selection) or **Nothing** (no Trip groups). The sticky Unallocated column remains visible in the full board even with Nothing selected. These selections filter which Trip columns appear in the full-width Day Board.
+- Every Job card now has a subtle light-blue **planned** status pill; this is a placeholder for future Job status workflows.
 - A **horizontally sticky Unallocated column** on the left.
 - Trip headers that remain visible when scrolling vertically.
 - An **always-visible sticky Unsequenced area** immediately below each Trip header, including a compact empty drop target when there are no unsequenced Jobs.
@@ -32,13 +35,17 @@ There is **no localhost, build step, framework, CDN or web service**. Keep index
 - Multiple levels of **Undo/Redo** (up to 100 moves), with a brief confirmation toast.
 - Shortcuts: **Ctrl+Z** (Undo), **Ctrl+Y** or **Ctrl+Shift+Z** (Redo).
 - Invented sample data: **208 Jobs** across **12 Trips** and **15 initially Unallocated Jobs**. There are enough Jobs and Trips to force both scroll directions at typical desktop sizes.
+- V00008 replaces the random sample coordinates with a **sensible pre-planned serpentine visiting order for every Trip**. Unsequenced Jobs appear near likely insertion points in their Trip, and Unallocated Jobs are near appropriate Trips with matching service types. Coordinates are still fictional, not real postcode locations.
+- The demonstration data uses a **new V00008 browser storage key**, ensuring these re-planned sample sequences appear as the starting position after the update. Older V00007 edits are not imported.
 - Browser storage of changed positions when supported by the browser's file:// storage rules. The board still works in memory if browser storage is unavailable.
 - **Reset sample data** to restore the initial positions (also clears Undo/Redo history).
 
-## Map mode (V00007)
+## Map mode (V00008)
 
 - **Show map** slides a self-contained illustrated map in from the right of the Day Board, at one-third of the previous entrance speed (~1.14 seconds); **Hide map** retains its faster exit (~0.34 seconds) and restores the original full grid.
 - The map appears alongside the **selected grid columns**, which retain their normal widths. Adding a grid column shrinks the available map space; removing one expands it. The vertical list of all Trips (plus Unallocated) is always present on the right.
+- The map's right-hand list is organised into **expandable/collapsible group sections**, with Unallocated separate at the top. Every Trip retains independent Map and Grid checkboxes, and collapsing a group hides only its list entries, **not** its map markers or grid columns.
+- **Expanded map groups and the main group filter are synchronised.** On closing the map, the full-width Day Board shows only the Trips belonging to groups left expanded; opening the map defaults to the first visible Trip(s) according to the group filter. Map/Grid checkbox selections remain independent of group expansion.
 - The default for each opening is **Unallocated + the first Trip** in both the grid and map. If there are no Unallocated Jobs, it instead starts with the **first two Trips**. After opening, users control the visibility themselves, even if the last Unallocated Job is moved.
 - **Map** and **Grid** checkboxes are independent for every Trip and for Unallocated. An unlimited number of Trips can be shown on the map; **only four columns total (including Unallocated)** can be shown in the grid at once. Once four are ticked, unchecked Grid boxes disable until a slot is freed. Grid selections move their columns to the left beside the map; Map-only selections never add columns.
 - A Trip's **Sequenced Jobs** appear as coloured numbered pins joined in order by **straight point-to-point lines**, not road routes. Its Unsequenced Jobs use hollow/dashed pins without connecting lines. Unallocated Jobs use muted-orange pins with no numbers or lines.
@@ -54,8 +61,7 @@ There is **no localhost, build step, framework, CDN or web service**. Keep index
 - Working date/day filters.
 - Editing Vehicle or Driver assignments.
 - Temporarily pinning a Trip column after Unallocated.
-- Auto-scrolling at the edge while dragging. The cursor must be over a visible valid drop zone.
-- Job detail controls, real statuses and completion workflow.
+- Real status changes, status-dependent styling and completion workflow.
 - Live data, APIs and server-side persistence.
 - Multiple Trips for the same Round/date.
 
