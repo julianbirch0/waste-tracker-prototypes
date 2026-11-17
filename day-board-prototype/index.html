@@ -4,15 +4,32 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light">
-  <title>Day Board | WasteTracker Prototype V00013</title>
+  <title>Day Board | WasteTracker Prototype V00014</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <main class="page">
     <header class="page-header">
       <div class="page-heading">
-        <h1>Day Board <span class="version">V00013</span></h1>
-        <p class="subtitle">Monday 16 November 2026 <span class="date-hint">· Sample day — date filtering to follow</span></p>
+        <h1>Day Board <span class="version">V00014</span></h1>
+        <p class="subtitle">Carrier scheduling · Day Board</p>
+      </div>
+      <div class="date-toolbar-wrap">
+        <nav class="date-toolbar" aria-label="Day Board date selection">
+          <button type="button" id="date-prev" class="date-step" aria-label="Previous day or range" title="Previous">−</button>
+          <strong id="date-current" class="date-current" aria-live="polite">17-Nov-2026, Today</strong>
+          <button type="button" id="date-next" class="date-step" aria-label="Next day or range" title="Next">+</button>
+          <button type="button" id="date-calendar" class="date-action date-calendar-trigger" aria-label="Select a single date" aria-expanded="false" title="Choose a date">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18"/><path d="M8 14h3M14 14h2M8 18h3"/>
+            </svg>
+          </button>
+          <button type="button" id="date-today" class="date-action">Select Today</button>
+          <button type="button" id="date-range-open" class="date-action">Select Date Range</button>
+        </nav>
+        <div id="date-single-popup" class="date-single-popup" hidden>
+          <div id="date-single-calendar"></div>
+        </div>
       </div>
       <div class="header-actions">
         <button type="button" class="btn btn-primary" id="toggle-map" aria-expanded="false" aria-controls="map-workspace">Show map</button>
@@ -31,7 +48,7 @@
         </div>
         <div class="board-summary-line">
           <div class="board-summary" id="board-summary" role="status" aria-live="polite"></div>
-          <div id="driver-warnings" class="driver-warnings" aria-label="Driver allocation warnings" aria-live="polite" hidden></div>
+          <div id="driver-warnings" class="driver-warnings" aria-label="Driver and vehicle allocation warnings" aria-live="polite" hidden></div>
         </div>
         <div class="board-tools">
           <span class="board-tip">Click or drag · Shift-click / Ctrl-click to select · Hold near top/bottom to scroll</span>
@@ -121,6 +138,37 @@
       <footer class="driver-dialog-actions">
         <button type="button" class="btn btn-secondary" id="vehicle-dialog-cancel">Cancel</button>
         <button type="button" class="btn btn-primary" id="vehicle-dialog-save">Save and Close</button>
+      </footer>
+    </section>
+  </div>
+  <div id="date-range-backdrop" class="date-range-backdrop" hidden>
+    <section class="date-range-dialog" role="dialog" aria-modal="true" aria-labelledby="date-range-title" tabindex="-1">
+      <header class="date-range-top"><h2 id="date-range-title">Select Date Range</h2><button type="button" id="date-range-close" aria-label="Cancel and close" class="driver-dialog-close">×</button></header>
+      <div class="date-range-scroll">
+        <div id="date-range-calendar"></div>
+        <p id="date-range-instruction" class="date-range-instruction">Select start date</p>
+        <div class="date-range-weekday-block">
+          <div class="date-range-section-label">Days of the week</div>
+          <div class="date-range-weekdays" id="date-range-weekdays">
+            <label><input type="checkbox" value="0" checked><span>Mon</span></label>
+            <label><input type="checkbox" value="1" checked><span>Tue</span></label>
+            <label><input type="checkbox" value="2" checked><span>Wed</span></label>
+            <label><input type="checkbox" value="3" checked><span>Thu</span></label>
+            <label><input type="checkbox" value="4" checked><span>Fri</span></label>
+            <label><input type="checkbox" value="5" checked><span>Sat</span></label>
+            <label><input type="checkbox" value="6" checked><span>Sun</span></label>
+          </div>
+        </div>
+        <div class="date-sort-row">
+          <span class="date-range-section-label">Display order:</span>
+          <strong id="date-sort-label">Round then Date</strong>
+          <button type="button" id="date-sort-toggle" class="date-sort-toggle" aria-label="Swap display order" title="Swap display order">⇄</button>
+        </div>
+        <div id="date-range-error" class="date-range-error" aria-live="polite" hidden></div>
+      </div>
+      <footer class="date-range-actions">
+        <button type="button" class="btn btn-secondary" id="date-range-cancel">Cancel</button>
+        <button type="button" class="btn btn-primary" id="date-range-apply">Apply</button>
       </footer>
     </section>
   </div>
