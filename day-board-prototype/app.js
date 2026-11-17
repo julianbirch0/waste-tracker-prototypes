@@ -407,6 +407,8 @@
   }
 
   function renderGroupFilter() {
+    const previousList = groupFilterPanel.querySelector(".group-filter-options");
+    const previousScrollTop = previousList ? previousList.scrollTop : 0;
     groupFilterButton.innerHTML = escapeHtml(groupSelectionText()) +
       ' <span aria-hidden="true" class="group-filter-chevron">▾</span>';
     const selectedTotal = visibleTripIds.size + (showUnallocated ? 1 : 0);
@@ -459,6 +461,8 @@
         }).join("") +
       '</div>' +
       '<div class="group-filter-hint">Select the exact Trips to display in the Day Board.</div>';
+    const list = groupFilterPanel.querySelector(".group-filter-options");
+    if (list) list.scrollTop = previousScrollTop;
 
     const master = groupFilterPanel.querySelector('input[data-group-select-all]');
     if (master) master.indeterminate = selectedTotal > 0 && selectedTotal < total;
