@@ -1016,17 +1016,17 @@
     }
   }
 
-  function updateDraftVehicle(action, driverName, otherTripId) {
+  function updateDraftVehicle(action, vehicleRegistration, otherTripId) {
     if (!draftVehicles || !vehicleDialogTripId) return;
     if (action === "unassign") {
       draftVehicles[vehicleDialogTripId] = "";
-    } else if (action === "assign" && availableVehicles.includes(driverName)) {
-      draftVehicles[vehicleDialogTripId] = driverName;
+    } else if (action === "assign" && availableVehicles.includes(vehicleRegistration)) {
+      draftVehicles[vehicleDialogTripId] = vehicleRegistration;
     } else if (action === "swap" && draftVehicles[vehicleDialogTripId] &&
                otherTripId && otherTripId !== vehicleDialogTripId &&
-               draftVehicles[otherTripId] === driverName) {
+               draftVehicles[otherTripId] === vehicleRegistration) {
       const previous = draftVehicles[vehicleDialogTripId];
-      draftVehicles[vehicleDialogTripId] = driverName;
+      draftVehicles[vehicleDialogTripId] = vehicleRegistration;
       draftVehicles[otherTripId] = previous;
     } else {
       return;
