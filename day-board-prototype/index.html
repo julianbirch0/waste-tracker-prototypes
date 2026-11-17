@@ -4,14 +4,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light">
-  <title>Day Board | WasteTracker Prototype V00007</title>
+  <title>Day Board | WasteTracker Prototype V00008</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <main class="page">
     <header class="page-header">
       <div class="page-heading">
-        <h1>Day Board <span class="version">V00007</span></h1>
+        <h1>Day Board <span class="version">V00008</span></h1>
         <p class="subtitle">Monday 16 November 2026 <span class="date-hint">· Sample day — date filtering to follow</span></p>
       </div>
       <div class="header-actions">
@@ -23,6 +23,12 @@
 
     <section class="board-section" aria-label="Day Board">
       <div class="board-toolbar">
+        <div class="group-filter-wrap" id="group-filter-wrap">
+          <span class="group-filter-label">Groups</span>
+          <button type="button" class="group-filter-button" id="group-filter-button"
+            aria-haspopup="true" aria-expanded="false" aria-controls="group-filter-panel">All groups <span aria-hidden="true">▾</span></button>
+          <div class="group-filter-panel" id="group-filter-panel" aria-label="Select Round groups" hidden></div>
+        </div>
         <div class="board-summary" id="board-summary" role="status" aria-live="polite"></div>
         <div class="board-tools">
           <span class="board-tip">Click or drag · Shift-click / Ctrl-click to select · Hold near top/bottom to scroll</span>
@@ -62,7 +68,7 @@
         </section>
       </div>
       <div class="board-footnote">
-        <span>Full board: Unallocated stays on the left · Map view: choose up to four grid columns.</span>
+        <span>Full board: filter by Round group · Map view: choose up to four grid columns.</span>
         <span class="prototype-note">Prototype only · Changes saved in this browser where supported; never sent to WasteTracker</span>
       </div>
     </section>
