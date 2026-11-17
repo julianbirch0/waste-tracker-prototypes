@@ -1,4 +1,4 @@
-/* WasteTracker Day Board V00007 — standalone illustrative map.
+/* WasteTracker Day Board V00008 — standalone illustrative map.
    No tiles, API keys, map SDK, network requests, or server are needed. */
 (function () {
   "use strict";
@@ -62,21 +62,59 @@
       '<span aria-hidden="true"></span></label>';
   }
 
+  function layerRow(col) {
+    const inGrid = gridColumns.includes(col.id);
+    const onMap = visibleOnMap.has(col.id);
+    const reachedLimit = gridColumns.length >= LIMIT;
+    return '<div class="layer-row">' +
+      '<div class="layer-title"><i class="layer-swatch" style="background:' +
+        columnColour(col.id) + '"></i>' +
+        '<span title="' + escapeHtml(col.name) + '">' + escapeHtml(col.name) + '</span>' +
+        '<small>' + col.jobs + '</small></div>' +
+      htmlTick(col, "map", onMap, false) +
+      htmlTick(col, "grid", inGrid, reachedLimit && !inGrid) +
+    '</div>';
+  }
+
   function renderLayers() {
     if (!opened) return;
-    const reachedLimit = gridColumns.length >= LIMIT;
-    layers.innerHTML = allColumns().map(function (col) {
-      const inGrid = gridColumns.includes(col.id);
-      const onMap = visibleOnMap.has(col.id);
-      return '<div class="layer-row">' +
-        '<div class="layer-title"><i class="layer-swatch" style="background:' +
-          columnColour(col.id) + '"></i>' +
-          '<span title="' + escapeHtml(col.name) + '">' + escapeHtml(col.name) + '</span>' +
-          '<small>' + col.jobs + '</small></div>' +
-        htmlTick(col, "map", onMap, false) +
-        htmlTick(col, "grid", inGrid, reachedLimit && !inGrid) +
-      '</div>';
+    const state = getState();
+    const columns = allColumns();
+    const expanded = new Set(bridge.getVisibleGroupIds());
+    const previousScroll = layers.scrollTop;
+    const unallocated = '<div class="layer-ungrouped">' +
+      layerRow(columns[0]) + '</div>';
+    const grouped = state.groups.map(function (group) {
+      const isExpanded = expanded.has(group.id);
+      const groupTrips = state.trips.filter(function (trip) {
+        return trip.groupId === group.id;
+      });
+      const groupCols = groupTrips.map(function (trip) {
+        return columns.find(function (col) { return col.id === trip.id; });
+      }).filter(Boolean);
+      const mapped = groupCols.filter(function (col) {
+        return visibleOnMap.has(col.id);
+      }).length;
+      return '<section class="layer-group">' +
+        '<button type="button" class="layer-group-toggle' +
+            (isExpanded ? ' is-expanded' : '') +
+            '" data-toggle-group="' + escapeHtml(group.id) +
+            '" aria-expanded="' + isExpanded +
+            '" aria-controls="map-group-' + escapeHtml(group.id) + '">' +
+          '<span class="layer-group-chevron" aria-hidden="true">›</span>' +
+          '<strong>' + escapeHtml(group.name) + '</strong>' +
+          '<small>' + groupCols.length + ' trips' +
+          (mapped ? ' · ' + mapped + ' on map' : '') + '</small>' +
+        '</button>' +
+        '<div class="layer-group-children" id="map-group-' + escapeHtml(group.id) +
+          '"' + (isExpanded ? '' : ' hidden') + '>' +
+          groupCols.map(layerRow).join("") +
+        '</div>' +
+      '</section>';
     }).join("");
+    layers.innerHTML = unallocated + grouped;
+    layers.scrollTop = previousScroll;
+    const reachedLimit = gridColumns.length >= LIMIT;
     capCaption.textContent = gridColumns.length + " of " + LIMIT +
       " grid columns selected" + (reachedLimit ? " · Limit reached" : "");
     capCaption.classList.toggle("at-limit", reachedLimit);
@@ -94,9 +132,15 @@
     if (opened) return;
     if (closeTimer) { clearTimeout(closeTimer); closeTimer = null; }
     const state = getState();
+    // Respect the current group filter. With no enabled groups, the
+    // Unallocated column can still be opened on its own.
+    const groups = new Set(bridge.getVisibleGroupIds());
+    const eligibleTrips = state.trips.filter(function (trip) {
+      return groups.has(trip.groupId);
+    });
     gridColumns = state.unallocated.length
-      ? [UNALLOCATED, state.trips[0].id]
-      : state.trips.slice(0, 2).map(function (trip) { return trip.id; });
+      ? [UNALLOCATED].concat(eligibleTrips.slice(0, 1).map(function (trip) { return trip.id; }))
+      : eligibleTrips.slice(0, 2).map(function (trip) { return trip.id; });
     visibleOnMap = new Set(gridColumns);
     opened = true;
     workspace.hidden = false;
@@ -346,6 +390,13 @@
     bridge = connected;
     toggleButton.addEventListener("click", toggleMap);
 
+    layers.addEventListener("click", function (event) {
+      const button = event.target.closest("button[data-toggle-group]");
+      if (!button || !opened) return;
+      bridge.toggleGroup(button.dataset.toggleGroup,
+        button.getAttribute("aria-expanded") !== "true");
+    });
+
     layers.addEventListener("change", function (event) {
       const input = event.target.closest('input[type="checkbox"][data-key]');
       if (!input || !opened) return;
@@ -448,6 +499,7 @@
     isOpen: function () { return opened; },
     visibleColumns: function () { return opened ? gridColumns.slice() : null; },
     onBoardChange: function () { if (opened) draw(); },
+    onGroupsChange: function () { if (opened) renderLayers(); },
     onSelectionChange: function () {
       if (!opened) return;
       const selected = new Set(bridge.getSelectedIds());
