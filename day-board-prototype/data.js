@@ -1,4 +1,4 @@
-/* Sample data for Day Board V00008.
+/* Sample data for Day Board V00009.
    All data is invented; no calls to WasteTracker or other services. */
 (function () {
   "use strict";
