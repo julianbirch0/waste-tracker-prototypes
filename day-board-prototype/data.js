@@ -1,4 +1,4 @@
-/* Sample data for Day Board V00013.
+/* Sample data for Day Board V00014.
    All data is invented; no calls to WasteTracker or other services. */
 (function () {
   "use strict";
@@ -88,7 +88,10 @@
     };
   }
 
-  function makeInitialState() {
+  function makeInitialState(dateKey) {
+    // Dated Trip/Job IDs distinguish repeated instances of the same Round
+    // across days. Without a dateKey the legacy fixture IDs remain available.
+    const suffix = dateKey ? "@" + dateKey : "";
     const jobs = {};
     let number = 1045;
     let sampleIndex = 0;
@@ -98,7 +101,7 @@
       const activityPool = activityRound
         ? activitiesByRound[activityRound]
         : unallocatedActivities;
-      const id = "job-" + number;
+      const id = "job-" + number + suffix;
       jobs[id] = {
         id: id,
         reference: String(number),
@@ -147,7 +150,9 @@
         return addJob(round.id, routePoint(round, i));
       });
       return {
-        id: round.id,
+        id: round.id + suffix,
+        roundId: round.id,
+        date: dateKey || "",
         name: round.name,
         groupId: round.groupId,
         vehicle: round.vehicle,
