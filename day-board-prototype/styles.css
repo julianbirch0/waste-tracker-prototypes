@@ -867,3 +867,275 @@ button:focus-visible, .board-scroll:focus-visible {
 @media (prefers-reduced-motion: reduce) {
   .layer-group-chevron { transition: none; }
 }
+
+
+/* V00010: driver allocation controls and modal.
+   Both are self-contained and keep the normal Day Board column geometry. */
+.column-driver-meta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.column-driver-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.driver-change-button {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 22px;
+  padding: 0;
+  margin-left: 3px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: #5e92a0;
+  background: transparent;
+  font-size: 17px;
+  line-height: 1;
+  font-weight: 600;
+}
+.driver-change-button:hover {
+  color: #207c73;
+  background: #f0faf7;
+  border-color: #b6dcd4;
+}
+.driver-change-button:focus-visible {
+  outline: 2px solid #469b9a;
+  outline-offset: 2px;
+}
+.driver-warnings {
+  flex: 0 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0 2px 10px;
+}
+.driver-warning {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 30px;
+  border: 1px solid #efcf9b;
+  border-radius: 8px;
+  padding: 5px 12px 5px 8px;
+  background: #fff6e7;
+  color: #956126;
+  font-size: 11px;
+  font-weight: 650;
+  cursor: help;
+  box-shadow: 0 1px 2px rgba(105,70,20,.05);
+}
+.driver-warning:hover { background: #ffefd6; border-color: #dca964; }
+.driver-warning-icon {
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background: #e8b770;
+  color: #fff;
+  font-weight: 750;
+  font-size: 12px;
+  text-align: center;
+  line-height: 17px;
+}
+.driver-warning:focus-visible {
+  outline: 2px solid #c98a3e;
+  outline-offset: 2px;
+}
+.driver-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 3200;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 24px;
+  background: rgba(24,43,62,.42);
+  backdrop-filter: blur(1.5px);
+}
+.driver-dialog {
+  display: flex;
+  flex-direction: column;
+  width: min(575px, 100%);
+  max-height: min(780px, calc(100dvh - 48px));
+  min-height: 320px;
+  overflow: hidden;
+  border: 1px solid #d4e1e7;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 24px 76px rgba(16,38,60,.29);
+  outline: none;
+  animation: driver-dialog-enter 170ms ease-out both;
+}
+@keyframes driver-dialog-enter {
+  from { opacity: 0; transform: translateY(11px) scale(.99); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.driver-dialog-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 19px 11px;
+  border-bottom: 1px solid #e5edf1;
+}
+.driver-dialog-heading h2 {
+  margin: 0;
+  color: #2c4159;
+  font-size: 17px;
+  line-height: 1.35;
+  font-weight: 650;
+}
+.driver-dialog-close {
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 5px;
+  color: #8094a7;
+  background: transparent;
+  font-size: 25px;
+  line-height: 1;
+}
+.driver-dialog-close:hover { background: #f0f4f7; color: #354c64; }
+.driver-dialog-trip {
+  display: grid;
+  grid-template-columns: minmax(0,1fr) auto;
+  gap: 10px;
+  padding: 14px 20px;
+  background: #f9fbfd;
+  border-bottom: 1px solid #e8eef2;
+}
+.driver-dialog-trip > div,
+.driver-current-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.driver-dialog-label {
+  color: #8a9aad;
+  font-size: 10px;
+  font-weight: 600;
+}
+.driver-dialog-trip strong {
+  color: #354b64;
+  font-size: 13px;
+  font-weight: 650;
+}
+.driver-current-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 15px 20px;
+  border-bottom: 1px solid #e3e9ef;
+}
+.driver-current-detail strong {
+  font-size: 14px;
+  font-weight: 650;
+  color: #2e5161;
+}
+.driver-current-detail strong.is-unassigned { color: #9ba9b6; font-style: italic; }
+.driver-unassign {
+  min-width: 85px;
+  min-height: 31px;
+  color: #956126;
+  background: #fff9f1;
+  border-color: #ebd2aa;
+}
+.driver-unassign:hover:not(:disabled) {
+  color: #774715;
+  background: #fff1dc;
+  border-color: #d6ac73;
+}
+.driver-list-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 8px 20px 14px;
+}
+.driver-dialog-section { padding: 4px 0 8px; }
+.driver-dialog-section + .driver-dialog-section {
+  padding-top: 13px;
+  border-top: 1px solid #e4ecf0;
+}
+.driver-dialog-section h3 {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin: 0 0 8px;
+  color: #546981;
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: .2px;
+}
+.driver-dialog-section h3 span {
+  color: #9eacb8;
+  font-size: 10px;
+  font-weight: 550;
+  letter-spacing: 0;
+}
+.driver-dialog-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 41px;
+  padding: 8px 8px;
+  border-bottom: 1px solid #edf1f4;
+}
+.driver-dialog-row:nth-child(even) { background: #fbfcfd; }
+.driver-dialog-row:hover { background: #f4faf9; }
+.driver-row-description { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.driver-row-name {
+  color: #354c65;
+  font-size: 11.5px;
+  font-weight: 600;
+}
+.driver-row-trip {
+  color: #90a1b3;
+  font-size: 10px;
+}
+.driver-row-actions { display: flex; flex: 0 0 auto; gap: 5px; }
+.driver-row-actions button {
+  min-width: 56px;
+  min-height: 26px;
+  padding: 3px 9px;
+  border-radius: 4px;
+  background: #fff;
+  font-size: 10.5px;
+  font-weight: 650;
+}
+.driver-action-assign { border: 1px solid #a6d6cf; color: #298377; }
+.driver-action-assign:hover { background: #eaf7f4; }
+.driver-action-swap { border: 1px solid #c7d9e4; color: #59768d; }
+.driver-action-swap:hover { background: #eff5f9; }
+.driver-dialog-empty {
+  margin: 4px 2px 13px;
+  padding: 10px 8px;
+  font-size: 11px;
+  color: #99a9b7;
+  font-style: italic;
+}
+.driver-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 9px;
+  padding: 13px 20px 17px;
+  border-top: 1px solid #e2e9ef;
+  background: #fdfefe;
+}
+.driver-dialog-actions .btn { min-height: 34px; }
+@media (max-width: 590px) {
+  .driver-dialog-backdrop { padding: 10px; }
+  .driver-dialog { max-height: calc(100dvh - 20px); }
+  .driver-dialog-trip { grid-template-columns: 1fr; }
+  .driver-list-scroll { padding-left: 13px; padding-right: 13px; }
+  .driver-dialog-row { padding-left: 3px; padding-right: 3px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .driver-dialog { animation: none; }
+}
