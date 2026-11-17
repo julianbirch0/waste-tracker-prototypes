@@ -1303,3 +1303,67 @@ button:focus-visible, .board-scroll:focus-visible {
   .board-summary-line { flex: 1 1 100%; flex-wrap: wrap; }
   .board-summary-line .driver-warnings { flex-wrap: wrap; }
 }
+
+
+/* V00012: live driver-issue pseudo-groups in the Groups and Trips filter. */
+.group-filter-panel {
+  width: 320px;
+  max-width: min(320px, calc(100vw - 28px));
+}
+.group-filter-specials {
+  padding: 4px 0 6px;
+  border-bottom: 1px solid #eadfcf;
+  background: #fffcf7;
+}
+.group-filter-special {
+  border-bottom-color: #f1e8dc;
+}
+.group-filter-special .group-filter-group-heading {
+  background: #fffbf5;
+}
+.group-filter-special .group-filter-group-heading:hover {
+  background: #fff1df;
+}
+.group-filter-special .group-filter-parent {
+  color: #8e682f;
+  font-size: 11px;
+}
+.group-filter-special .group-filter-parent input {
+  accent-color: #c58f48;
+}
+.group-filter-special .group-filter-parent input:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+.group-filter-special .group-filter-parent:has(input:disabled) {
+  color: #b4aa9c;
+  cursor: default;
+}
+.group-filter-special .group-filter-expand:hover {
+  background: #fff0da;
+  color: #95652b;
+}
+.group-filter-warning-children {
+  background: #fffcf8;
+}
+.group-filter-warning-trip {
+  cursor: default;
+  min-height: 29px;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  color: #8b754f;
+}
+.group-filter-warning-trip:hover {
+  background: #fff7ea;
+}
+.group-filter-warning-trip small {
+  color: #ad9979;
+  font-size: 10px;
+  white-space: nowrap;
+}
+.group-filter-warning-empty {
+  padding: 7px 12px 10px;
+  font-style: italic;
+  font-size: 10px;
+  color: #b7ab9b;
+}
