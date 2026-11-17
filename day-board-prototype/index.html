@@ -4,14 +4,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light">
-  <title>Day Board | WasteTracker Prototype V00009</title>
+  <title>Day Board | WasteTracker Prototype V00010</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <main class="page">
     <header class="page-header">
       <div class="page-heading">
-        <h1>Day Board <span class="version">V00009</span></h1>
+        <h1>Day Board <span class="version">V00010</span></h1>
         <p class="subtitle">Monday 16 November 2026 <span class="date-hint">· Sample day — date filtering to follow</span></p>
       </div>
       <div class="header-actions">
@@ -35,6 +35,7 @@
           <button type="button" class="text-button" id="reset">Reset sample data</button>
         </div>
       </div>
+      <div id="driver-warnings" class="driver-warnings" role="status" aria-live="polite" hidden></div>
       <div class="board-frame">
         <div class="board-scroll" id="board-scroll" tabindex="0" aria-label="Scrollable day board. Scroll vertically for more jobs and horizontally for more trips.">
           <div class="board-canvas" id="board"></div>
@@ -73,6 +74,30 @@
       </div>
     </section>
   </main>
+  <div id="driver-dialog-backdrop" class="driver-dialog-backdrop" hidden>
+    <section class="driver-dialog" role="dialog" aria-modal="true" aria-labelledby="driver-dialog-title" tabindex="-1">
+      <header class="driver-dialog-heading">
+        <h2 id="driver-dialog-title">Change driver</h2>
+        <button type="button" class="driver-dialog-close" id="driver-dialog-close" aria-label="Cancel and close">×</button>
+      </header>
+      <div class="driver-dialog-trip">
+        <div><span class="driver-dialog-label">Trip (Round)</span><strong id="driver-dialog-trip-name"></strong></div>
+        <div><span class="driver-dialog-label">Trip date</span><strong id="driver-dialog-date">Monday, 16/Nov</strong></div>
+      </div>
+      <div class="driver-current-row">
+        <span class="driver-current-detail">
+          <span class="driver-dialog-label">Assigned driver</span>
+          <strong id="driver-dialog-current"></strong>
+        </span>
+        <button type="button" class="btn driver-unassign" id="driver-dialog-unassign">Unassign</button>
+      </div>
+      <div class="driver-list-scroll" id="driver-dialog-list"></div>
+      <footer class="driver-dialog-actions">
+        <button type="button" class="btn btn-secondary" id="driver-dialog-cancel">Cancel</button>
+        <button type="button" class="btn btn-primary" id="driver-dialog-save">Save and Close</button>
+      </footer>
+    </section>
+  </div>
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
   <!-- Local-file friendly: no framework, CDN, imports, fetch or web server. -->
