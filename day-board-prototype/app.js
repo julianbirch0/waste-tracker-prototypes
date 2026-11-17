@@ -42,7 +42,7 @@
   let visibleTripIds = null;
   let showUnallocated = true;
   let expandedFilterGroups = new Set(groups.map(function (group) { return group.id; }));
-  let expandedWarningGroups = new Set(["missing", "multiple"]);
+  let expandedWarningGroups = new Set(["missing", "multiple", "vehicle-missing", "vehicle-multiple"]);
   // An active issue filter is a live view of today's allocations, not a
   // frozen list of Trip IDs. Keep the ordinary selection untouched beneath it.
   let activeWarningFilter = null;
@@ -342,35 +342,51 @@
     updateAllocationWarnings();
   }
 
+  // Driver and vehicle warnings use identical rules but independent
+  // allocations. The existing driver warning IDs are retained for
+  // compatibility with the V00012 filter interaction.
+  function warningKindDetails(kind) {
+    if (kind === "missing") return { asset: "driver", category: "missing" };
+    if (kind === "multiple") return { asset: "driver", category: "multiple" };
+    if (kind === "vehicle-missing") return { asset: "vehicle", category: "missing" };
+    if (kind === "vehicle-multiple") return { asset: "vehicle", category: "multiple" };
+    return null;
+  }
+
   function warningTrips(kind) {
-    if (kind === "missing") {
-      return state.trips.filter(function (trip) { return !trip.driver; });
+    const details = warningKindDetails(kind);
+    if (!details) return [];
+    const field = details.asset;
+    if (details.category === "missing") {
+      return state.trips.filter(function (trip) { return !trip[field]; });
     }
-    if (kind === "multiple") {
-      const counts = new Map();
-      state.trips.forEach(function (trip) {
-        if (trip.driver) counts.set(trip.driver, (counts.get(trip.driver) || 0) + 1);
-      });
-      return state.trips.filter(function (trip) {
-        return trip.driver && (counts.get(trip.driver) || 0) > 1;
-      });
-    }
-    return [];
+    const counts = new Map();
+    state.trips.forEach(function (trip) {
+      if (trip[field]) counts.set(trip[field], (counts.get(trip[field]) || 0) + 1);
+    });
+    return state.trips.filter(function (trip) {
+      return trip[field] && (counts.get(trip[field]) || 0) > 1;
+    });
   }
 
   const warningGroupDetails = {
     missing: { title: "Trips with no driver assigned", shortName: "No driver assigned" },
-    multiple: { title: "Trips with duplicate driver", shortName: "Duplicate driver" }
+    multiple: { title: "Trips with duplicate driver", shortName: "Duplicate driver" },
+    "vehicle-missing": { title: "Trips with no vehicle assigned", shortName: "No vehicle assigned" },
+    "vehicle-multiple": { title: "Trips with duplicate vehicle", shortName: "Duplicate vehicle" }
   };
+  const warningKinds = ["missing", "multiple", "vehicle-missing", "vehicle-multiple"];
 
   function sortedWarningTrips(kind) {
     const trips = warningTrips(kind).slice();
+    const details = warningKindDetails(kind);
     const compare = function (a, b) {
       return a.localeCompare(b, "en-GB", { sensitivity: "base", numeric: true });
     };
-    if (kind === "multiple") {
+    if (details && details.category === "multiple") {
+      const field = details.asset;
       trips.sort(function (a, b) {
-        return compare(a.driver, b.driver) || compare(a.name, b.name);
+        return compare(a[field], b[field]) || compare(a.name, b.name);
       });
     } else {
       trips.sort(function (a, b) { return compare(a.name, b.name); });
@@ -423,28 +439,31 @@
     return true;
   }
 
-  function updateDriverWarnings() {
-    const missing = warningTrips("missing");
-    const multiple = warningTrips("multiple");
-    const duplicateDrivers = new Set(multiple.map(function (trip) { return trip.driver; }));
+  function updateAllocationWarnings() {
     const warnings = [];
-
-    if (missing.length) {
+    [
+      { kind: "missing", noun: "driver" },
+      { kind: "multiple", noun: "driver" },
+      { kind: "vehicle-missing", noun: "vehicle" },
+      { kind: "vehicle-multiple", noun: "vehicle" }
+    ].forEach(function (setting) {
+      const trips = warningTrips(setting.kind);
+      if (!trips.length) return;
+      const isMultiple = warningKindDetails(setting.kind).category === "multiple";
+      const amount = isMultiple
+        ? new Set(trips.map(function (trip) { return trip[setting.noun]; })).size
+        : trips.length;
+      const label = isMultiple
+        ? amount + (amount === 1 ? " " + setting.noun + " assigned to multiple trips" :
+          " " + setting.noun + "s assigned to multiple trips")
+        : amount + (amount === 1 ? " trip with no " + setting.noun + " assigned" :
+          " trips with no " + setting.noun + " assigned");
       warnings.push({
-        kind: "missing",
-        label: missing.length + (missing.length === 1
-          ? " trip with no driver assigned" : " trips with no driver assigned"),
-        hint: "Show only Trips with no driver assigned"
+        kind: setting.kind,
+        label: label,
+        hint: warningGroupDetails[setting.kind].title
       });
-    }
-    if (duplicateDrivers.size) {
-      warnings.push({
-        kind: "multiple",
-        label: duplicateDrivers.size + (duplicateDrivers.size === 1
-          ? " driver assigned to multiple trips" : " drivers assigned to multiple trips"),
-        hint: "Show only Trips sharing a driver"
-      });
-    }
+    });
 
     driverWarnings.hidden = warnings.length === 0;
     driverWarnings.innerHTML = warnings.map(function (warning) {
@@ -452,7 +471,8 @@
         '<span class="driver-warning-icon" aria-hidden="true">!</span>' +
         '<span class="driver-warning-label">' + escapeHtml(warning.label) + '</span>' +
         '<button type="button" class="driver-warning-show" data-warning-filter="' +
-        warning.kind + '" aria-label="' + escapeHtml(warning.hint) + '">Show</button></span>';
+        warning.kind + '" aria-label="Show ' + escapeHtml(warning.hint) +
+        '">Show</button></span>';
     }).join("");
   }
 
@@ -536,7 +556,7 @@
           '</label>' +
         '</div>' +
         '<div class="group-filter-specials">' +
-          ["missing", "multiple"].map(function (kind) {
+          warningKinds.map(function (kind) {
             const affected = sortedWarningTrips(kind);
             const active = activeWarningFilter === kind;
             const expanded = expandedWarningGroups.has(kind);
@@ -561,8 +581,8 @@
                 (affected.length ? affected.map(function (trip) {
                   return '<div class="group-filter-trip group-filter-warning-trip">' +
                     '<span>' + escapeHtml(trip.name) + '</span>' +
-                    (kind === "multiple" ?
-                      '<small>' + escapeHtml(trip.driver) + '</small>' : '') +
+                    (warningKindDetails(kind).category === "multiple" ?
+                      '<small>' + escapeHtml(trip[warningKindDetails(kind).asset]) + '</small>' : '') +
                   '</div>';
                 }).join("") :
                   '<div class="group-filter-warning-empty">No affected Trips</div>') +
