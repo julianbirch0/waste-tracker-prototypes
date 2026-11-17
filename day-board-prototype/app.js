@@ -332,7 +332,9 @@
 
   function migrateLegacy(parsed) {
     if (!parsed.placement) return;
-    const key = todayKey, suffix = "@" + key;
+    // V00013 and earlier were explicitly the sample Trip day Mon 16-Nov.
+    // Preserve existing edits on that actual date, not the user's current day.
+    const key = "2026-11-16", suffix = "@" + key;
     const placement = parsed.placement;
     if (!Array.isArray(placement.trips) || placement.trips.length !== 12 ||
         !Array.isArray(placement.unallocated)) return;
@@ -367,8 +369,8 @@
           loadDayRecord(key, parsed.days[key]);
         });
       } else if ([1, 2, 3].includes(parsed.version)) {
-        // Preserve the previously saved demo sequence and allocations on
-        // the selected current day, rather than discarding existing work.
+        // Earlier prototype data belongs to its original 16-Nov sample day.
+        // Preserve it without accidentally assigning those edits to Today.
         migrateLegacy(parsed);
       }
       state = buildView();
