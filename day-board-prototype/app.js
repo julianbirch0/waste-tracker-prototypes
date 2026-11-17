@@ -973,11 +973,13 @@
     const rows = state.trips.filter(function (trip) {
       return trip.id !== driverDialogTripId && Boolean(draftDrivers[trip.id]);
     }).map(function (trip) {
-      return { name: draftDrivers[trip.id], tripId: trip.id, tripName: trip.name };
+      return { name: draftDrivers[trip.id], tripId: trip.id, tripName: trip.name,
+        tripLabel: trip.name + (isRangeView() ? " · " + shortDate(trip.date) : ""), tripDate: trip.date };
     });
     rows.sort(function (a, b) {
       return a.name.localeCompare(b.name, "en-GB") ||
-        a.tripName.localeCompare(b.tripName, "en-GB");
+        a.tripName.localeCompare(b.tripName, "en-GB") ||
+        a.tripDate.localeCompare(b.tripDate);
     });
     return { unassigned: free, assigned: rows };
   }
@@ -1019,7 +1021,7 @@
       return '<div class="driver-dialog-row">' +
         '<span class="driver-row-description">' +
           '<strong class="driver-row-name">' + escapeHtml(entry.name) + '</strong>' +
-          '<span class="driver-row-trip">' + escapeHtml(entry.tripName) + '</span></span>' +
+          '<span class="driver-row-trip">' + escapeHtml(entry.tripLabel) + '</span></span>' +
         '<div class="driver-row-actions">' + actions + '</div>' +
       '</div>';
     }).join("");
@@ -1143,11 +1145,13 @@
     const rows = state.trips.filter(function (trip) {
       return trip.id !== vehicleDialogTripId && Boolean(draftVehicles[trip.id]);
     }).map(function (trip) {
-      return { name: draftVehicles[trip.id], tripId: trip.id, tripName: trip.name };
+      return { name: draftVehicles[trip.id], tripId: trip.id, tripName: trip.name,
+        tripLabel: trip.name + (isRangeView() ? " · " + shortDate(trip.date) : ""), tripDate: trip.date };
     });
     rows.sort(function (a, b) {
       return a.name.localeCompare(b.name, "en-GB") ||
-        a.tripName.localeCompare(b.tripName, "en-GB");
+        a.tripName.localeCompare(b.tripName, "en-GB") ||
+        a.tripDate.localeCompare(b.tripDate);
     });
     return { unassigned: free, assigned: rows };
   }
@@ -1189,7 +1193,7 @@
       return '<div class="driver-dialog-row">' +
         '<span class="driver-row-description">' +
           '<strong class="driver-row-name">' + escapeHtml(entry.name) + '</strong>' +
-          '<span class="driver-row-trip">' + escapeHtml(entry.tripName) + '</span></span>' +
+          '<span class="driver-row-trip">' + escapeHtml(entry.tripLabel) + '</span></span>' +
         '<div class="driver-row-actions">' + actions + '</div>' +
       '</div>';
     }).join("");
@@ -2331,6 +2335,8 @@
           : Array.from(visibleTripIds);
       },
       isUnallocatedSelected: function () { return !activeWarningFilter && showUnallocated; },
+      isRangeView: isRangeView,
+      formatTripDate: shortDate,
       toggleGroup: toggleGroup,
       selectJob: function (jobId) { setSelectedJobs([jobId], jobId); },
       scrollToJob: scrollToJobFromMap
