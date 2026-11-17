@@ -1,4 +1,4 @@
-/* WasteTracker Day Board V00014
+/* WasteTracker Day Board V00015
    Standalone, file:// compatible. Custom pointer drag-and-drop; no dependencies. */
 (function () {
   "use strict";
@@ -42,7 +42,6 @@
   let visibleTripIds = null;
   let showUnallocated = true;
   let expandedFilterGroups = new Set(groups.map(function (group) { return group.id; }));
-  let expandedWarningGroups = new Set(["missing", "multiple", "vehicle-missing", "vehicle-multiple"]);
   // An active issue filter is a live view of today's allocations, not a
   // frozen list of Trip IDs. Keep the ordinary selection untouched beneath it.
   let activeWarningFilter = null;
@@ -764,41 +763,6 @@
             '<span>Unallocated</span><small>' + state.unallocated.length + '</small>' +
           '</label>' +
         '</div>' +
-        '<div class="group-filter-specials"' + (isRangeView() ? ' hidden' : '') + '>' +
-          (isRangeView() ? [] : warningKinds).map(function (kind) {
-            const affected = sortedWarningTrips(kind);
-            const active = activeWarningFilter === kind;
-            const expanded = expandedWarningGroups.has(kind);
-            return '<section class="group-filter-group group-filter-special">' +
-              '<div class="group-filter-group-heading">' +
-                '<button type="button" class="group-filter-expand' +
-                  (expanded ? ' is-expanded' : '') +
-                  '" data-expand-warning-group="' + kind +
-                  '" aria-expanded="' + expanded +
-                  '" aria-label="' + (expanded ? 'Collapse ' : 'Expand ') +
-                  escapeHtml(warningGroupDetails[kind].title) + '">' +
-                  '<span aria-hidden="true">›</span></button>' +
-                '<label class="group-filter-option group-filter-parent group-filter-warning-parent">' +
-                  '<input type="checkbox" data-warning-group="' + kind +
-                    '"' + (active ? ' checked' : '') + (affected.length ? '' : ' disabled') + '>' +
-                  '<span>' + escapeHtml(warningGroupDetails[kind].title) + '</span>' +
-                  '<small>' + affected.length + '</small>' +
-                '</label>' +
-              '</div>' +
-              '<div class="group-filter-children group-filter-warning-children"' +
-                (expanded ? '' : ' hidden') + '>' +
-                (affected.length ? affected.map(function (trip) {
-                  return '<div class="group-filter-trip group-filter-warning-trip">' +
-                    '<span>' + escapeHtml(trip.name) + '</span>' +
-                    (warningKindDetails(kind).category === "multiple" ?
-                      '<small>' + escapeHtml(trip[warningKindDetails(kind).asset]) + '</small>' : '') +
-                  '</div>';
-                }).join("") :
-                  '<div class="group-filter-warning-empty">No affected Trips</div>') +
-              '</div>' +
-            '</section>';
-          }).join("") +
-        '</div>' +
         groups.map(function (group) {
           const trips = state.trips.filter(function (trip) {
             return trip.groupId === group.id;
@@ -832,6 +796,21 @@
             '</div>' +
           '</section>';
         }).join("") +
+        // The special warning filters are deliberately last and compact.
+        // Their purpose here is to reflect the active Show-button filter;
+        // users do not need to browse a second list of affected Trips.
+        '<div class="group-filter-specials"' + (isRangeView() ? ' hidden' : '') + '>' +
+          (isRangeView() ? [] : warningKinds).map(function (kind) {
+            const affected = warningTrips(kind);
+            return '<label class="group-filter-option group-filter-warning-option">' +
+                '<input type="checkbox" data-warning-group="' + kind + '"' +
+                  (activeWarningFilter === kind ? ' checked' : '') +
+                  (affected.length ? '' : ' disabled') + '>' +
+                '<span>' + escapeHtml(warningGroupDetails[kind].title) + '</span>' +
+                '<small>' + affected.length + '</small>' +
+              '</label>';
+          }).join("") +
+        '</div>' +
       '</div>' +
       '<div class="group-filter-hint">' +
         (activeWarningFilter ? 'Live issue filter — resolved Trips disappear automatically.' :
@@ -911,14 +890,6 @@
     groupFilterButton.setAttribute("aria-expanded", String(show));
   });
   groupFilterPanel.addEventListener("click", function (event) {
-    const special = event.target.closest("button[data-expand-warning-group]");
-    if (special) {
-      const kind = special.dataset.expandWarningGroup;
-      if (expandedWarningGroups.has(kind)) expandedWarningGroups.delete(kind);
-      else expandedWarningGroups.add(kind);
-      renderGroupFilter();
-      return;
-    }
     const toggle = event.target.closest("button[data-expand-filter-group]");
     if (!toggle) return;
     const groupId = toggle.dataset.expandFilterGroup;
