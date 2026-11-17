@@ -1,4 +1,4 @@
-# Day Board prototype — V00011
+# Day Board prototype — V00012
 
 A standalone, local-file-friendly WasteTracker Day Board prototype.
 
@@ -14,7 +14,7 @@ There is **no localhost, build step, framework, CDN or web service**. Keep index
 
 - 12 Trip columns, each showing the **parent Round name only**, with Vehicle displayed as read-only text and Driver changed through the ⇄ dialog.
 - **Round groups** are represented by four invented operational groups: Skips Team, Trade & Bins, Recycling & Deliveries, and Specialist Fleet. These are mock assignments independent of the existing Round Definition prototype.
-- The **Groups and Trips** multi-select above the Day Board defaults to everything selected. A **Select All** checkbox is followed by a subtle divider, a non-expandable **Unallocated** entry, and four expandable group entries containing **individual Trip checkboxes**. A group checkbox selects/deselects all its Trips; partial selections show a mixed state at group level and Select All level. Unallocated can now be independently hidden in the full-width grid. The group chevrons expand/collapse the selector's rows without changing selected Trips.
+- The **Groups and Trips** multi-select above the Day Board defaults to everything selected. A **Select All** checkbox is followed by a subtle divider, a non-expandable **Unallocated** entry, two **live pseudo-groups** for **Trips with no driver assigned** and **Trips with duplicate driver**, and four expandable ordinary groups with individual Trip checkboxes. The pseudo-groups have expandable, read-only child Trip lists and their own mutually exclusive checkboxes. They are disabled when they have no affected Trips; choosing either one activates exactly the same live issue filter as its warning's Show button. Clicking the active pseudo-group again restores the prior ordinary filter; choosing a normal group or Trip exits the special filter and starts a new manual selection. Ordinary group checkboxes select/deselect all their Trips, partial selections show mixed states, and Unallocated can be independently hidden. Chevrons expand/collapse without changing selections.
 - Every Job card now has a subtle light-blue **planned** status pill; this is a placeholder for future Job status workflows.
 - A **horizontally sticky Unallocated column** on the left.
 - Trip headers that remain visible when scrolling vertically.
@@ -40,7 +40,7 @@ There is **no localhost, build step, framework, CDN or web service**. Keep index
 - Browser storage of changed positions when supported by the browser's file:// storage rules. The board still works in memory if browser storage is unavailable.
 - **Reset sample data** to restore the initial positions (also clears Undo/Redo history).
 
-## Driver assignment and swapping (V00011)
+## Driver assignment and swapping (V00012)
 
 - A small **⇄** button beside the driver in each Trip heading opens **Change driver**. This works in both the full Day Board and the map's visible grid columns.
 - The dialog displays **Trip (Round)**, the fixed sample date **Monday, 16-Nov** (`dddd, dd-mmm`), and the current **Assigned driver** (or **Unassigned**) with an **Unassign** button when a driver exists.
@@ -50,11 +50,12 @@ There is **no localhost, build step, framework, CDN or web service**. Keep index
 - **Swap** exchanges the current Trip driver with the driver on **that specific allocated Trip row**, preserving any other Trips belonging to either driver. Swap is shown only when the edited Trip already has a driver. An unassigned driver's row has **Assign** only.
 - The dialog operates on a **provisional working copy**: Unassign, Assign and Swap immediately refresh its two lists, but **Cancel** or Escape discards all changes. **Save and Close always refreshes** the Day Board, driver names, and warnings, and persists changes locally. Clicking outside the dialog also cancels.
 - Every Save and Close that actually changes allocations creates **one Undo/Redo history step**, even if several drivers were changed within the dialog. Job moves share the same history and are unaffected. An unchanged Save still refreshes but adds no redundant Undo step.
-- Two subtle **amber warning pills** appear **in the same toolbar row immediately after the Job/Trip/Unallocated/Unsequenced totals** when applicable: **N trips with no driver assigned** and **N drivers assigned to multiple trips**. Each now includes a small **Show** button rather than hover details. Clicking Show filters the **full-width grid to exactly the Trips affected by that warning** (the missing-driver Trips, or all Trips allocated to a multiply assigned driver). It deselects Unallocated and any other Trips, and closes the map first if necessary. Warning counts always include every Trip regardless of the current filter.
+- Two subtle **amber warning pills** appear **in the same toolbar row immediately after the Job/Trip/Unallocated/Unsequenced totals** when applicable: **N trips with no driver assigned** and **N drivers assigned to multiple trips**. Each includes a small **Show** button. Clicking Show activates the corresponding **live issue filter** in Groups and Trips, closing the map first if needed. The grid shows all Trips currently affected by that issue (never Unallocated) and immediately removes resolved Trips after Save and Close. When the **last** issue in the active category is resolved, the exact prior manual selection of Trips and Unallocated is restored. Warning counts always include every Trip regardless of filter.
+- **Special filter order:** the unassigned-driver issue filter shows Trip columns alphabetically by **Trip name**. The duplicate-driver issue filter sorts by **driver name**, then **Trip name**. In ordinary filter mode, the pre-existing Trip order is preserved. The issue lists update on **Save and Close, Undo, Redo and Reset** without a page reload. Switching between warning categories retains the original selection for eventual restoration.
 - The sample starts with **two unassigned Trips** (Recycling 1 and Bin Deliveries), **one driver on two Trips** (Lisa Walker on Skips 2 and Skips 4), and **five unassigned drivers**. The new driver assignments are saved alongside existing Job placements in the same browser storage key, with backwards compatibility for older saved placements.
 - **Reset sample data** restores both the pre-planned Job placements and the original driver assignments, and clears Undo/Redo.
 
-## Map mode (V00011)
+## Map mode (V00012)
 
 - **Show map** slides a self-contained illustrated map in from the right of the Day Board, at one-third of the previous entrance speed (~1.14 seconds); **Hide map** retains its faster exit (~0.34 seconds) and restores the original full grid.
 - The map appears alongside the **selected grid columns**, which retain their normal widths. Adding a grid column shrinks the available map space; removing one expands it. The vertical list of all Trips (plus Unallocated) is always present on the right.
