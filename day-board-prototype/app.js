@@ -1,4 +1,4 @@
-/* WasteTracker Day Board V00013
+/* WasteTracker Day Board V00014
    Standalone, file:// compatible. Custom pointer drag-and-drop; no dependencies. */
 (function () {
   "use strict";
@@ -48,7 +48,119 @@
   let activeWarningFilter = null;
   let savedFilterBeforeWarning = null;
 
-  let state = window.DayBoardData.makeInitialState();
+  const DAY_MS = 86400000;
+  const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const MONTH_NAMES = ["January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"];
+
+  function isoLocal(date) {
+    return date.getFullYear() + "-" + String(date.getMonth() + 1).padStart(2, "0") +
+      "-" + String(date.getDate()).padStart(2, "0");
+  }
+
+  function fromIso(iso) {
+    const parts = iso.split("-").map(Number);
+    return new Date(parts[0], parts[1] - 1, parts[2], 12);
+  }
+
+  function addDays(iso, count) {
+    const date = fromIso(iso);
+    date.setDate(date.getDate() + count);
+    return isoLocal(date);
+  }
+
+  function dayIndex(iso) { return (fromIso(iso).getDay() + 6) % 7; }
+
+  function shortDate(iso) {
+    const date = fromIso(iso);
+    return WEEKDAYS[dayIndex(iso)] + ", " + String(date.getDate()).padStart(2, "0") +
+      "-" + MONTHS[date.getMonth()];
+  }
+
+  function dateLabel(iso) {
+    const date = fromIso(iso);
+    return String(date.getDate()).padStart(2, "0") + "-" +
+      MONTHS[date.getMonth()] + "-" + date.getFullYear();
+  }
+
+  const todayKey = isoLocal(new Date());
+  let dateSelection = {
+    mode: "single", day: todayKey, start: todayKey, end: todayKey,
+    weekdays: [0, 1, 2, 3, 4, 5, 6], order: "round-date"
+  };
+  const dayStore = new Map();
+  const dayTemplates = new Map();
+
+  function getTemplate(key) {
+    if (!dayTemplates.has(key)) dayTemplates.set(key, window.DayBoardData.makeInitialState(key));
+    return dayTemplates.get(key);
+  }
+
+  function getDay(key) {
+    if (!dayStore.has(key)) dayStore.set(key, window.DayBoardData.makeInitialState(key));
+    return dayStore.get(key);
+  }
+
+  function jobOrigin(id) { return String(id).slice(-10); }
+
+  function resolveJob(id) {
+    const origin = jobOrigin(id);
+    return /^\d{4}-\d{2}-\d{2}$/.test(origin) ? getTemplate(origin).jobs[id] : null;
+  }
+
+  function datesInSelection() {
+    if (dateSelection.mode === "single") return [dateSelection.day];
+    const result = [];
+    const allowed = new Set(dateSelection.weekdays);
+    for (let day = dateSelection.start, n = 0; day <= dateSelection.end && n < 366; day = addDays(day, 1), n += 1) {
+      if (allowed.has(dayIndex(day))) result.push(day);
+    }
+    return result;
+  }
+
+  function isRangeView() { return dateSelection.mode === "range"; }
+
+  function buildView() {
+    const keys = datesInSelection();
+    const days = keys.map(getDay);
+    const jobs = {};
+    const trips = [];
+    const unallocated = [];
+    days.forEach(function (day) {
+      Object.assign(jobs, day.jobs);
+      trips.push.apply(trips, day.trips);
+      unallocated.push.apply(unallocated, day.unallocated);
+    });
+    return { groups: window.DayBoardData.groups, jobs: jobs,
+      trips: trips, unallocated: unallocated };
+  }
+
+  // Materialise the projection back to the dated records whenever a Job or
+  // assignment changes, so edits made across days remain visible on each
+  // individual day. Unallocated Jobs remain with their date of origin.
+  function commitViewToDays() {
+    const keys = datesInSelection();
+    keys.forEach(function (key) {
+      const day = getDay(key);
+      day.trips = state.trips.filter(function (trip) { return trip.date === key; });
+      day.unallocated = state.unallocated.filter(function (id) { return jobOrigin(id) === key; });
+      const jobs = {};
+      const ids = day.unallocated.concat.apply(day.unallocated.slice(),
+        day.trips.reduce(function (parts, trip) {
+          parts.push(trip.unsequenced, trip.sequenced);
+          return parts;
+        }, []));
+      ids.forEach(function (id) {
+        const job = state.jobs[id] || resolveJob(id);
+        if (job) jobs[id] = job;
+      });
+      day.jobs = jobs;
+    });
+  }
+
+  let state = buildView();
   visibleTripIds = new Set(state.trips.map(function (trip) { return trip.id; }));
   let undoStack = [];
   let redoStack = [];
@@ -178,36 +290,104 @@
     redoStack = [];
   }
 
+  function captureDay(day) {
+    return {
+      placement: {
+        unallocated: day.unallocated.slice(),
+        trips: day.trips.map(function (trip) {
+          return { id: trip.id, unsequenced: trip.unsequenced.slice(), sequenced: trip.sequenced.slice() };
+        })
+      },
+      drivers: Object.fromEntries(day.trips.map(function (trip) { return [trip.id, trip.driver || ""]; })),
+      vehicles: Object.fromEntries(day.trips.map(function (trip) { return [trip.id, trip.vehicle || ""]; }))
+    };
+  }
+
+  function loadDayRecord(key, record) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(key) || !record || !record.placement) return;
+    const day = getDay(key), placement = record.placement;
+    if (!Array.isArray(placement.trips) || placement.trips.length !== day.trips.length ||
+        !Array.isArray(placement.unallocated)) return;
+    const ids = placement.unallocated.slice();
+    for (let i = 0; i < day.trips.length; i += 1) {
+      const row = placement.trips[i];
+      if (!row || row.id !== day.trips[i].id ||
+          !Array.isArray(row.unsequenced) || !Array.isArray(row.sequenced)) return;
+      ids.push.apply(ids, row.unsequenced);
+      ids.push.apply(ids, row.sequenced);
+    }
+    if (new Set(ids).size !== ids.length || ids.some(function (id) { return !resolveJob(id); })) return;
+    day.unallocated = placement.unallocated.slice();
+    placement.trips.forEach(function (saved, i) {
+      const trip = day.trips[i];
+      trip.unsequenced = saved.unsequenced.slice();
+      trip.sequenced = saved.sequenced.slice();
+      if (record.drivers && availableDrivers.includes(record.drivers[trip.id])) trip.driver = record.drivers[trip.id];
+      else if (record.drivers && record.drivers[trip.id] === "") trip.driver = "";
+      if (record.vehicles && availableVehicles.includes(record.vehicles[trip.id])) trip.vehicle = record.vehicles[trip.id];
+      else if (record.vehicles && record.vehicles[trip.id] === "") trip.vehicle = "";
+    });
+    day.jobs = Object.fromEntries(ids.map(function (id) { return [id, resolveJob(id)]; }));
+  }
+
+  function migrateLegacy(parsed) {
+    if (!parsed.placement) return;
+    const key = todayKey, suffix = "@" + key;
+    const placement = parsed.placement;
+    if (!Array.isArray(placement.trips) || placement.trips.length !== 12 ||
+        !Array.isArray(placement.unallocated)) return;
+    const suffixItems = function (list) { return list.map(function (id) { return id + suffix; }); };
+    loadDayRecord(key, {
+      placement: {
+        unallocated: suffixItems(placement.unallocated),
+        trips: placement.trips.map(function (row) {
+          return {
+            id: row.id + suffix,
+            unsequenced: suffixItems(row.unsequenced),
+            sequenced: suffixItems(row.sequenced)
+          };
+        })
+      },
+      drivers: parsed.drivers ? Object.fromEntries(Object.entries(parsed.drivers).map(function (entry) {
+        return [entry[0] + suffix, entry[1]];
+      })) : null,
+      vehicles: parsed.vehicles ? Object.fromEntries(Object.entries(parsed.vehicles).map(function (entry) {
+        return [entry[0] + suffix, entry[1]];
+      })) : null
+    });
+  }
+
   function readSavedPlacement() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return;
       const parsed = JSON.parse(raw);
-      if ((parsed.version === 1 || parsed.version === 2 || parsed.version === 3) &&
-          placementIsValid(parsed.placement)) {
-        applyPlacement(parsed.placement);
-        // Preserve all saved Jobs and driver assignments from V00012.
-        // Earlier storage versions did not contain vehicle assignments,
-        // so those safely begin with the new demonstration sample.
-        if (parsed.version >= 2) applyDriverAssignments(parsed.drivers);
-        if (parsed.version >= 3) applyVehicleAssignments(parsed.vehicles);
+      if (parsed.version === 4 && parsed.days && typeof parsed.days === "object") {
+        Object.keys(parsed.days).forEach(function (key) {
+          loadDayRecord(key, parsed.days[key]);
+        });
+      } else if ([1, 2, 3].includes(parsed.version)) {
+        // Preserve the previously saved demo sequence and allocations on
+        // the selected current day, rather than discarding existing work.
+        migrateLegacy(parsed);
       }
+      state = buildView();
     } catch (error) {
-      // Some browsers restrict localStorage when opening file:// pages.
-      // The board remains fully usable in memory in that case.
+      // Some file:// browser configurations disable localStorage.
     }
   }
 
   function persistPlacement() {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({
-        version: 3, placement: getPlacement(),
-        drivers: getDriverAssignments(), vehicles: getVehicleAssignments()
-      }));
+      commitViewToDays();
+      const days = {};
+      dayStore.forEach(function (day, key) { days[key] = captureDay(day); });
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ version: 4, days: days }));
     } catch (error) {
-      // Persisting is a convenience only, not a dependency for dragging.
+      // All editing and date navigation also work without browser storage.
     }
   }
+
 
   function getTrip(tripId) {
     return state.trips.find(function (trip) { return trip.id === tripId; }) || null;
