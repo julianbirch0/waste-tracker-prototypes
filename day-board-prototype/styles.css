@@ -1671,3 +1671,33 @@ button:focus-visible, .board-scroll:focus-visible {
 @media (prefers-reduced-motion: reduce) {
   .date-range-dialog { animation: none; }
 }
+
+
+/* V00015: align the whole Unallocated column with Unsequenced's muted amber. */
+.unallocated-column,
+.unallocated-column .column-header,
+.unallocated-body {
+  background: var(--amber-bg);
+}
+.unallocated-column .column-header {
+  border-bottom-color: var(--amber-line);
+}
+
+/* Warning filter entries live last in Groups and Trips: compact, no child rows. */
+.group-filter-specials {
+  margin-top: 8px;
+  padding: 8px 0 5px;
+  border-top: 1px solid #e9dcc6;
+  border-bottom: 0;
+}
+.group-filter-warning-option {
+  min-height: 33px;
+  padding: 5px 13px;
+  color: #8c713f;
+  font-size: 11px;
+}
+.group-filter-warning-option:hover { background: #fff4e3; }
+.group-filter-warning-option input { accent-color: #c58f48; }
+.group-filter-warning-option input:disabled { opacity: .5; cursor: default; }
+.group-filter-warning-option:has(input:disabled) { color: #ad9f89; cursor: default; }
+.group-filter-warning-option small { flex: 0 0 auto; }
