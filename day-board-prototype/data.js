@@ -1,4 +1,4 @@
-/* Sample data for Day Board V00012.
+/* Sample data for Day Board V00013.
    All data is invented; no calls to WasteTracker or other services. */
 (function () {
   "use strict";
@@ -24,7 +24,7 @@
     { id: "bin-deliveries", groupId: "recycling", routeCenter: [245, 565], name: "Bin Deliveries", vehicle: "LE69 NBG", driver: "", unsequenced: 0, sequenced: 14 },
     { id: "trade-2", groupId: "commercial", routeCenter: [465, 565], name: "Trade Waste 2", vehicle: "MP74 ACV", driver: "Amy Taylor", unsequenced: 2, sequenced: 16 },
     { id: "wait-load", groupId: "specialist", routeCenter: [690, 565], name: "Wait and Load", vehicle: "", driver: "Peter Lewis", unsequenced: 0, sequenced: 11 },
-    { id: "skips-4", groupId: "skips", routeCenter: [910, 565], name: "Skips 4", vehicle: "RD72 HBE", driver: "Lisa Walker", unsequenced: 1, sequenced: 15 }
+    { id: "skips-4", groupId: "skips", routeCenter: [910, 565], name: "Skips 4", vehicle: "BX73 FHT", driver: "Lisa Walker", unsequenced: 1, sequenced: 15 }
   ];
 
   // All available drivers, whether assigned to zero, one or several Trips.
@@ -35,6 +35,14 @@
     "Dave Roberts", "James Patel", "John Harris", "Lisa Walker",
     "Michael Evans", "Olivia Moore", "Peter Lewis", "Sarah Price",
     "Sophie Bennett", "Tom Fisher"
+  ];
+
+  // Vehicle pool is independent of Trip assignment. BX73 FHT is intentionally
+  // assigned to two Trips; vehicles not currently on a Trip remain available.
+  const vehicles = [
+    "AE70 TRK", "AY21 KPL", "BX73 FHT", "CF22 GHB", "DN23 JVF",
+    "GK71 YND", "HG22 LMX", "JL25 RPN", "LE69 NBG", "MP74 ACV",
+    "NR23 VSD", "PK24 ZUV", "RD72 HBE", "TU20 FKM"
   ];
 
   const customers = [
@@ -152,5 +160,5 @@
       jobs: jobs, unallocated: unallocated, trips: trips };
   }
 
-  window.DayBoardData = { groups: groups, drivers: drivers, makeInitialState: makeInitialState };
+  window.DayBoardData = { groups: groups, drivers: drivers, vehicles: vehicles, makeInitialState: makeInitialState };
 }());
