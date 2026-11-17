@@ -1,4 +1,4 @@
-# Day Board prototype — V00014
+# Day Board prototype — V00015
 
 A standalone, local-file-friendly WasteTracker Day Board prototype.
 
@@ -14,9 +14,9 @@ There is **no localhost, build step, framework, CDN or web service**. Keep index
 
 - 12 Trip columns, each showing the **parent Round name only**, with **both Vehicle and Driver editable through separate ⇄ dialogs**.
 - **Round groups** are represented by four invented operational groups: Skips Team, Trade & Bins, Recycling & Deliveries, and Specialist Fleet. These are mock assignments independent of the existing Round Definition prototype.
-- The **Groups and Trips** multi-select above the Day Board defaults to everything selected. A **Select All** checkbox is followed by a subtle divider, a non-expandable **Unallocated** entry, four **live pseudo-groups** for **Trips with no driver assigned**, **Trips with duplicate driver**, **Trips with no vehicle assigned**, and **Trips with duplicate vehicle**, and four expandable ordinary groups with individual Trip checkboxes. The pseudo-groups have expandable, read-only child Trip lists and their own mutually exclusive checkboxes. They are disabled when they have no affected Trips; choosing either one activates exactly the same live issue filter as its warning's Show button. Clicking the active pseudo-group again restores the prior ordinary filter; choosing a normal group or Trip exits the special filter and starts a new manual selection. Ordinary group checkboxes select/deselect all their Trips, partial selections show mixed states, and Unallocated can be independently hidden. Chevrons expand/collapse without changing selections.
+- The **Groups and Trips** multi-select above the Day Board defaults to everything selected. A **Select All** checkbox is followed by a subtle divider, a non-expandable **Unallocated** entry, four expandable ordinary groups with individual Trip checkboxes, and finally four **compact warning pseudo-filters**: **Trips with no driver assigned**, **Trips with duplicate driver**, **Trips with no vehicle assigned**, and **Trips with duplicate vehicle**. These four warning filters sit **at the bottom** of the dropdown, with **no expandable child Trip lists**; they primarily reflect the live filters activated by the amber warnings' **Show** buttons. They are disabled when they have no affected Trips; choosing either one activates exactly the same live issue filter as its warning's Show button. Clicking the active pseudo-group again restores the prior ordinary filter; choosing a normal group or Trip exits the special filter and starts a new manual selection. Ordinary group checkboxes select/deselect all their Trips, partial selections show mixed states, and Unallocated can be independently hidden. Chevrons expand/collapse without changing selections.
 - Every Job card now has a subtle light-blue **planned** status pill; this is a placeholder for future Job status workflows.
-- A **horizontally sticky Unallocated column** on the left.
+- A **horizontally sticky Unallocated column** on the left, now using the **same muted amber background as Unsequenced Jobs** throughout its header and body.
 - Trip headers that remain visible when scrolling vertically.
 - An **always-visible sticky Unsequenced area** immediately below each Trip header, including a compact empty drop target when there are no unsequenced Jobs.
 - A horizontal scrollbar at the **bottom of the board's fixed-height scrolling area**, always accessible while scrolling up/down through Jobs.
@@ -36,11 +36,11 @@ There is **no localhost, build step, framework, CDN or web service**. Keep index
 - Shortcuts: **Ctrl+Z** (Undo), **Ctrl+Y** or **Ctrl+Shift+Z** (Redo).
 - Invented sample data: **208 Jobs** across **12 Trips** and **15 initially Unallocated Jobs per generated day**. There are enough Jobs and Trips to force both scroll directions at typical desktop sizes.
 - V00008 replaces the random sample coordinates with a **sensible pre-planned serpentine visiting order for every Trip**. Unsequenced Jobs appear near likely insertion points in their Trip, and Unallocated Jobs are near appropriate Trips with matching service types. Coordinates are still fictional, not real postcode locations.
-- The demonstration data retains the **V00008 browser storage key** to preserve previously saved Job, driver and vehicle changes. Starting with V00014, edits are stored against dated Trip/Job instances (storage format V4).
+- The demonstration data retains the **V00008 browser storage key** to preserve previously saved Job, driver and vehicle changes. Starting with V00015, edits are stored against dated Trip/Job instances (storage format V4).
 - Browser storage of changed positions when supported by the browser's file:// storage rules. The board still works in memory if browser storage is unavailable.
 - **Reset sample data** to restore the initial positions (also clears Undo/Redo history).
 
-## Date selection and date ranges (V00014)
+## Date selection and date ranges (V00015)
 
 - A **large, centred date toolbar at the top of the screen** clearly identifies the selected day (e.g. **17-Nov-2026, Today**) or the exact range, including its number of selected days.
 - **− / +** steps one day backward/forward in single-day mode, or shifts the entire selected range by one day. **Select Today** returns to the current local day and is disabled when Today is already selected in single-day mode.
@@ -56,7 +56,7 @@ There is **no localhost, build step, framework, CDN or web service**. Keep index
 - For performance, the prototype currently accepts ranges up to **31 calendar days**. There is no online data source or live calendar service.
 - **Reset sample data** clears saved changes for all generated dates, restoring their initial Jobs and driver/vehicle allocations. Existing V1–V3 edits are migrated to the **original Monday 16-Nov-2026** sample day; the new landing page defaults to the browser's local **Today**.
 
-## Driver assignment and swapping (V00014)
+## Driver assignment and swapping (V00015)
 
 - A small **⇄** button beside the driver in each Trip heading opens **Change driver**. This works in both the full Day Board and the map's visible grid columns.
 - The dialog displays **Trip (Round)**, the **actual selected Trip date** (e.g. **Tuesday, 17-Nov**), and the current **Assigned driver** (or **Unassigned**) with an **Unassign** button when a driver exists.
@@ -71,7 +71,7 @@ There is **no localhost, build step, framework, CDN or web service**. Keep index
 - The sample starts with **two unassigned Trips** (Recycling 1 and Bin Deliveries), **one driver on two Trips** (Lisa Walker on Skips 2 and Skips 4), and **five unassigned drivers**. The new driver assignments are saved alongside existing Job placements in the same browser storage key, with backwards compatibility for older saved placements.
 - **Reset sample data** restores the pre-planned Job placements, original driver allocations and original vehicle allocations, and clears Undo/Redo.
 
-## Vehicle assignment and swapping (V00014)
+## Vehicle assignment and swapping (V00015)
 
 - Each Trip's **Vehicle** line has its own small **⇄** button beside the registration, matching the Driver edit button.
 - The **Change vehicle** dialog shows the parent Round/Trip name, **its actual date**, the current vehicle registration (or **Unassigned**) and an **Unassign** button when a vehicle exists.
@@ -84,7 +84,7 @@ There is **no localhost, build step, framework, CDN or web service**. Keep index
 - Demonstration data begins with **two vehicle-unassigned Trips** (Recycling 1 and Wait and Load), **one vehicle on two Trips** (BX73 FHT on Skips 2 and Skips 4), and **five unassigned vehicle registrations** available to assign.
 - Persistence remains on the existing Day Board browser-storage key. **Version 4** stores dated Jobs, driver and vehicle assignments, with backwards-compatible loading of V1–V3. Their existing edits are correctly migrated to the **original Monday 16-Nov-2026 sample day**, not accidentally attributed to Today.
 
-## Map mode (V00014)
+## Map mode (V00015)
 
 - **Show map** slides a self-contained illustrated map in from the right of the Day Board, at one-third of the previous entrance speed (~1.14 seconds); **Hide map** retains its faster exit (~0.34 seconds) and restores the original full grid.
 - The map appears alongside the **selected grid columns**, which retain their normal widths. Adding a grid column shrinks the available map space; removing one expands it. The vertical list of all Trips (plus Unallocated) is always present on the right.
