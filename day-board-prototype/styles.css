@@ -1367,3 +1367,6 @@ button:focus-visible, .board-scroll:focus-visible {
   font-size: 10px;
   color: #b7ab9b;
 }
+
+/* V00013: the Vehicle ⇄ control and dialog deliberately share the existing
+   compact Driver button, list-row and modal styling for visual consistency. */
