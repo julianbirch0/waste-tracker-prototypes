@@ -1,4 +1,4 @@
-/* WasteTracker Day Board V00013 — standalone illustrative map.
+/* WasteTracker Day Board V00014 — standalone illustrative map.
    No tiles, API keys, map SDK, network requests, or server are needed. */
 (function () {
   "use strict";
@@ -44,7 +44,8 @@
       .concat(getState().trips.map(function (trip) {
         return {
           id: trip.id,
-          name: trip.name,
+          name: bridge.isRangeView() && trip.date
+            ? trip.name + " · " + bridge.formatTripDate(trip.date) : trip.name,
           jobs: trip.unsequenced.length + trip.sequenced.length
         };
       }));
