@@ -1,4 +1,4 @@
-/* WasteTracker Day Board V00009
+/* WasteTracker Day Board V00010
    Standalone, file:// compatible. Custom pointer drag-and-drop; no dependencies. */
 (function () {
   "use strict";
@@ -16,6 +16,16 @@
   const groupFilterWrap = document.getElementById("group-filter-wrap");
   const groupFilterButton = document.getElementById("group-filter-button");
   const groupFilterPanel = document.getElementById("group-filter-panel");
+  const driverWarnings = document.getElementById("driver-warnings");
+  const driverDialogBackdrop = document.getElementById("driver-dialog-backdrop");
+  const driverDialog = driverDialogBackdrop.querySelector(".driver-dialog");
+  const driverDialogTripName = document.getElementById("driver-dialog-trip-name");
+  const driverDialogCurrent = document.getElementById("driver-dialog-current");
+  const driverDialogUnassign = document.getElementById("driver-dialog-unassign");
+  const driverDialogList = document.getElementById("driver-dialog-list");
+  const availableDrivers = (window.DayBoardData.drivers || []).slice().sort(function (a, b) {
+    return a.localeCompare(b, "en-GB");
+  });
   const groups = window.DayBoardData.groups || [];
   let visibleGroupIds = new Set(groups.map(function (group) { return group.id; }));
 
@@ -30,6 +40,8 @@
   let scrollFrame = 0;
   let latestPointer = null;
   let toastTimeout = null;
+  let driverDialogTripId = null;
+  let draftDrivers = null;
 
   function escapeHtml(value) {
     return String(value == null ? "" : value).replace(/[&<>"']/g, function (ch) {
@@ -81,13 +93,55 @@
     });
   }
 
+  function getDriverAssignments() {
+    const result = {};
+    state.trips.forEach(function (trip) { result[trip.id] = trip.driver || ""; });
+    return result;
+  }
+
+  function driverAssignmentsValid(assignments) {
+    if (!assignments || typeof assignments !== "object" || Array.isArray(assignments)) return false;
+    return state.trips.every(function (trip) {
+      return Object.prototype.hasOwnProperty.call(assignments, trip.id) &&
+        (assignments[trip.id] === "" || availableDrivers.includes(assignments[trip.id]));
+    });
+  }
+
+  function applyDriverAssignments(assignments) {
+    if (!driverAssignmentsValid(assignments)) return false;
+    state.trips.forEach(function (trip) { trip.driver = assignments[trip.id]; });
+    return true;
+  }
+
+  function getHistoryState() {
+    return { placement: getPlacement(), drivers: getDriverAssignments() };
+  }
+
+  function applyHistoryState(snapshot) {
+    if (!snapshot || !placementIsValid(snapshot.placement) ||
+        !driverAssignmentsValid(snapshot.drivers)) return false;
+    applyPlacement(snapshot.placement);
+    applyDriverAssignments(snapshot.drivers);
+    return true;
+  }
+
+  function addHistoryEntry(entry) {
+    undoStack.push(entry);
+    if (undoStack.length > MAX_HISTORY) undoStack.shift();
+    redoStack = [];
+  }
+
   function readSavedPlacement() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return;
       const parsed = JSON.parse(raw);
-      if (parsed.version === 1 && placementIsValid(parsed.placement)) {
+      if ((parsed.version === 1 || parsed.version === 2) &&
+          placementIsValid(parsed.placement)) {
         applyPlacement(parsed.placement);
+        // V00009 and earlier saved only Job sequencing. Existing browser
+        // positions remain intact; driver assignments start from sample data.
+        if (parsed.version === 2) applyDriverAssignments(parsed.drivers);
       }
     } catch (error) {
       // Some browsers restrict localStorage when opening file:// pages.
@@ -97,7 +151,9 @@
 
   function persistPlacement() {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ version: 1, placement: getPlacement() }));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        version: 2, placement: getPlacement(), drivers: getDriverAssignments()
+      }));
     } catch (error) {
       // Persisting is a convenience only, not a dependency for dragging.
     }
@@ -189,7 +245,7 @@
       : '<span class="column-meta-empty">Not assigned</span>';
     const driver = trip.driver
       ? escapeHtml(trip.driver)
-      : '<span class="column-meta-empty">Not assigned</span>';
+      : '<span class="column-meta-empty">Unassigned</span>';
     const group = groups.find(function (item) { return item.id === trip.groupId; });
     return '<div class="trip-column" data-group-id="' + escapeHtml(trip.groupId) + '">' +
       '<div class="column-header">' +
@@ -197,7 +253,10 @@
           escapeHtml(group ? group.name : "Unassigned") + '">' + escapeHtml(trip.name) + '</span>' +
           '<span class="column-count">' + total + ' jobs</span></div>' +
         '<div class="column-meta"><span class="meta-label">Vehicle:</span> ' + vehicle + '</div>' +
-        '<div class="column-meta"><span class="meta-label">Driver:</span> ' + driver + '</div>' +
+        '<div class="column-meta column-driver-meta"><span class="meta-label">Driver:</span> ' +
+          '<span class="column-driver-name">' + driver + '</span>' +
+          '<button type="button" class="driver-change-button" data-driver-trip="' + escapeHtml(trip.id) +
+            '" aria-label="Change driver for ' + escapeHtml(trip.name) + '" title="Change or swap driver">⇄</button></div>' +
       '</div>' +
       '<div class="unsequenced-block">' +
         '<div class="zone-heading"><span>Unsequenced</span><span class="zone-count">' +
@@ -226,6 +285,45 @@
       '<span class="summary-item"><strong>' + unsequenced + '</strong> unsequenced</span>';
     undoButton.disabled = undoStack.length === 0;
     redoButton.disabled = redoStack.length === 0;
+    updateDriverWarnings();
+  }
+
+  function updateDriverWarnings() {
+    const withoutDriver = state.trips.filter(function (trip) { return !trip.driver; });
+    const allocations = new Map();
+    state.trips.forEach(function (trip) {
+      if (!trip.driver) return;
+      if (!allocations.has(trip.driver)) allocations.set(trip.driver, []);
+      allocations.get(trip.driver).push(trip.name);
+    });
+    const duplicates = Array.from(allocations).filter(function (entry) {
+      return entry[1].length > 1;
+    });
+    const warnings = [];
+    if (withoutDriver.length) {
+      const count = withoutDriver.length;
+      warnings.push({
+        label: count + (count === 1 ? " trip with no driver assigned" : " trips with no driver assigned"),
+        details: withoutDriver.map(function (trip) { return trip.name; }).join("\n")
+      });
+    }
+    if (duplicates.length) {
+      const count = duplicates.length;
+      warnings.push({
+        label: count + (count === 1 ? " driver assigned to multiple trips" : " drivers assigned to multiple trips"),
+        details: duplicates.map(function (entry) {
+          return entry[0] + ": " + entry[1].join(", ");
+        }).join("\n")
+      });
+    }
+    driverWarnings.hidden = warnings.length === 0;
+    driverWarnings.innerHTML = warnings.map(function (warning) {
+      return '<span class="driver-warning" tabindex="0" title="' +
+        escapeHtml(warning.details) + '" aria-label="' +
+        escapeHtml(warning.label + ". " + warning.details.replace(/\n/g, "; ")) +
+        '"><span class="driver-warning-icon" aria-hidden="true">!</span>' +
+        escapeHtml(warning.label) + '</span>';
+    }).join("");
   }
 
   function renderBoard() {
@@ -336,6 +434,167 @@
     }
   });
 
+  // Driver changes are edited in a working copy. None of these controls
+  // mutate the Day Board until Save and Close is pressed.
+  function driverDialogRows() {
+    const used = new Set(Object.keys(draftDrivers).map(function (id) {
+      return draftDrivers[id];
+    }).filter(Boolean));
+    const free = availableDrivers.filter(function (name) { return !used.has(name); });
+    const rows = state.trips.filter(function (trip) {
+      return trip.id !== driverDialogTripId && Boolean(draftDrivers[trip.id]);
+    }).map(function (trip) {
+      return { name: draftDrivers[trip.id], tripId: trip.id, tripName: trip.name };
+    });
+    rows.sort(function (a, b) {
+      return a.name.localeCompare(b.name, "en-GB") ||
+        a.tripName.localeCompare(b.tripName, "en-GB");
+    });
+    return { unassigned: free, assigned: rows };
+  }
+
+  function renderDriverDialog() {
+    if (!driverDialogTripId || !draftDrivers) return;
+    const trip = getTrip(driverDialogTripId);
+    if (!trip) return;
+    const currentDriver = draftDrivers[trip.id] || "";
+    driverDialogTripName.textContent = trip.name;
+    driverDialogCurrent.textContent = currentDriver || "Unassigned";
+    driverDialogCurrent.classList.toggle("is-unassigned", !currentDriver);
+    driverDialogUnassign.hidden = !currentDriver;
+    const lists = driverDialogRows();
+
+    const freeRows = lists.unassigned.map(function (name) {
+      return '<div class="driver-dialog-row">' +
+        '<span class="driver-row-name">' + escapeHtml(name) + '</span>' +
+        '<div class="driver-row-actions"><button type="button" class="driver-action-assign"' +
+          ' data-driver-action="assign" data-driver-name="' + escapeHtml(name) +
+          '" title="Assign ' + escapeHtml(name) + ' to ' + escapeHtml(trip.name) + '">Assign</button></div>' +
+      '</div>';
+    }).join("");
+    const occupiedRows = lists.assigned.map(function (entry) {
+      const actions = '<button type="button" class="driver-action-assign" data-driver-action="assign"' +
+        ' data-driver-name="' + escapeHtml(entry.name) +
+        '" data-other-trip="' + escapeHtml(entry.tripId) + '" title="Assign without removing other Trips">Assign</button>' +
+        (currentDriver
+          ? '<button type="button" class="driver-action-swap" data-driver-action="swap"' +
+              ' data-driver-name="' + escapeHtml(entry.name) +
+              '" data-other-trip="' + escapeHtml(entry.tripId) +
+              '" title="Exchange drivers with ' + escapeHtml(entry.tripName) + '">Swap</button>'
+          : "");
+      return '<div class="driver-dialog-row">' +
+        '<span class="driver-row-description">' +
+          '<strong class="driver-row-name">' + escapeHtml(entry.name) + '</strong>' +
+          '<span class="driver-row-trip">' + escapeHtml(entry.tripName) + '</span></span>' +
+        '<div class="driver-row-actions">' + actions + '</div>' +
+      '</div>';
+    }).join("");
+    driverDialogList.innerHTML =
+      '<section class="driver-dialog-section">' +
+        '<h3>Unassigned drivers <span>' + lists.unassigned.length + '</span></h3>' +
+        (freeRows || '<p class="driver-dialog-empty">All drivers are currently assigned.</p>') +
+      '</section>' +
+      '<section class="driver-dialog-section">' +
+        '<h3>Assigned drivers <span>' + lists.assigned.length + ' allocations</span></h3>' +
+        (occupiedRows || '<p class="driver-dialog-empty">No other drivers currently assigned.</p>') +
+      '</section>';
+  }
+
+  function openDriverDialog(tripId) {
+    if (!getTrip(tripId) || pendingDrag || activeDrag) return;
+    driverDialogTripId = tripId;
+    draftDrivers = getDriverAssignments();
+    closeGroupFilter();
+    renderDriverDialog();
+    driverDialogBackdrop.hidden = false;
+    document.body.classList.add("has-driver-dialog");
+    driverDialog.focus();
+  }
+
+  function closeDriverDialog() {
+    const tripId = driverDialogTripId;
+    driverDialogBackdrop.hidden = true;
+    document.body.classList.remove("has-driver-dialog");
+    driverDialogTripId = null;
+    draftDrivers = null;
+    if (tripId) {
+      const edit = board.querySelector('.driver-change-button[data-driver-trip="' + tripId + '"]');
+      if (edit) edit.focus();
+    }
+  }
+
+  function updateDraftDriver(action, driverName, otherTripId) {
+    if (!draftDrivers || !driverDialogTripId) return;
+    if (action === "unassign") {
+      draftDrivers[driverDialogTripId] = "";
+    } else if (action === "assign" && availableDrivers.includes(driverName)) {
+      draftDrivers[driverDialogTripId] = driverName;
+    } else if (action === "swap" && draftDrivers[driverDialogTripId] &&
+               otherTripId && otherTripId !== driverDialogTripId &&
+               draftDrivers[otherTripId] === driverName) {
+      const previous = draftDrivers[driverDialogTripId];
+      draftDrivers[driverDialogTripId] = driverName;
+      draftDrivers[otherTripId] = previous;
+    } else {
+      return;
+    }
+    renderDriverDialog();
+  }
+
+  function saveDriverDialog() {
+    if (!draftDrivers || !driverAssignmentsValid(draftDrivers)) return;
+    const before = getHistoryState();
+    const name = getTrip(driverDialogTripId).name;
+    applyDriverAssignments(draftDrivers);
+    const after = getHistoryState();
+    if (JSON.stringify(before.drivers) !== JSON.stringify(after.drivers)) {
+      addHistoryEntry({
+        kind: "drivers", before: before, after: after,
+        description: "Driver assignments updated for " + name
+      });
+    }
+    persistPlacement();
+    // Always refresh the Day Board, even if no warning is affected.
+    renderBoard();
+    closeDriverDialog();
+    showToast("Driver assignments saved", name);
+  }
+
+  board.addEventListener("click", function (event) {
+    const button = event.target.closest("button[data-driver-trip]");
+    if (!button || !board.contains(button)) return;
+    event.preventDefault();
+    openDriverDialog(button.dataset.driverTrip);
+  });
+  driverDialogUnassign.addEventListener("click", function () {
+    updateDraftDriver("unassign");
+  });
+  driverDialogList.addEventListener("click", function (event) {
+    const button = event.target.closest("button[data-driver-action]");
+    if (!button) return;
+    updateDraftDriver(button.dataset.driverAction,
+      button.dataset.driverName, button.dataset.otherTrip || "");
+  });
+  document.getElementById("driver-dialog-save").addEventListener("click", saveDriverDialog);
+  document.getElementById("driver-dialog-cancel").addEventListener("click", closeDriverDialog);
+  document.getElementById("driver-dialog-close").addEventListener("click", closeDriverDialog);
+  driverDialogBackdrop.addEventListener("pointerdown", function (event) {
+    if (event.target === driverDialogBackdrop) closeDriverDialog();
+  });
+  driverDialog.addEventListener("keydown", function (event) {
+    if (event.key !== "Tab") return;
+    const controls = Array.from(driverDialog.querySelectorAll('button:not([hidden]):not(:disabled)'));
+    if (!controls.length) return;
+    const first = controls[0], last = controls[controls.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  });
+
   function showToast(title, detail) {
     clearTimeout(toastTimeout);
     toastElement.innerHTML = '<strong>' + escapeHtml(title) + '</strong><span>' + escapeHtml(detail) + '</span>';
@@ -441,7 +700,7 @@
       return false;
     }
 
-    const before = getPlacement();
+    const before = getHistoryState();
     const selected = new Set(ids);
     const sourceLists = sourceColumn === ""
       ? [state.unallocated]
@@ -458,16 +717,12 @@
     const index = Math.max(0, Math.min(targetIndex, target.length));
     target.splice(index, 0, ...ids);
 
-    const after = getPlacement();
+    const after = getHistoryState();
     if (JSON.stringify(before) === JSON.stringify(after)) return false;
-    undoStack.push({
-      before: before,
-      after: after,
-      jobIds: ids,
-      jobId: grabbedJobId || ids[0]
+    addHistoryEntry({
+      kind: "jobs", before: before, after: after,
+      jobIds: ids, jobId: grabbedJobId || ids[0]
     });
-    if (undoStack.length > MAX_HISTORY) undoStack.shift();
-    redoStack = [];
     persistPlacement();
     return true;
   }
@@ -824,6 +1079,7 @@
   }
 
   board.addEventListener("pointerdown", function (event) {
+    if (event.target.closest(".driver-change-button")) return;
     if (event.button !== 0 || pendingDrag || activeDrag) return;
     const card = event.target.closest(".job-card");
     if (!card || !board.contains(card)) {
@@ -908,13 +1164,17 @@
   // No native drag/drop: the floating card is always rendered at full opacity.
   board.addEventListener("dragstart", function (event) { event.preventDefault(); });
 
-  function restoreHistory(entry, placement, action) {
-    applyPlacement(placement);
+  function restoreHistory(entry, snapshot, action) {
+    if (!applyHistoryState(snapshot)) return;
     persistPlacement();
     renderBoard();
-    const ids = entry.jobIds || [entry.jobId];
-    setSelectedJobs(ids, entry.jobId);
-    showToast(action, moveDescription(ids));
+    if (entry.kind === "drivers") {
+      showToast(action, entry.description);
+    } else {
+      const ids = entry.jobIds || [entry.jobId];
+      setSelectedJobs(ids, entry.jobId);
+      showToast(action, moveDescription(ids));
+    }
   }
 
   function undo() {
@@ -934,7 +1194,7 @@
   undoButton.addEventListener("click", undo);
   redoButton.addEventListener("click", redo);
   document.getElementById("reset").addEventListener("click", function () {
-    if (!window.confirm("Reset the Day Board to its original sample Jobs and sequences? This clears Undo/Redo history.")) return;
+    if (!window.confirm("Reset the Day Board to its original sample Jobs, sequences and driver assignments? This clears Undo/Redo history.")) return;
     state = window.DayBoardData.makeInitialState();
     selectedJobIds = new Set();
     selectionAnchorId = null;
@@ -944,10 +1204,19 @@
     scroller.scrollLeft = 0;
     scroller.scrollTop = 0;
     renderBoard();
-    showToast("Sample data reset", "All Jobs returned to their starting positions.");
+    showToast("Sample data reset", "Jobs and driver assignments restored.");
   });
 
   document.addEventListener("keydown", function (event) {
+    if (!driverDialogBackdrop.hidden) {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closeDriverDialog();
+      }
+      // Do not let Undo/Redo shortcuts mutate the underlying board while
+      // the dialog is editing a provisional copy of its assignments.
+      return;
+    }
     if (event.key === "Escape") {
       if (!groupFilterPanel.hidden) {
         event.preventDefault();
