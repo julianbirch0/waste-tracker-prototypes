@@ -1,4 +1,4 @@
-/* WasteTracker Day Board V00012
+/* WasteTracker Day Board V00013
    Standalone, file:// compatible. Custom pointer drag-and-drop; no dependencies. */
 (function () {
   "use strict";
@@ -25,6 +25,15 @@
   const driverDialogList = document.getElementById("driver-dialog-list");
   const availableDrivers = (window.DayBoardData.drivers || []).slice().sort(function (a, b) {
     return a.localeCompare(b, "en-GB");
+  });
+  const vehicleDialogBackdrop = document.getElementById("vehicle-dialog-backdrop");
+  const vehicleDialog = vehicleDialogBackdrop.querySelector(".driver-dialog");
+  const vehicleDialogTripName = document.getElementById("vehicle-dialog-trip-name");
+  const vehicleDialogCurrent = document.getElementById("vehicle-dialog-current");
+  const vehicleDialogUnassign = document.getElementById("vehicle-dialog-unassign");
+  const vehicleDialogList = document.getElementById("vehicle-dialog-list");
+  const availableVehicles = (window.DayBoardData.vehicles || []).slice().sort(function (a, b) {
+    return a.localeCompare(b, "en-GB", { numeric: true });
   });
   const groups = window.DayBoardData.groups || [];
   let visibleGroupIds = new Set(groups.map(function (group) { return group.id; }));
@@ -53,6 +62,8 @@
   let toastTimeout = null;
   let driverDialogTripId = null;
   let draftDrivers = null;
+  let vehicleDialogTripId = null;
+  let draftVehicles = null;
 
   function escapeHtml(value) {
     return String(value == null ? "" : value).replace(/[&<>"']/g, function (ch) {
@@ -124,15 +135,40 @@
     return true;
   }
 
+  function getVehicleAssignments() {
+    const result = {};
+    state.trips.forEach(function (trip) { result[trip.id] = trip.vehicle || ""; });
+    return result;
+  }
+
+  function vehicleAssignmentsValid(assignments) {
+    if (!assignments || typeof assignments !== "object" || Array.isArray(assignments)) return false;
+    return state.trips.every(function (trip) {
+      return Object.prototype.hasOwnProperty.call(assignments, trip.id) &&
+        (assignments[trip.id] === "" || availableVehicles.includes(assignments[trip.id]));
+    });
+  }
+
+  function applyVehicleAssignments(assignments) {
+    if (!vehicleAssignmentsValid(assignments)) return false;
+    state.trips.forEach(function (trip) { trip.vehicle = assignments[trip.id]; });
+    return true;
+  }
+
   function getHistoryState() {
-    return { placement: getPlacement(), drivers: getDriverAssignments() };
+    return {
+      placement: getPlacement(), drivers: getDriverAssignments(),
+      vehicles: getVehicleAssignments()
+    };
   }
 
   function applyHistoryState(snapshot) {
     if (!snapshot || !placementIsValid(snapshot.placement) ||
-        !driverAssignmentsValid(snapshot.drivers)) return false;
+        !driverAssignmentsValid(snapshot.drivers) ||
+        !vehicleAssignmentsValid(snapshot.vehicles)) return false;
     applyPlacement(snapshot.placement);
     applyDriverAssignments(snapshot.drivers);
+    applyVehicleAssignments(snapshot.vehicles);
     return true;
   }
 
@@ -147,12 +183,14 @@
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return;
       const parsed = JSON.parse(raw);
-      if ((parsed.version === 1 || parsed.version === 2) &&
+      if ((parsed.version === 1 || parsed.version === 2 || parsed.version === 3) &&
           placementIsValid(parsed.placement)) {
         applyPlacement(parsed.placement);
-        // V00009 and earlier saved only Job sequencing. Existing browser
-        // positions remain intact; driver assignments start from sample data.
-        if (parsed.version === 2) applyDriverAssignments(parsed.drivers);
+        // Preserve all saved Jobs and driver assignments from V00012.
+        // Earlier storage versions did not contain vehicle assignments,
+        // so those safely begin with the new demonstration sample.
+        if (parsed.version >= 2) applyDriverAssignments(parsed.drivers);
+        if (parsed.version >= 3) applyVehicleAssignments(parsed.vehicles);
       }
     } catch (error) {
       // Some browsers restrict localStorage when opening file:// pages.
@@ -163,7 +201,8 @@
   function persistPlacement() {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify({
-        version: 2, placement: getPlacement(), drivers: getDriverAssignments()
+        version: 3, placement: getPlacement(),
+        drivers: getDriverAssignments(), vehicles: getVehicleAssignments()
       }));
     } catch (error) {
       // Persisting is a convenience only, not a dependency for dragging.
@@ -253,7 +292,7 @@
     const total = trip.unsequenced.length + trip.sequenced.length;
     const vehicle = trip.vehicle
       ? escapeHtml(trip.vehicle)
-      : '<span class="column-meta-empty">Not assigned</span>';
+      : '<span class="column-meta-empty">Unassigned</span>';
     const driver = trip.driver
       ? escapeHtml(trip.driver)
       : '<span class="column-meta-empty">Unassigned</span>';
@@ -263,7 +302,11 @@
         '<div class="column-heading-line"><span class="column-name" title="Group: ' +
           escapeHtml(group ? group.name : "Unassigned") + '">' + escapeHtml(trip.name) + '</span>' +
           '<span class="column-count">' + total + ' jobs</span></div>' +
-        '<div class="column-meta"><span class="meta-label">Vehicle:</span> ' + vehicle + '</div>' +
+        '<div class="column-meta column-driver-meta"><span class="meta-label">Vehicle:</span> ' +
+          '<span class="column-driver-name">' + vehicle + '</span>' +
+          '<button type="button" class="driver-change-button vehicle-change-button" data-vehicle-trip="' +
+            escapeHtml(trip.id) + '" aria-label="Change vehicle for ' +
+            escapeHtml(trip.name) + '" title="Change or swap vehicle">⇄</button></div>' +
         '<div class="column-meta column-driver-meta"><span class="meta-label">Driver:</span> ' +
           '<span class="column-driver-name">' + driver + '</span>' +
           '<button type="button" class="driver-change-button" data-driver-trip="' + escapeHtml(trip.id) +
@@ -296,7 +339,7 @@
       '<span class="summary-item"><strong>' + unsequenced + '</strong> unsequenced</span>';
     undoButton.disabled = undoStack.length === 0;
     redoButton.disabled = redoStack.length === 0;
-    updateDriverWarnings();
+    updateAllocationWarnings();
   }
 
   function warningTrips(kind) {
@@ -1433,7 +1476,7 @@
     if (!applyHistoryState(snapshot)) return;
     persistPlacement();
     renderBoard();
-    if (entry.kind === "drivers") {
+    if (entry.kind === "drivers" || entry.kind === "vehicles") {
       showToast(action, entry.description);
     } else {
       const ids = entry.jobIds || [entry.jobId];
@@ -1459,7 +1502,7 @@
   undoButton.addEventListener("click", undo);
   redoButton.addEventListener("click", redo);
   document.getElementById("reset").addEventListener("click", function () {
-    if (!window.confirm("Reset the Day Board to its original sample Jobs, sequences and driver assignments? This clears Undo/Redo history.")) return;
+    if (!window.confirm("Reset the Day Board to its original sample Jobs, sequences, driver assignments and vehicle assignments? This clears Undo/Redo history.")) return;
     state = window.DayBoardData.makeInitialState();
     selectedJobIds = new Set();
     selectionAnchorId = null;
@@ -1469,14 +1512,15 @@
     scroller.scrollLeft = 0;
     scroller.scrollTop = 0;
     renderBoard();
-    showToast("Sample data reset", "Jobs and driver assignments restored.");
+    showToast("Sample data reset", "Jobs, drivers and vehicles restored.");
   });
 
   document.addEventListener("keydown", function (event) {
-    if (!driverDialogBackdrop.hidden) {
+    if (!driverDialogBackdrop.hidden || !vehicleDialogBackdrop.hidden) {
       if (event.key === "Escape") {
         event.preventDefault();
-        closeDriverDialog();
+        if (!driverDialogBackdrop.hidden) closeDriverDialog();
+        if (!vehicleDialogBackdrop.hidden) closeVehicleDialog();
       }
       // Do not let Undo/Redo shortcuts mutate the underlying board while
       // the dialog is editing a provisional copy of its assignments.
