@@ -722,29 +722,30 @@ button:focus-visible, .board-scroll:focus-visible {
   border-radius: 7px;
   box-shadow: 0 12px 28px rgba(37,57,80,.22);
 }
-.group-filter-actions {
-  display: grid;
-  grid-template-columns: 56px 1fr 64px;
-  gap: 6px;
-  padding: 10px 11px;
-  border-bottom: 1px solid #e4ebf0;
-  background: #f6fafb;
-}
-.group-filter-actions button {
-  min-height: 29px;
-  padding: 5px 6px;
-  border: 1px solid #d5e1e8;
-  border-radius: 4px;
-  background: #fff;
-  color: #486177;
-  font-size: 10.5px;
+.group-filter-select-all {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 43px;
+  padding: 10px 13px;
+  color: #344c65;
+  background: #f7fafb;
+  font-size: 11.5px;
   font-weight: 650;
-  white-space: nowrap;
+  cursor: pointer;
 }
-.group-filter-actions button:hover {
-  color: #227f74;
-  border-color: #91c8c0;
-  background: #edf8f5;
+.group-filter-select-all:hover { background: #eef7f5; }
+.group-filter-select-all input {
+  width: 15px;
+  height: 15px;
+  margin: 0;
+  accent-color: #258f83;
+  cursor: pointer;
+}
+.group-filter-divider {
+  height: 1px;
+  margin: 0 13px;
+  background: #dce7eb;
 }
 .group-filter-options { padding: 5px 0; }
 .group-filter-option {
@@ -775,7 +776,7 @@ button:focus-visible, .board-scroll:focus-visible {
   background: #fafcfd;
 }
 .group-filter-button:focus-visible,
-.group-filter-actions button:focus-visible,
+.group-filter-select-all:focus-within,
 .layer-group-toggle:focus-visible {
   outline: 2px solid #4e94c7;
   outline-offset: 2px;
