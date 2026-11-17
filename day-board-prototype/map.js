@@ -135,10 +135,10 @@
     const state = getState();
     // Initialise from the full board's Group AND Trip selection. The
     // map's independent Map/Grid tick boxes take over once it's open.
-    const selectedTrips = new Set(bridge.getVisibleTripIds());
-    const eligibleTrips = state.trips.filter(function (trip) {
-      return selectedTrips.has(trip.id);
-    });
+    const tripById = new Map(state.trips.map(function (trip) { return [trip.id, trip]; }));
+    const eligibleTrips = bridge.getDisplayTripIds().map(function (id) {
+      return tripById.get(id);
+    }).filter(Boolean);
     gridColumns = state.unallocated.length && bridge.isUnallocatedSelected()
       ? [UNALLOCATED].concat(eligibleTrips.slice(0, 1).map(function (trip) { return trip.id; }))
       : eligibleTrips.slice(0, 2).map(function (trip) { return trip.id; });
