@@ -923,6 +923,171 @@
     }
   });
 
+  // Vehicles use the same provisional Assign/Swap/Unassign workflow as drivers.
+  // Vehicle changes are edited in a working copy. None of these controls
+  // mutate the Day Board until Save and Close is pressed.
+  function vehicleDialogRows() {
+    const used = new Set(Object.keys(draftVehicles).map(function (id) {
+      return draftVehicles[id];
+    }).filter(Boolean));
+    const free = availableVehicles.filter(function (name) { return !used.has(name); });
+    const rows = state.trips.filter(function (trip) {
+      return trip.id !== vehicleDialogTripId && Boolean(draftVehicles[trip.id]);
+    }).map(function (trip) {
+      return { name: draftVehicles[trip.id], tripId: trip.id, tripName: trip.name };
+    });
+    rows.sort(function (a, b) {
+      return a.name.localeCompare(b.name, "en-GB") ||
+        a.tripName.localeCompare(b.tripName, "en-GB");
+    });
+    return { unassigned: free, assigned: rows };
+  }
+
+  function renderVehicleDialog() {
+    if (!vehicleDialogTripId || !draftVehicles) return;
+    const trip = getTrip(vehicleDialogTripId);
+    if (!trip) return;
+    const currentVehicle = draftVehicles[trip.id] || "";
+    vehicleDialogTripName.textContent = trip.name;
+    vehicleDialogCurrent.textContent = currentVehicle || "Unassigned";
+    vehicleDialogCurrent.classList.toggle("is-unassigned", !currentVehicle);
+    vehicleDialogUnassign.hidden = !currentVehicle;
+    const lists = vehicleDialogRows();
+
+    const freeRows = lists.unassigned.map(function (name) {
+      return '<div class="driver-dialog-row">' +
+        '<span class="driver-row-name">' + escapeHtml(name) + '</span>' +
+        '<div class="driver-row-actions"><button type="button" class="driver-action-assign"' +
+          ' data-vehicle-action="assign" data-vehicle-name="' + escapeHtml(name) +
+          '" title="Assign ' + escapeHtml(name) + ' to ' + escapeHtml(trip.name) + '">Assign</button></div>' +
+      '</div>';
+    }).join("");
+    const occupiedRows = lists.assigned.map(function (entry) {
+      const actions = '<button type="button" class="driver-action-assign" data-vehicle-action="assign"' +
+        ' data-vehicle-name="' + escapeHtml(entry.name) +
+        '" data-other-trip="' + escapeHtml(entry.tripId) + '" title="Assign without removing other Trips">Assign</button>' +
+        (currentVehicle
+          ? '<button type="button" class="driver-action-swap" data-vehicle-action="swap"' +
+              ' data-vehicle-name="' + escapeHtml(entry.name) +
+              '" data-other-trip="' + escapeHtml(entry.tripId) +
+              '" title="Exchange vehicles with ' + escapeHtml(entry.tripName) + '">Swap</button>'
+          : "");
+      return '<div class="driver-dialog-row">' +
+        '<span class="driver-row-description">' +
+          '<strong class="driver-row-name">' + escapeHtml(entry.name) + '</strong>' +
+          '<span class="driver-row-trip">' + escapeHtml(entry.tripName) + '</span></span>' +
+        '<div class="driver-row-actions">' + actions + '</div>' +
+      '</div>';
+    }).join("");
+    const previousScrollTop = vehicleDialogList.scrollTop;
+    vehicleDialogList.innerHTML =
+      '<section class="driver-dialog-section">' +
+        '<h3>Unassigned vehicles <span>' + lists.unassigned.length + '</span></h3>' +
+        (freeRows || '<p class="driver-dialog-empty">All vehicles are currently assigned.</p>') +
+      '</section>' +
+      '<section class="driver-dialog-section">' +
+        '<h3>Assigned vehicles <span>' + lists.assigned.length + ' allocations</span></h3>' +
+        (occupiedRows || '<p class="driver-dialog-empty">No other vehicles currently assigned.</p>') +
+      '</section>';
+    vehicleDialogList.scrollTop = previousScrollTop;
+  }
+
+  function openVehicleDialog(tripId) {
+    if (!getTrip(tripId) || pendingDrag || activeDrag) return;
+    vehicleDialogTripId = tripId;
+    draftVehicles = getVehicleAssignments();
+    closeGroupFilter();
+    renderVehicleDialog();
+    vehicleDialogBackdrop.hidden = false;
+    document.body.classList.add("has-driver-dialog");
+    vehicleDialog.focus();
+  }
+
+  function closeVehicleDialog() {
+    const tripId = vehicleDialogTripId;
+    vehicleDialogBackdrop.hidden = true;
+    document.body.classList.remove("has-driver-dialog");
+    vehicleDialogTripId = null;
+    draftVehicles = null;
+    if (tripId) {
+      const edit = board.querySelector('.vehicle-change-button[data-vehicle-trip="' + tripId + '"]');
+      if (edit) edit.focus();
+      else groupFilterButton.focus();
+    }
+  }
+
+  function updateDraftVehicle(action, driverName, otherTripId) {
+    if (!draftVehicles || !vehicleDialogTripId) return;
+    if (action === "unassign") {
+      draftVehicles[vehicleDialogTripId] = "";
+    } else if (action === "assign" && availableVehicles.includes(driverName)) {
+      draftVehicles[vehicleDialogTripId] = driverName;
+    } else if (action === "swap" && draftVehicles[vehicleDialogTripId] &&
+               otherTripId && otherTripId !== vehicleDialogTripId &&
+               draftVehicles[otherTripId] === driverName) {
+      const previous = draftVehicles[vehicleDialogTripId];
+      draftVehicles[vehicleDialogTripId] = driverName;
+      draftVehicles[otherTripId] = previous;
+    } else {
+      return;
+    }
+    renderVehicleDialog();
+  }
+
+  function saveVehicleDialog() {
+    if (!draftVehicles || !vehicleAssignmentsValid(draftVehicles)) return;
+    const before = getHistoryState();
+    const name = getTrip(vehicleDialogTripId).name;
+    applyVehicleAssignments(draftVehicles);
+    const after = getHistoryState();
+    if (JSON.stringify(before.vehicles) !== JSON.stringify(after.vehicles)) {
+      addHistoryEntry({
+        kind: "vehicles", before: before, after: after,
+        description: "Vehicle assignments updated for " + name
+      });
+    }
+    persistPlacement();
+    // Always refresh the Day Board, even if no warning is affected.
+    renderBoard();
+    closeVehicleDialog();
+    showToast("Vehicle assignments saved", name);
+  }
+
+  board.addEventListener("click", function (event) {
+    const button = event.target.closest("button[data-vehicle-trip]");
+    if (!button || !board.contains(button)) return;
+    event.preventDefault();
+    openVehicleDialog(button.dataset.vehicleTrip);
+  });
+  vehicleDialogUnassign.addEventListener("click", function () {
+    updateDraftVehicle("unassign");
+  });
+  vehicleDialogList.addEventListener("click", function (event) {
+    const button = event.target.closest("button[data-vehicle-action]");
+    if (!button) return;
+    updateDraftVehicle(button.dataset.vehicleAction,
+      button.dataset.vehicleName, button.dataset.otherTrip || "");
+  });
+  document.getElementById("vehicle-dialog-save").addEventListener("click", saveVehicleDialog);
+  document.getElementById("vehicle-dialog-cancel").addEventListener("click", closeVehicleDialog);
+  document.getElementById("vehicle-dialog-close").addEventListener("click", closeVehicleDialog);
+  vehicleDialogBackdrop.addEventListener("pointerdown", function (event) {
+    if (event.target === vehicleDialogBackdrop) closeVehicleDialog();
+  });
+  vehicleDialog.addEventListener("keydown", function (event) {
+    if (event.key !== "Tab") return;
+    const controls = Array.from(vehicleDialog.querySelectorAll('button:not([hidden]):not(:disabled)'));
+    if (!controls.length) return;
+    const first = controls[0], last = controls[controls.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  });
+
   function showToast(title, detail) {
     clearTimeout(toastTimeout);
     toastElement.innerHTML = '<strong>' + escapeHtml(title) + '</strong><span>' + escapeHtml(detail) + '</span>';
