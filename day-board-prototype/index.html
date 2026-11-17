@@ -4,14 +4,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light">
-  <title>Day Board | WasteTracker Prototype V00010</title>
+  <title>Day Board | WasteTracker Prototype V00011</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <main class="page">
     <header class="page-header">
       <div class="page-heading">
-        <h1>Day Board <span class="version">V00010</span></h1>
+        <h1>Day Board <span class="version">V00011</span></h1>
         <p class="subtitle">Monday 16 November 2026 <span class="date-hint">· Sample day — date filtering to follow</span></p>
       </div>
       <div class="header-actions">
@@ -24,18 +24,20 @@
     <section class="board-section" aria-label="Day Board">
       <div class="board-toolbar">
         <div class="group-filter-wrap" id="group-filter-wrap">
-          <span class="group-filter-label">Groups</span>
+          <span class="group-filter-label">Groups and Trips</span>
           <button type="button" class="group-filter-button" id="group-filter-button"
-            aria-haspopup="true" aria-expanded="false" aria-controls="group-filter-panel">All groups <span aria-hidden="true">▾</span></button>
-          <div class="group-filter-panel" id="group-filter-panel" aria-label="Select Round groups" hidden></div>
+            aria-haspopup="true" aria-expanded="false" aria-controls="group-filter-panel">All <span aria-hidden="true">▾</span></button>
+          <div class="group-filter-panel" id="group-filter-panel" aria-label="Select groups and Trips" hidden></div>
         </div>
-        <div class="board-summary" id="board-summary" role="status" aria-live="polite"></div>
+        <div class="board-summary-line">
+          <div class="board-summary" id="board-summary" role="status" aria-live="polite"></div>
+          <div id="driver-warnings" class="driver-warnings" aria-label="Driver allocation warnings" aria-live="polite" hidden></div>
+        </div>
         <div class="board-tools">
           <span class="board-tip">Click or drag · Shift-click / Ctrl-click to select · Hold near top/bottom to scroll</span>
           <button type="button" class="text-button" id="reset">Reset sample data</button>
         </div>
       </div>
-      <div id="driver-warnings" class="driver-warnings" role="status" aria-live="polite" hidden></div>
       <div class="board-frame">
         <div class="board-scroll" id="board-scroll" tabindex="0" aria-label="Scrollable day board. Scroll vertically for more jobs and horizontally for more trips.">
           <div class="board-canvas" id="board"></div>
@@ -69,7 +71,7 @@
         </section>
       </div>
       <div class="board-footnote">
-        <span>Full board: filter by Round group · Map view: choose up to four grid columns.</span>
+        <span>Full board: filter by Group or Trip · Map view: choose up to four grid columns.</span>
         <span class="prototype-note">Prototype only · Changes saved in this browser where supported; never sent to WasteTracker</span>
       </div>
     </section>
@@ -82,7 +84,7 @@
       </header>
       <div class="driver-dialog-trip">
         <div><span class="driver-dialog-label">Trip (Round)</span><strong id="driver-dialog-trip-name"></strong></div>
-        <div><span class="driver-dialog-label">Trip date</span><strong id="driver-dialog-date">Monday, 16/Nov</strong></div>
+        <div><span class="driver-dialog-label">Trip date</span><strong id="driver-dialog-date">Monday, 16-Nov</strong></div>
       </div>
       <div class="driver-current-row">
         <span class="driver-current-detail">
