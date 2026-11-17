@@ -1,4 +1,4 @@
-/* WasteTracker Day Board V00008
+/* WasteTracker Day Board V00009
    Standalone, file:// compatible. Custom pointer drag-and-drop; no dependencies. */
 (function () {
   "use strict";
@@ -267,11 +267,12 @@
     groupFilterButton.innerHTML = escapeHtml(groupSelectionText()) +
       ' <span aria-hidden="true" class="group-filter-chevron">▾</span>';
     groupFilterPanel.innerHTML =
-      '<div class="group-filter-actions">' +
-        '<button type="button" data-group-action="all">All</button>' +
-        '<button type="button" data-group-action="rest">All the Rest</button>' +
-        '<button type="button" data-group-action="nothing">Nothing</button>' +
-      '</div>' +
+      '<label class="group-filter-select-all">' +
+        '<input type="checkbox" data-group-select-all' +
+          (visibleGroupIds.size === groups.length ? ' checked' : '') + '>' +
+        '<span>Select All</span>' +
+      '</label>' +
+      '<div class="group-filter-divider" role="separator"></div>' +
       '<div class="group-filter-options">' + groups.map(function (group) {
         return '<label class="group-filter-option"><input type="checkbox" data-group-option="' +
           escapeHtml(group.id) + '"' + (visibleGroupIds.has(group.id) ? ' checked' : '') +
@@ -281,6 +282,9 @@
           }).length + '</small></label>';
       }).join("") + '</div>' +
       '<div class="group-filter-hint">Expanded groups appear in the full Day Board.</div>';
+    const master = groupFilterPanel.querySelector('input[data-group-select-all]');
+    if (master) master.indeterminate =
+      visibleGroupIds.size > 0 && visibleGroupIds.size < groups.length;
   }
 
   function chooseGroups(ids) {
@@ -314,22 +318,14 @@
     groupFilterPanel.hidden = !show;
     groupFilterButton.setAttribute("aria-expanded", String(show));
   });
-  groupFilterPanel.addEventListener("click", function (event) {
-    const quick = event.target.closest("button[data-group-action]");
-    if (!quick) return;
-    const action = quick.dataset.groupAction;
-    const current = new Set(visibleGroupIds);
-    if (action === "all") {
-      chooseGroups(groups.map(function (group) { return group.id; }));
-    } else if (action === "rest") {
-      chooseGroups(groups.filter(function (group) {
-        return !current.has(group.id);
-      }).map(function (group) { return group.id; }));
-    } else if (action === "nothing") {
-      chooseGroups([]);
-    }
-  });
   groupFilterPanel.addEventListener("change", function (event) {
+    const selectAll = event.target.closest('input[data-group-select-all]');
+    if (selectAll) {
+      chooseGroups(selectAll.checked ? groups.map(function (group) {
+        return group.id;
+      }) : []);
+      return;
+    }
     const input = event.target.closest('input[data-group-option]');
     if (!input) return;
     toggleGroup(input.dataset.groupOption, input.checked);
