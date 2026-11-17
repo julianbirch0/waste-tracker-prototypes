@@ -1,4 +1,4 @@
-/* WasteTracker Day Board V00010 — standalone illustrative map.
+/* WasteTracker Day Board V00011 — standalone illustrative map.
    No tiles, API keys, map SDK, network requests, or server are needed. */
 (function () {
   "use strict";
@@ -132,13 +132,13 @@
     if (opened) return;
     if (closeTimer) { clearTimeout(closeTimer); closeTimer = null; }
     const state = getState();
-    // Respect the current group filter. With no enabled groups, the
-    // Unallocated column can still be opened on its own.
-    const groups = new Set(bridge.getVisibleGroupIds());
+    // Initialise from the full board's Group AND Trip selection. The
+    // map's independent Map/Grid tick boxes take over once it's open.
+    const selectedTrips = new Set(bridge.getVisibleTripIds());
     const eligibleTrips = state.trips.filter(function (trip) {
-      return groups.has(trip.groupId);
+      return selectedTrips.has(trip.id);
     });
-    gridColumns = state.unallocated.length
+    gridColumns = state.unallocated.length && bridge.isUnallocatedSelected()
       ? [UNALLOCATED].concat(eligibleTrips.slice(0, 1).map(function (trip) { return trip.id; }))
       : eligibleTrips.slice(0, 2).map(function (trip) { return trip.id; });
     visibleOnMap = new Set(gridColumns);
@@ -497,6 +497,7 @@
   window.DayBoardMap = {
     bind: bind,
     isOpen: function () { return opened; },
+    hideMap: hideMap,
     visibleColumns: function () { return opened ? gridColumns.slice() : null; },
     onBoardChange: function () { if (opened) draw(); },
     onGroupsChange: function () { if (opened) renderLayers(); },
