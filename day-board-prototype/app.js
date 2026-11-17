@@ -1881,6 +1881,19 @@
   });
 
   document.addEventListener("keydown", function (event) {
+    if (!dateRangeBackdrop.hidden) {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closeRangeCalendar();
+      }
+      return;
+    }
+    if (!dateSinglePopup.hidden && event.key === "Escape") {
+      event.preventDefault();
+      closeSingleCalendar();
+      dateCalendarButton.focus();
+      return;
+    }
     if (!driverDialogBackdrop.hidden || !vehicleDialogBackdrop.hidden) {
       if (event.key === "Escape") {
         event.preventDefault();
@@ -1943,7 +1956,321 @@
     }
   }
 
+
+  // Date controls: the main selection is always prominent, and the range
+  // dialog operates on a draft until Apply. Dates use local noon to avoid DST
+  // transitions affecting the calendar or the previous/next buttons.
+  const dateLabelElement = document.getElementById("date-current");
+  const dateTodayButton = document.getElementById("date-today");
+  const dateCalendarButton = document.getElementById("date-calendar");
+  const dateSinglePopup = document.getElementById("date-single-popup");
+  const dateSingleCalendar = document.getElementById("date-single-calendar");
+  const dateRangeBackdrop = document.getElementById("date-range-backdrop");
+  const dateRangeDialog = dateRangeBackdrop.querySelector(".date-range-dialog");
+  const dateRangeCalendar = document.getElementById("date-range-calendar");
+  const dateRangeInstruction = document.getElementById("date-range-instruction");
+  const dateWeekdays = document.getElementById("date-range-weekdays");
+  const dateSortLabel = document.getElementById("date-sort-label");
+  const dateRangeError = document.getElementById("date-range-error");
+  let singleCalendarMonth = todayKey.slice(0, 7) + "-01";
+  let rangeCalendarMonth = todayKey.slice(0, 7) + "-01";
+  let dateDraft = null;
+
+  function updateDateDisplay() {
+    const single = !isRangeView();
+    const key = dateSelection.day;
+    const relative = key === todayKey ? ", Today" :
+      key === addDays(todayKey, 1) ? ", Tomorrow" :
+      key === addDays(todayKey, -1) ? ", Yesterday" : "";
+    const visible = datesInSelection();
+    dateLabelElement.textContent = single
+      ? dateLabel(key) + relative
+      : dateLabel(dateSelection.start) + " – " + dateLabel(dateSelection.end) +
+        " · " + visible.length + (visible.length === 1 ? " day" : " days");
+    dateLabelElement.title = single
+      ? shortDate(key)
+      : visible.length + " selected days · " +
+        (dateSelection.order === "round-date" ? "Round then Date" : "Date then Round");
+    dateTodayButton.disabled = single && key === todayKey;
+    document.body.classList.toggle("date-range-view", !single);
+  }
+
+  function chooseDateSelection(next) {
+    // Save the current view before leaving it, including any cross-date Job
+    // movements and driver/vehicle assignments made in a range view.
+    persistPlacement();
+    const selectedRounds = new Set(Array.from(visibleTripIds).map(function (id) {
+      return id.split("@")[0];
+    }));
+    if (activeWarningFilter && savedFilterBeforeWarning) {
+      selectedRounds.clear();
+      savedFilterBeforeWarning.tripIds.forEach(function (id) {
+        selectedRounds.add(id.split("@")[0]);
+      });
+      showUnallocated = savedFilterBeforeWarning.unallocated;
+    }
+    if (window.DayBoardMap && window.DayBoardMap.isOpen()) window.DayBoardMap.hideMap();
+    dateSelection = next;
+    activeWarningFilter = null;
+    savedFilterBeforeWarning = null;
+    state = buildView();
+    visibleTripIds = new Set(state.trips.filter(function (trip) {
+      return selectedRounds.has(trip.roundId);
+    }).map(function (trip) { return trip.id; }));
+    visibleGroupIds = new Set(groups.filter(function (group) {
+      return state.trips.some(function (trip) {
+        return trip.groupId === group.id && visibleTripIds.has(trip.id);
+      });
+    }).map(function (group) { return group.id; }));
+    selectedJobIds = new Set();
+    selectionAnchorId = null;
+    undoStack = [];
+    redoStack = [];
+    scroller.scrollTop = 0;
+    scroller.scrollLeft = 0;
+    updateDateDisplay();
+    renderBoard();
+  }
+
+  function closeSingleCalendar() {
+    dateSinglePopup.hidden = true;
+    dateCalendarButton.setAttribute("aria-expanded", "false");
+  }
+
+  function closeRangeCalendar() {
+    dateRangeBackdrop.hidden = true;
+    dateDraft = null;
+    document.body.classList.remove("has-date-range-dialog");
+    document.getElementById("date-range-open").focus();
+  }
+
+  function monthShift(iso, delta) {
+    const date = fromIso(iso);
+    date.setDate(1);
+    date.setMonth(date.getMonth() + delta);
+    return isoLocal(date);
+  }
+
+  function calendarMarkup(monthKey, mode) {
+    const shownMonth = fromIso(monthKey);
+    const firstDay = isoLocal(new Date(shownMonth.getFullYear(), shownMonth.getMonth(), 1, 12));
+    const gridStart = addDays(firstDay, -dayIndex(firstDay));
+    const selected = mode === "single" && !isRangeView() ? dateSelection.day : null;
+    const start = mode === "range" && dateDraft ? dateDraft.start : null;
+    const end = mode === "range" && dateDraft ? dateDraft.end : null;
+    const weekdayNames = WEEKDAYS.map(function (day) {
+      return '<span class="date-calendar-weekday">' + day + '</span>';
+    }).join("");
+    const days = Array.from({ length: 42 }, function (_, index) {
+      const iso = addDays(gridStart, index), value = fromIso(iso);
+      const sameMonth = value.getMonth() === shownMonth.getMonth();
+      const today = iso === todayKey;
+      const inRange = start && end && iso >= start && iso <= end;
+      const chosen = selected === iso || start === iso || end === iso;
+      return '<button type="button" class="date-calendar-day' +
+        (sameMonth ? '' : ' is-other-month') +
+        (today ? ' is-today' : '') +
+        (inRange ? ' is-in-range' : '') +
+        (chosen ? ' is-selected' : '') +
+        '" data-calendar-day="' + iso + '" aria-label="' +
+        value.toLocaleDateString("en-GB", { weekday: "long", day: "numeric",
+          month: "long", year: "numeric" }) + '"' +
+        (today ? ' aria-current="date"' : '') +
+        (chosen ? ' aria-pressed="true"' : ' aria-pressed="false"') +
+        '>' + value.getDate() + '</button>';
+    }).join("");
+    return '<div class="date-calendar-header">' +
+      '<button type="button" class="date-calendar-arrow" data-month-step="-1" aria-label="Previous month">‹</button>' +
+      '<strong>' + MONTH_NAMES[shownMonth.getMonth()] + ' ' + shownMonth.getFullYear() + '</strong>' +
+      '<button type="button" class="date-calendar-arrow" data-month-step="1" aria-label="Next month">›</button>' +
+      '</div><div class="date-calendar-grid">' + weekdayNames + days + '</div>';
+  }
+
+  function renderSingleCalendar() {
+    dateSingleCalendar.innerHTML = calendarMarkup(singleCalendarMonth, "single");
+  }
+
+  function renderRangeCalendar() {
+    dateRangeCalendar.innerHTML = calendarMarkup(rangeCalendarMonth, "range");
+    const instruction = dateDraft.stage === "end" ? "Select end date" :
+      dateDraft.start && dateDraft.end
+        ? dateLabel(dateDraft.start) + " – " + dateLabel(dateDraft.end)
+        : "Select start date";
+    dateRangeInstruction.textContent = instruction;
+    dateSortLabel.textContent = dateDraft.order === "round-date"
+      ? "Round then Date" : "Date then Round";
+    dateWeekdays.querySelectorAll('input[type="checkbox"]').forEach(function (input) {
+      input.checked = dateDraft.weekdays.has(Number(input.value));
+    });
+  }
+
+  function openSingleCalendar() {
+    if (!dateRangeBackdrop.hidden) return;
+    const showing = dateSinglePopup.hidden;
+    closeSingleCalendar();
+    if (!showing) return;
+    singleCalendarMonth = (isRangeView() ? dateSelection.start : dateSelection.day).slice(0, 7) + "-01";
+    renderSingleCalendar();
+    dateSinglePopup.hidden = false;
+    dateCalendarButton.setAttribute("aria-expanded", "true");
+  }
+
+  function openRangeCalendar() {
+    closeSingleCalendar();
+    const existing = isRangeView();
+    dateDraft = {
+      start: existing ? dateSelection.start : null,
+      end: existing ? dateSelection.end : null,
+      weekdays: new Set(existing ? dateSelection.weekdays : [0, 1, 2, 3, 4, 5, 6]),
+      order: existing ? dateSelection.order : "round-date",
+      stage: existing ? "done" : "start"
+    };
+    rangeCalendarMonth = (existing ? dateSelection.start : todayKey).slice(0, 7) + "-01";
+    dateRangeError.hidden = true;
+    dateRangeError.textContent = "";
+    renderRangeCalendar();
+    dateRangeBackdrop.hidden = false;
+    document.body.classList.add("has-date-range-dialog");
+    dateRangeDialog.focus();
+  }
+
+  function onCalendarAction(event, mode) {
+    const step = event.target.closest("button[data-month-step]");
+    if (step) {
+      if (mode === "single") {
+        singleCalendarMonth = monthShift(singleCalendarMonth, Number(step.dataset.monthStep));
+        renderSingleCalendar();
+      } else {
+        rangeCalendarMonth = monthShift(rangeCalendarMonth, Number(step.dataset.monthStep));
+        renderRangeCalendar();
+      }
+      return;
+    }
+    const day = event.target.closest("button[data-calendar-day]");
+    if (!day) return;
+    const iso = day.dataset.calendarDay;
+    if (mode === "single") {
+      closeSingleCalendar();
+      chooseDateSelection({ mode: "single", day: iso, start: iso, end: iso,
+        weekdays: [0, 1, 2, 3, 4, 5, 6], order: "round-date" });
+      return;
+    }
+    if (dateDraft.stage === "start" || dateDraft.stage === "done") {
+      dateDraft.start = iso;
+      dateDraft.end = null;
+      dateDraft.stage = "end";
+    } else if (iso >= dateDraft.start) {
+      dateDraft.end = iso;
+      dateDraft.stage = "done";
+    } else {
+      dateDraft.start = iso;
+      dateDraft.end = null;
+    }
+    dateRangeError.hidden = true;
+    renderRangeCalendar();
+  }
+
+  function applyRangeSelection() {
+    if (!dateDraft.start || !dateDraft.end) {
+      dateRangeError.textContent = "Please select both start and end dates.";
+    } else if (!dateDraft.weekdays.size) {
+      dateRangeError.textContent = "Select at least one day of the week.";
+    } else {
+      const inclusive = Math.round((fromIso(dateDraft.end) - fromIso(dateDraft.start)) / DAY_MS) + 1;
+      if (inclusive > 31) {
+        dateRangeError.textContent = "Select up to 31 calendar days in this prototype.";
+      } else {
+        const next = {
+          mode: "range", day: dateDraft.start, start: dateDraft.start,
+          end: dateDraft.end, weekdays: Array.from(dateDraft.weekdays).sort(),
+          order: dateDraft.order
+        };
+        const candidates = [];
+        for (let day = next.start; day <= next.end; day = addDays(day, 1)) {
+          if (next.weekdays.includes(dayIndex(day))) candidates.push(day);
+        }
+        if (candidates.length) {
+          closeRangeCalendar();
+          chooseDateSelection(next);
+          return;
+        }
+        dateRangeError.textContent = "No selected weekdays fall within this date range.";
+      }
+    }
+    dateRangeError.hidden = false;
+  }
+
+  function bindDateControls() {
+    document.getElementById("date-prev").addEventListener("click", function () {
+      const range = isRangeView();
+      const day = addDays(dateSelection.day, -1);
+      chooseDateSelection(range
+        ? Object.assign({}, dateSelection, { day: addDays(dateSelection.start, -1),
+          start: addDays(dateSelection.start, -1), end: addDays(dateSelection.end, -1) })
+        : Object.assign({}, dateSelection, { day: day, start: day, end: day }));
+    });
+    document.getElementById("date-next").addEventListener("click", function () {
+      const range = isRangeView();
+      const day = addDays(dateSelection.day, 1);
+      chooseDateSelection(range
+        ? Object.assign({}, dateSelection, { day: addDays(dateSelection.start, 1),
+          start: addDays(dateSelection.start, 1), end: addDays(dateSelection.end, 1) })
+        : Object.assign({}, dateSelection, { day: day, start: day, end: day }));
+    });
+    dateTodayButton.addEventListener("click", function () {
+      chooseDateSelection({ mode: "single", day: todayKey, start: todayKey, end: todayKey,
+        weekdays: [0, 1, 2, 3, 4, 5, 6], order: "round-date" });
+      closeSingleCalendar();
+    });
+    dateCalendarButton.addEventListener("click", openSingleCalendar);
+    dateSingleCalendar.addEventListener("click", function (event) {
+      onCalendarAction(event, "single");
+    });
+    document.getElementById("date-range-open").addEventListener("click", openRangeCalendar);
+    dateRangeCalendar.addEventListener("click", function (event) {
+      onCalendarAction(event, "range");
+    });
+    dateWeekdays.addEventListener("change", function (event) {
+      const input = event.target;
+      if (!input || input.type !== "checkbox") return;
+      const index = Number(input.value);
+      if (input.checked) dateDraft.weekdays.add(index);
+      else dateDraft.weekdays.delete(index);
+      dateRangeError.hidden = true;
+    });
+    document.getElementById("date-sort-toggle").addEventListener("click", function () {
+      dateDraft.order = dateDraft.order === "round-date" ? "date-round" : "round-date";
+      renderRangeCalendar();
+    });
+    document.getElementById("date-range-apply").addEventListener("click", applyRangeSelection);
+    document.getElementById("date-range-cancel").addEventListener("click", closeRangeCalendar);
+    document.getElementById("date-range-close").addEventListener("click", closeRangeCalendar);
+    dateRangeBackdrop.addEventListener("pointerdown", function (event) {
+      if (event.target === dateRangeBackdrop) closeRangeCalendar();
+    });
+    document.addEventListener("pointerdown", function (event) {
+      if (!dateSinglePopup.hidden && !event.target.closest(".date-toolbar-wrap")) {
+        closeSingleCalendar();
+      }
+    });
+    dateRangeDialog.addEventListener("keydown", function (event) {
+      if (event.key !== "Tab") return;
+      const controls = Array.from(dateRangeDialog.querySelectorAll('button:not(:disabled),input:not(:disabled)'));
+      if (!controls.length) return;
+      const first = controls[0], last = controls[controls.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    });
+  }
+
   readSavedPlacement();
+  updateDateDisplay();
+  bindDateControls();
   renderGroupFilter();
   renderBoard();
   if (window.DayBoardMap) {
