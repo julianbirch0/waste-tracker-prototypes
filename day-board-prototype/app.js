@@ -973,11 +973,16 @@
   // Driver changes are edited in a working copy. None of these controls
   // mutate the Day Board until Save and Close is pressed.
   function driverDialogRows() {
-    const used = new Set(Object.keys(draftDrivers).map(function (id) {
-      return draftDrivers[id];
+    const editedTrip = getTrip(driverDialogTripId);
+    const sameDayTrips = state.trips.filter(function (trip) {
+      return trip.date === editedTrip.date;
+    });
+    // A driver assigned on another day is still available on this date.
+    const used = new Set(sameDayTrips.map(function (trip) {
+      return draftDrivers[trip.id];
     }).filter(Boolean));
     const free = availableDrivers.filter(function (name) { return !used.has(name); });
-    const rows = state.trips.filter(function (trip) {
+    const rows = sameDayTrips.filter(function (trip) {
       return trip.id !== driverDialogTripId && Boolean(draftDrivers[trip.id]);
     }).map(function (trip) {
       return { name: draftDrivers[trip.id], tripId: trip.id, tripName: trip.name,
@@ -1077,6 +1082,7 @@
       draftDrivers[driverDialogTripId] = driverName;
     } else if (action === "swap" && draftDrivers[driverDialogTripId] &&
                otherTripId && otherTripId !== driverDialogTripId &&
+               getTrip(otherTripId) && getTrip(otherTripId).date === getTrip(driverDialogTripId).date &&
                draftDrivers[otherTripId] === driverName) {
       const previous = draftDrivers[driverDialogTripId];
       draftDrivers[driverDialogTripId] = driverName;
@@ -1145,11 +1151,16 @@
   // Vehicle changes are edited in a working copy. None of these controls
   // mutate the Day Board until Save and Close is pressed.
   function vehicleDialogRows() {
-    const used = new Set(Object.keys(draftVehicles).map(function (id) {
-      return draftVehicles[id];
+    const editedTrip = getTrip(vehicleDialogTripId);
+    const sameDayTrips = state.trips.filter(function (trip) {
+      return trip.date === editedTrip.date;
+    });
+    // An allocated vehicle on another date can still be available today.
+    const used = new Set(sameDayTrips.map(function (trip) {
+      return draftVehicles[trip.id];
     }).filter(Boolean));
     const free = availableVehicles.filter(function (name) { return !used.has(name); });
-    const rows = state.trips.filter(function (trip) {
+    const rows = sameDayTrips.filter(function (trip) {
       return trip.id !== vehicleDialogTripId && Boolean(draftVehicles[trip.id]);
     }).map(function (trip) {
       return { name: draftVehicles[trip.id], tripId: trip.id, tripName: trip.name,
@@ -1249,6 +1260,7 @@
       draftVehicles[vehicleDialogTripId] = vehicleRegistration;
     } else if (action === "swap" && draftVehicles[vehicleDialogTripId] &&
                otherTripId && otherTripId !== vehicleDialogTripId &&
+               getTrip(otherTripId) && getTrip(otherTripId).date === getTrip(vehicleDialogTripId).date &&
                draftVehicles[otherTripId] === vehicleRegistration) {
       const previous = draftVehicles[vehicleDialogTripId];
       draftVehicles[vehicleDialogTripId] = vehicleRegistration;
