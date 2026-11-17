@@ -1,4 +1,4 @@
-# Day Board prototype — V00008
+# Day Board prototype — V00009
 
 A standalone, local-file-friendly WasteTracker Day Board prototype.
 
@@ -14,7 +14,7 @@ There is **no localhost, build step, framework, CDN or web service**. Keep index
 
 - 12 Trip columns, each showing the **parent Round name only**, with Vehicle and Driver displayed as read-only text.
 - **Round groups** are represented by four invented operational groups: Skips Team, Trade & Bins, Recycling & Deliveries, and Specialist Fleet. These are mock assignments independent of the existing Round Definition prototype.
-- **Groups multi-select** above the Day Board defaults to **All**. Tick any combination of groups, use **All** (all groups), **All the Rest** (invert the current selection) or **Nothing** (no Trip groups). The sticky Unallocated column remains visible in the full board even with Nothing selected. These selections filter which Trip columns appear in the full-width Day Board.
+- **Groups multi-select** above the Day Board defaults to all groups selected. A single **Select All** checkbox appears above a subtle divider and the individual group checkboxes. Select All ticks or unticks every group, shows a mixed state if only some groups are selected, and the sticky Unallocated column remains visible even when all groups are unticked. These selections filter which Trip columns appear in the full-width Day Board.
 - Every Job card now has a subtle light-blue **planned** status pill; this is a placeholder for future Job status workflows.
 - A **horizontally sticky Unallocated column** on the left.
 - Trip headers that remain visible when scrolling vertically.
@@ -35,12 +35,12 @@ There is **no localhost, build step, framework, CDN or web service**. Keep index
 - Multiple levels of **Undo/Redo** (up to 100 moves), with a brief confirmation toast.
 - Shortcuts: **Ctrl+Z** (Undo), **Ctrl+Y** or **Ctrl+Shift+Z** (Redo).
 - Invented sample data: **208 Jobs** across **12 Trips** and **15 initially Unallocated Jobs**. There are enough Jobs and Trips to force both scroll directions at typical desktop sizes.
-- V00008 replaces the random sample coordinates with a **sensible pre-planned serpentine visiting order for every Trip**. Unsequenced Jobs appear near likely insertion points in their Trip, and Unallocated Jobs are near appropriate Trips with matching service types. Coordinates are still fictional, not real postcode locations.
-- The demonstration data uses a **new V00008 browser storage key**, ensuring these re-planned sample sequences appear as the starting position after the update. Older V00007 edits are not imported.
+- V00009 replaces the random sample coordinates with a **sensible pre-planned serpentine visiting order for every Trip**. Unsequenced Jobs appear near likely insertion points in their Trip, and Unallocated Jobs are near appropriate Trips with matching service types. Coordinates are still fictional, not real postcode locations.
+- The demonstration data uses a **new V00009 browser storage key**, ensuring these re-planned sample sequences appear as the starting position after the update. Older V00007 edits are not imported.
 - Browser storage of changed positions when supported by the browser's file:// storage rules. The board still works in memory if browser storage is unavailable.
 - **Reset sample data** to restore the initial positions (also clears Undo/Redo history).
 
-## Map mode (V00008)
+## Map mode (V00009)
 
 - **Show map** slides a self-contained illustrated map in from the right of the Day Board, at one-third of the previous entrance speed (~1.14 seconds); **Hide map** retains its faster exit (~0.34 seconds) and restores the original full grid.
 - The map appears alongside the **selected grid columns**, which retain their normal widths. Adding a grid column shrinks the available map space; removing one expands it. The vertical list of all Trips (plus Unallocated) is always present on the right.
