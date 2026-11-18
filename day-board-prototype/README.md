@@ -1,4 +1,4 @@
-# Day Board prototype — V00020
+# Day Board prototype — V00021
 
 A standalone, local-file-friendly WasteTracker Day Board prototype.
 
@@ -36,25 +36,27 @@ There is **no localhost, build step, framework, CDN or web service**. Keep index
 - Shortcuts: **Ctrl+Z** (Undo), **Ctrl+Y** or **Ctrl+Shift+Z** (Redo).
 - Invented sample data: **208 Jobs** across **12 Trips** and **15 initially Unallocated Jobs per generated day**. There are enough Jobs and Trips to force both scroll directions at typical desktop sizes.
 - V00008 replaces the random sample coordinates with a **sensible pre-planned serpentine visiting order for every Trip**. Unsequenced Jobs appear near likely insertion points in their Trip, and Unallocated Jobs are near appropriate Trips with matching service types. Coordinates are still fictional, not real postcode locations.
-- The demonstration data retains the **V00008 browser storage key** to preserve previously saved Job, driver and vehicle changes. Starting with V00020, edits are stored against dated Trip/Job instances (storage format V4).
+- The demonstration data retains the **V00008 browser storage key** to preserve previously saved Job, driver and vehicle changes. Starting with V00021, edits are stored against dated Trip/Job instances (storage format V4).
 - Browser storage of changed positions when supported by the browser's file:// storage rules. The board still works in memory if browser storage is unavailable.
 - **Reset sample data** to restore the initial positions (also clears Undo/Redo history).
 
-## Summary toolbar layout (V00020)
+## Summary toolbar layout (V00021)
 
 - The Day Board toolbar displays **three ordered sections on the same line** at typical desktop widths: **Job/Trip/Unallocated/Unsequenced totals**, **Groups and Trips filter**, and finally **driver/vehicle warning pills** (single-day mode) or **Display order: Round then Date ⇄** (range mode).
-- The totals and Groups and Trips sections each have **reserved horizontal widths**, with modest separators and padding. The totals region was tightened from 500px to **400px in V00020** to remove excessive empty space while preserving a stable dropdown position. The **Groups and Trips dropdown stays in the same horizontal position** when Job totals change, issue warnings appear/disappear, or the display order toggle is shown instead.
+- The totals and Groups and Trips sections each have **reserved horizontal widths**, with modest separators and padding. The totals region was tightened from 500px to **400px in V00021** to remove excessive empty space while preserving a stable dropdown position. The **Groups and Trips dropdown stays in the same horizontal position** when Job totals change, issue warnings appear/disappear, or the display order toggle is shown instead.
 - In range mode, the first total now reads **N jobs displayed**, not "jobs in range". This counts only Jobs actually in the rendered columns, including Unallocated when visible, and honours the **40-column limit** and Group/Trip filtering. The other three totals retain their existing full-date-view counts. In single-day mode the established **jobs today / jobs on day** wording remains.
 
-## Date selection and date ranges (V00020)
+## Date selection and date ranges (V00021)
 
 - **The currently selected date/range is the visual centrepiece at the top of the Day Board**, formatted **`dd-mmm`** for single dates (e.g. **18-Nov**) and **`dd-mmm – dd-mmm`** for ranges (e.g. **23-Nov – 28-Nov**). The main date stays **26 px**, with the relative description or selected-day count on a separate **12 px** line. Both single and range views use the **same fixed 275 px field**, keeping the whole date toolbar's width and both navigation buttons in precisely the same positions.
 - For **single dates**, the date is followed by an intelligent relative description, calculated from browser-local Today using Monday–Sunday weeks: **Yesterday**, **Today**, **Tomorrow**, **This Thursday**, **Next Monday**, **Monday in 2 weeks**, **Monday 2 weeks ago**, **Monday last week**, or **Monday, this week** (for earlier days in the same week). The large caption makes it much harder to edit the wrong day's Jobs.
 - **− / +** move one day backward or forward **only in single-date view**. In range view they **remain visible but disabled**; they are never removed from the layout. The main **Select Today** shortcut returns to Today, disabled when Today is already the active single date. The separate calendar-icon button remains removed.
-- **Edit Date Filter** opens a single modal with **Preset** and **Custom** tabs. All filter edits are provisional until **Apply**; **Cancel** or Escape discards changes. The modal preserves the existing Apply and Cancel footer.
-- **Preset** includes **Today, Tomorrow, This week, Next week, This month, Next month**. Weeks start on Monday and end Sunday; months use actual calendar boundaries. Single-day presets show one dated Trip instance; week/month presets show a range.
-- **Custom** offers **Single date** or **Date range** modes above a Monday-first monthly calendar. In single mode, clicking any day selects it; clicking another replaces the draft single date, and Apply commits it. In range mode, the first click tentatively establishes the start date; the second establishes the end date. **If the second click is earlier, the two endpoints automatically exchange places**. A third click begins a new draft range.
-- **Today is outlined but unselected** in a fresh custom range. The instruction changes from **Select start date** to **Select end date**, without the word "the". Custom range mode alone shows **Mon–Sun checkboxes**, initially all selected; their checked state is deliberately **pale mint** rather than strongly filled. Unselected weekdays and their Trips are excluded from the range. Apply validates that both dates and at least one included weekday are chosen.
+- **Edit Date Filter** now visually matches the production **Reports** date filter: soft grey preset choices, **teal segmented Presets/Custom tabs**, generous spacing and a **fixed-size dialog** that does not resize when switching tabs. There is **no redundant current-date preview**. Apply and Cancel stay in their original footer positions. The reserved 40-column notice is **neutral white when empty**, turning subtle amber only when the message appears.
+- **Opening state:** Presets is shown by default, with **no preset highlighted**, even when a preset is already active on the board. If and only if the current filter is an **existing custom date range**, the dialog opens on **Custom** with the selected range intact and the calendar displaying the **month containing its start date**. A prior custom single-date filter still opens on Presets, with its date retained if the user switches to Custom.
+- **Presets** retains **Today, Tomorrow, This Week, Next Week, This Month, Next Month**. **Today and Tomorrow apply immediately and dismiss the dialog** without an extra Apply click. Week/month presets show **Monday–Sunday checkboxes**, initially all selected. A small underlined **Deselect all** text control is shown when all seven are ticked; otherwise it reads **Select all**. No weekdays selected, or a filter identical to the current one, disables **Apply**. Selecting another week/month preset starts with all weekdays selected.
+- **Custom** presents one **Monday-first calendar**, without Single Date/Date Range buttons. One click selects **one date**, which can be applied immediately; a second click selects a range, automatically sorting the endpoints chronologically regardless of click order. **Today is outlined but not selected** for a fresh custom selection.
+- **Editable range endpoints:** The dialog remembers which range endpoint was last clicked/adjusted. A click **inside** the range moves that last-adjusted endpoint, allowing it to shrink in the direction the user originally chose (e.g. 21→17→18 means 18–21 Nov; 17→21→19 means 17–19 Nov). A click **outside** extends the appropriate boundary (17→21→25 gives 17–25 Nov; 17→21→14 gives 14–21 Nov). Clicking either selected boundary deselects just that boundary and leaves the other date selected as a **single date**. Clicking the remaining selected date clears the selection entirely. There is no need for a Reset button.
+- The weekday checkboxes appear **only when two custom dates form a range**, or when a week/month preset is chosen. Their light mint checked state is deliberately restrained. Weekday changes are provisional until Apply; ranges with no selected days, ranges exceeding the prototype's 31-day limit, and unchanged filters all keep **Apply disabled**. **Cancel**, Escape, and clicking the backdrop discard unsaved changes.
 - **Display order: Round then Date ⇄** now sits on the **main page beside Groups and Trips**, rather than in the date toolbar, shown **only for any range view** (preset or custom). It swaps to **Date then Round**, applying immediately to the existing grid without reopening the date modal. The control is absent for single dates.
 - Date-range views repeat the relevant Round as a separate dated Trip for each included day, with **`ddd, dd-mmm`** shown prominently in its column heading. The map's Trip labels and driver/vehicle dialogs also distinguish each date. Assignment dialogs operate on the Trip's own day, while cross-date Job moves remain possible.
 - **A maximum of 40 columns** is rendered in the full grid, in the current display order, **including Unallocated when selected**. The limit is evaluated after the date range, weekday and Groups and Trips selections are applied. If more than 40 columns qualify, a **reserved message row inside the Edit Date Filter dialog**, immediately above its Apply/Cancel footer, displays the exact message: **"Only the first 40 columns will be displayed in the grid."** This warning is calculated against the **draft date/weekday filter and existing Group/Trip selections** before Apply; its reserved height avoids dialog layout shifts. Nothing appears underneath the main date toolbar. All dated Jobs and Trips remain stored, even when their columns are beyond the visible 40.
@@ -62,7 +64,7 @@ There is **no localhost, build step, framework, CDN or web service**. Keep index
 - The Groups and Trips selection follows parent Round names when navigating dates. Date changes clear the current view's Undo/Redo history, preventing actions on the wrong day. Dated Job positions, cross-date moves and driver/vehicle assignments remain saved under the existing browser key using V4 storage.
 - The prototype currently accepts custom ranges of up to **31 calendar days** to constrain the amount of generated sample data. **Reset sample data** restores original Jobs and allocations across all dates. Older V1–V3 saved edits are migrated to the original **Monday 16-Nov-2026** sample day, not silently assigned to Today.
 
-## Driver assignment and swapping (V00020)
+## Driver assignment and swapping (V00021)
 
 - A small **⇄** button beside the driver in each Trip heading opens **Change driver**. This works in both the full Day Board and the map's visible grid columns.
 - The dialog displays **Trip (Round)**, the **actual selected Trip date** (e.g. **Tuesday, 17-Nov**), and the current **Assigned driver** (or **Unassigned**) with an **Unassign** button when a driver exists.
@@ -77,7 +79,7 @@ There is **no localhost, build step, framework, CDN or web service**. Keep index
 - The sample starts with **two unassigned Trips** (Recycling 1 and Bin Deliveries), **one driver on two Trips** (Lisa Walker on Skips 2 and Skips 4), and **five unassigned drivers**. The new driver assignments are saved alongside existing Job placements in the same browser storage key, with backwards compatibility for older saved placements.
 - **Reset sample data** restores the pre-planned Job placements, original driver allocations and original vehicle allocations, and clears Undo/Redo.
 
-## Vehicle assignment and swapping (V00020)
+## Vehicle assignment and swapping (V00021)
 
 - Each Trip's **Vehicle** line has its own small **⇄** button beside the registration, matching the Driver edit button.
 - The **Change vehicle** dialog shows the parent Round/Trip name, **its actual date**, the current vehicle registration (or **Unassigned**) and an **Unassign** button when a vehicle exists.
@@ -90,7 +92,7 @@ There is **no localhost, build step, framework, CDN or web service**. Keep index
 - Demonstration data begins with **two vehicle-unassigned Trips** (Recycling 1 and Wait and Load), **one vehicle on two Trips** (BX73 FHT on Skips 2 and Skips 4), and **five unassigned vehicle registrations** available to assign.
 - Persistence remains on the existing Day Board browser-storage key. **Version 4** stores dated Jobs, driver and vehicle assignments, with backwards-compatible loading of V1–V3. Their existing edits are correctly migrated to the **original Monday 16-Nov-2026 sample day**, not accidentally attributed to Today.
 
-## Map mode (V00020)
+## Map mode (V00021)
 
 - **Show map** slides a self-contained illustrated map in from the right of the Day Board, at one-third of the previous entrance speed (~1.14 seconds); **Hide map** retains its faster exit (~0.34 seconds) and restores the original full grid.
 - The map appears alongside the **selected grid columns**, which retain their normal widths. Adding a grid column shrinks the available map space; removing one expands it. The vertical list of all Trips (plus Unallocated) is always present on the right.
