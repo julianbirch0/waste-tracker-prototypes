@@ -1,4 +1,4 @@
-/* WasteTracker Day Board V00018
+/* WasteTracker Day Board V00019
    Standalone, file:// compatible. Custom pointer drag-and-drop; no dependencies. */
 (function () {
   "use strict";
@@ -532,12 +532,14 @@
     '</div>';
   }
 
-  function updateSummary() {
+  function updateSummary(displayedJobs) {
     const unsequenced = state.trips.reduce(function (n, t) { return n + t.unsequenced.length; }, 0);
-    const jobs = Object.keys(state.jobs).length;
+    // "Jobs displayed" means Jobs in the actual rendered grid columns,
+    // including the 40-column cap and current Group/Trip selection.
+    const jobs = isRangeView() ? displayedJobs : Object.keys(state.jobs).length;
     summary.innerHTML =
       '<span class="summary-item"><strong>' + jobs + '</strong> ' +
-        (isRangeView() ? 'jobs in range' : dateSelection.day === todayKey ? 'jobs today' : 'jobs on day') +
+        (isRangeView() ? 'jobs displayed' : dateSelection.day === todayKey ? 'jobs today' : 'jobs on day') +
         '</span>' +
       '<span class="summary-dot"></span>' +
       '<span class="summary-item"><strong>' + state.trips.length + '</strong> trips</span>' +
@@ -775,12 +777,17 @@
     const left = scroller.scrollLeft;
     const top = scroller.scrollTop;
     const mapColumns = window.DayBoardMap && window.DayBoardMap.visibleColumns();
+    let displayedJobs = 0;
     if (mapColumns) {
       // Map mode renders only chosen columns, including an optional
       // Unallocated column. Their order follows the user's checkbox choices.
       board.innerHTML = mapColumns.map(function (id) {
-        if (id === "unallocated") return renderUnallocated();
+        if (id === "unallocated") {
+          displayedJobs += state.unallocated.length;
+          return renderUnallocated();
+        }
         const trip = getTrip(id);
+        if (trip) displayedJobs += trip.unsequenced.length + trip.sequenced.length;
         return trip ? renderTrip(trip) : "";
       }).join("");
     } else {
@@ -789,13 +796,17 @@
       const showAvailable = !activeWarningFilter && showUnallocated;
       const shownTrips = displayTripsInOrder().slice(0,
         MAX_GRID_COLUMNS - (showAvailable ? 1 : 0));
+      displayedJobs = (showAvailable ? state.unallocated.length : 0) +
+        shownTrips.reduce(function (total, trip) {
+          return total + trip.unsequenced.length + trip.sequenced.length;
+        }, 0);
       board.innerHTML = (showAvailable ? renderUnallocated() : "") +
         shownTrips.map(renderTrip).join("");
       if (!showAvailable && shownTrips.length === 0) {
         board.innerHTML = '<div class="board-no-columns">No Trips selected. Use Groups and Trips to choose what to display.</div>';
       }
     }
-    updateSummary();
+    updateSummary(displayedJobs);
     updateColumnLimitNotice();
     scroller.scrollLeft = left;
     scroller.scrollTop = top;
