@@ -2370,3 +2370,23 @@ button:focus-visible, .board-scroll:focus-visible {
   margin-top: 20px;
   padding-top: 13px;
 }
+
+
+/* V00025: both single-date and range-date captions occupy the same width.
+   The largest weekday description fits without shifting navigation buttons. */
+.date-display,
+.date-range-view .date-display {
+  flex: 0 0 340px;
+  width: 340px;
+  min-width: 340px;
+  max-width: 340px;
+}
+@media (max-width: 660px) {
+  .date-display,
+  .date-range-view .date-display {
+    flex: 0 0 min(340px, calc(100vw - 24px));
+    width: min(340px, calc(100vw - 24px));
+    min-width: 0;
+    max-width: min(340px, calc(100vw - 24px));
+  }
+}

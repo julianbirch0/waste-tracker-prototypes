@@ -1,4 +1,4 @@
-/* WasteTracker Day Board V00024
+/* WasteTracker Day Board V00025
    Standalone, file:// compatible. Custom pointer drag-and-drop; no dependencies. */
 (function () {
   "use strict";
@@ -2093,17 +2093,28 @@
   let rangeCalendarMonth = todayKey.slice(0, 7) + "-01";
   let dateDraft = null;
 
+  function weekdaySelectionDescription(days) {
+    const selected = WEEKDAYS.filter(function (_, index) {
+      return days.includes(index);
+    });
+    if (selected.length === 7) return "All days shown";
+    if (!selected.length) return "No days shown";
+    if (selected.length === 1) return "Showing " + selected[0] + " only";
+    return "Showing " + selected.slice(0, -1).join(", ") +
+      " and " + selected[selected.length - 1] + " only";
+  }
+
   function updateDateDisplay() {
     const single = !isRangeView();
-    const count = datesInSelection().length;
     dateLabelElement.textContent = single
       ? dateLabel(dateSelection.day)
       : dateLabel(dateSelection.start) + " – " + dateLabel(dateSelection.end);
     dateDescriptionElement.textContent = single
       ? relativeDateDescription(dateSelection.day)
-      : count + (count === 1 ? " selected day" : " selected days");
+      : weekdaySelectionDescription(dateSelection.weekdays);
     dateLabelElement.title = single ? shortDate(dateSelection.day)
-      : count + " selected days";
+      : shortDate(dateSelection.start) + " to " + shortDate(dateSelection.end) +
+        " · " + weekdaySelectionDescription(dateSelection.weekdays);
     dateTodayButton.disabled = single && dateSelection.day === todayKey;
     datePrevButton.disabled = !single;
     dateNextButton.disabled = !single;
