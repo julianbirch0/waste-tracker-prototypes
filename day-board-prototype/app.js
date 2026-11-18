@@ -1,4 +1,4 @@
-/* WasteTracker Day Board V00023
+/* WasteTracker Day Board V00024
    Standalone, file:// compatible. Custom pointer drag-and-drop; no dependencies. */
 (function () {
   "use strict";
@@ -2301,7 +2301,7 @@
     if (custom) {
       dateRangeCalendar.innerHTML = calendarMarkup(rangeCalendarMonth);
       dateRangeInstruction.textContent = !dateDraft.start ? "Select a single date or select two dates to select a date range."
-        : !dateDraft.end ? "Select end date"
+        : !dateDraft.end ? "Click Apply to filter to a single date, or select a second date to select a date range."
         : dateLabel(dateDraft.start) + " – " + dateLabel(dateDraft.end);
     }
 
