@@ -2362,3 +2362,11 @@ button:focus-visible, .board-scroll:focus-visible {
     overflow-y: auto;
   }
 }
+
+
+/* V00023 — extra breathing room above Days to display for range presets only.
+   Custom calendar spacing stays compact to avoid reintroducing scrolling. */
+.date-range-scroll:has(#date-preset-panel:not([hidden])) #date-range-weekday-block:not([hidden]) {
+  margin-top: 20px;
+  padding-top: 13px;
+}
