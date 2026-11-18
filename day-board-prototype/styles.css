@@ -1845,7 +1845,7 @@ button:focus-visible, .board-scroll:focus-visible {
 }
 .date-range-weekdays input[type="checkbox"]:checked {
   border-color: #86c4b3;
-  background: #e9f7f1 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath d='M3.1 8.2l3.1 3.0 6.6-6.5' fill='none' stroke='%232a8578' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 14px 14px no-repeat;
+  background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath d='M3.1 8.2l3.1 3.0 6.6-6.5' fill='none' stroke='%232a8578' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 14px 14px no-repeat;
 }
 .date-range-weekdays input[type="checkbox"]:focus-visible {
   outline: 2px solid #438f83;
@@ -2171,7 +2171,7 @@ button:focus-visible, .board-scroll:focus-visible {
 .date-preset-panel {
   flex: 0 0 auto;
   padding: 0;
-  margin: auto 0;
+  margin: 0;
 }
 .date-preset-grid {
   display: grid;
@@ -2198,7 +2198,7 @@ button:focus-visible, .board-scroll:focus-visible {
   border-color: #35a99c;
 }
 .date-range-scroll:has(#date-range-weekday-block:not([hidden])) .date-preset-panel {
-  margin: 16px 0 24px;
+  margin: 0;
 }
 #date-custom-panel {
   flex: 0 0 auto;
@@ -2306,4 +2306,59 @@ button:focus-visible, .board-scroll:focus-visible {
   .date-filter-tabs { margin-left: 13px; margin-right: 13px; }
   .date-range-scroll { padding-left: 13px; padding-right: 13px; }
   .date-range-weekdays { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+
+/* V00022 — compact, stable date dialog.
+   Presets stay aligned to the top whether weekdays are showing or not.
+   The six-week custom calendar and seven weekdays fit without desktop scroll.
+   Rounded corners clip the footer and reserved notice cleanly. */
+.date-range-dialog {
+  overflow: hidden;
+}
+.date-range-scroll {
+  overflow-y: hidden;
+  padding-top: 9px;
+  padding-bottom: 7px;
+}
+.date-range-scroll .date-preset-panel {
+  margin: 0;
+}
+.date-range-scroll .date-calendar-header {
+  padding-bottom: 4px;
+}
+.date-range-scroll .date-calendar-grid {
+  gap: 4px;
+}
+.date-range-scroll .date-calendar-weekday {
+  height: 24px;
+}
+.date-range-scroll .date-calendar-day {
+  height: 31px;
+}
+.date-range-instruction {
+  margin: 3px 0 0;
+  padding: 5px 0;
+}
+.date-range-weekday-block {
+  margin-top: 4px;
+  padding-top: 6px;
+  padding-bottom: 7px;
+}
+.date-range-weekdays {
+  margin-top: 6px;
+}
+.date-range-weekdays label {
+  min-height: 32px;
+  padding: 3px 4px;
+}
+.date-range-weekdays input[type="checkbox"],
+.date-range-weekdays input[type="checkbox"]:checked {
+  background-color: #fff;
+}
+/* Short/zoomed-in screens may scroll instead of clipping controls. */
+@media (max-height: 720px) {
+  .date-range-scroll {
+    overflow-y: auto;
+  }
 }
