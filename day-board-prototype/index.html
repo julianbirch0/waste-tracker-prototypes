@@ -4,14 +4,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light">
-  <title>Day Board | WasteTracker Prototype V00018</title>
+  <title>Day Board | WasteTracker Prototype V00019</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <main class="page">
     <header class="page-header">
       <div class="page-heading">
-        <h1>Day Board <span class="version">V00018</span></h1>
+        <h1>Day Board <span class="version">V00019</span></h1>
         <p class="subtitle">Carrier scheduling · Day Board</p>
       </div>
       <div class="date-toolbar-wrap">
@@ -36,20 +36,22 @@
 
     <section class="board-section" aria-label="Day Board">
       <div class="board-toolbar">
+        <div class="board-counts-slot">
+          <div class="board-summary" id="board-summary" role="status" aria-live="polite"></div>
+        </div>
         <div class="group-filter-wrap" id="group-filter-wrap">
           <span class="group-filter-label">Groups and Trips</span>
           <button type="button" class="group-filter-button" id="group-filter-button"
             aria-haspopup="true" aria-expanded="false" aria-controls="group-filter-panel">All <span aria-hidden="true">▾</span></button>
           <div class="group-filter-panel" id="group-filter-panel" aria-label="Select groups and Trips" hidden></div>
         </div>
-        <div id="date-main-sort" class="date-main-sort board-date-sort" hidden>
-          <span>Display order:</span>
-          <strong id="date-sort-label">Round then Date</strong>
-          <button type="button" id="date-sort-toggle" class="date-sort-toggle" aria-label="Swap display order" title="Swap display order">⇄</button>
-        </div>
-        <div class="board-summary-line">
-          <div class="board-summary" id="board-summary" role="status" aria-live="polite"></div>
+        <div class="board-context-controls">
           <div id="driver-warnings" class="driver-warnings" aria-label="Driver and vehicle allocation warnings" aria-live="polite" hidden></div>
+          <div id="date-main-sort" class="date-main-sort board-date-sort" hidden>
+            <span>Display order:</span>
+            <strong id="date-sort-label">Round then Date</strong>
+            <button type="button" id="date-sort-toggle" class="date-sort-toggle" aria-label="Swap display order" title="Swap display order">⇄</button>
+          </div>
         </div>
         <div class="board-tools">
           <span class="board-tip">Click or drag · Shift-click / Ctrl-click to select · Hold near top/bottom to scroll</span>
