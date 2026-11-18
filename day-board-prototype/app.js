@@ -702,7 +702,11 @@
   const columnLimitElement = document.getElementById("date-column-limit");
 
   function updateColumnLimitNotice() {
-    const count = isRangeView() ? displayTripsInOrder().length : 0;
+    // Unallocated is itself a grid column when selected, so it counts
+    // towards the 40-column maximum.
+    const count = isRangeView()
+      ? displayTripsInOrder().length + (!activeWarningFilter && showUnallocated ? 1 : 0)
+      : 0;
     const limited = count > MAX_GRID_COLUMNS;
     columnLimitElement.textContent = limited
       ? "Only the first 40 columns will be displayed in the grid." : "";
@@ -745,8 +749,9 @@
     } else {
       // The full board shows only Trips in the chosen/expanded groups.
       // Unallocated remains the sticky first column even for "Nothing".
-      const shownTrips = displayTripsInOrder().slice(0, MAX_GRID_COLUMNS);
       const showAvailable = !activeWarningFilter && showUnallocated;
+      const shownTrips = displayTripsInOrder().slice(0,
+        MAX_GRID_COLUMNS - (showAvailable ? 1 : 0));
       board.innerHTML = (showAvailable ? renderUnallocated() : "") +
         shownTrips.map(renderTrip).join("");
       if (!showAvailable && shownTrips.length === 0) {
