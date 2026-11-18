@@ -4,14 +4,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light">
-  <title>Day Board | WasteTracker Prototype V00017</title>
+  <title>Day Board | WasteTracker Prototype V00018</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <main class="page">
     <header class="page-header">
       <div class="page-heading">
-        <h1>Day Board <span class="version">V00017</span></h1>
+        <h1>Day Board <span class="version">V00018</span></h1>
         <p class="subtitle">Carrier scheduling · Day Board</p>
       </div>
       <div class="date-toolbar-wrap">
@@ -19,18 +19,13 @@
           <button type="button" id="date-today" class="date-action">Select Today</button>
           <button type="button" id="date-prev" class="date-step" aria-label="Previous day" title="Previous day">−</button>
           <div class="date-display" aria-live="polite" aria-atomic="true">
-            <strong id="date-current" class="date-current">18-Nov-2026</strong>
+            <strong id="date-current" class="date-current">18-Nov</strong>
             <span id="date-description" class="date-description">Today</span>
           </div>
           <button type="button" id="date-next" class="date-step" aria-label="Next day" title="Next day">+</button>
           <button type="button" id="date-range-open" class="date-action">Edit Date Filter</button>
-          <div id="date-main-sort" class="date-main-sort" hidden>
-            <span>Display order:</span>
-            <strong id="date-sort-label">Round then Date</strong>
-            <button type="button" id="date-sort-toggle" class="date-sort-toggle" aria-label="Swap display order" title="Swap display order">⇄</button>
-          </div>
+
         </nav>
-        <div id="date-column-limit" class="date-column-limit" role="status" aria-live="polite"></div>
       </div>
       <div class="header-actions">
         <button type="button" class="btn btn-primary" id="toggle-map" aria-expanded="false" aria-controls="map-workspace">Show map</button>
@@ -46,6 +41,11 @@
           <button type="button" class="group-filter-button" id="group-filter-button"
             aria-haspopup="true" aria-expanded="false" aria-controls="group-filter-panel">All <span aria-hidden="true">▾</span></button>
           <div class="group-filter-panel" id="group-filter-panel" aria-label="Select groups and Trips" hidden></div>
+        </div>
+        <div id="date-main-sort" class="date-main-sort board-date-sort" hidden>
+          <span>Display order:</span>
+          <strong id="date-sort-label">Round then Date</strong>
+          <button type="button" id="date-sort-toggle" class="date-sort-toggle" aria-label="Swap display order" title="Swap display order">⇄</button>
         </div>
         <div class="board-summary-line">
           <div class="board-summary" id="board-summary" role="status" aria-live="polite"></div>
@@ -187,6 +187,7 @@
         </div>
         <div id="date-range-error" class="date-range-error" aria-live="polite" hidden></div>
       </div>
+      <div id="date-column-limit" class="date-column-limit date-dialog-column-limit" role="status" aria-live="polite"></div>
       <footer class="date-range-actions">
         <button type="button" class="btn btn-secondary" id="date-range-cancel">Cancel</button>
         <button type="button" class="btn btn-primary" id="date-range-apply">Apply</button>
