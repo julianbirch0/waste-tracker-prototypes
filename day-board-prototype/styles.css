@@ -2016,3 +2016,92 @@ button:focus-visible, .board-scroll:focus-visible {
   .board-date-sort { border-left: 0; padding-left: 0; }
   .date-toolbar { flex-wrap: wrap; }
 }
+
+
+/* V00019: stable three-part Day Board toolbar.
+   Counts occupy a fixed left slot, so changing values/warnings never
+   shift Groups and Trips horizontally. Only the third slot changes:
+   warnings for one day; display order for a date range. */
+.board-toolbar {
+  justify-content: flex-start;
+  align-items: center;
+  column-gap: 13px;
+  row-gap: 9px;
+}
+.board-counts-slot {
+  display: flex;
+  align-items: center;
+  flex: 0 0 500px;
+  width: 500px;
+  min-width: 500px;
+  min-height: 34px;
+  padding-right: 12px;
+  border-right: 1px solid #e6edf1;
+}
+.board-counts-slot .board-summary {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 9px;
+  width: 100%;
+  white-space: nowrap;
+}
+.board-toolbar > .group-filter-wrap {
+  display: inline-flex;
+  justify-content: space-between;
+  flex: 0 0 290px;
+  width: 290px;
+  min-width: 290px;
+  gap: 8px;
+}
+.board-toolbar > .group-filter-wrap .group-filter-button {
+  flex: 0 0 160px;
+  width: 160px;
+  min-width: 160px;
+  max-width: 160px;
+}
+.board-context-controls {
+  display: flex;
+  flex: 0 1 auto;
+  align-items: center;
+  min-width: 0;
+  min-height: 34px;
+  gap: 8px;
+  padding-left: 15px;
+  border-left: 1px solid #e5edf0;
+}
+.board-context-controls .driver-warnings {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+  padding: 0;
+}
+.board-context-controls .board-date-sort {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.board-toolbar > .board-tools {
+  margin-left: auto;
+}
+@media (max-width: 890px) {
+  .board-counts-slot {
+    flex: 0 0 500px;
+  }
+  .board-context-controls { flex: 1 1 100%; }
+}
+@media (max-width: 580px) {
+  .board-counts-slot {
+    flex: 1 1 100%;
+    width: 100%;
+    min-width: 0;
+    overflow-x: auto;
+    padding-right: 0;
+    border-right: 0;
+  }
+  .board-counts-slot .board-summary { width: max-content; }
+  .board-toolbar > .group-filter-wrap {
+    flex-basis: 290px;
+  }
+}
