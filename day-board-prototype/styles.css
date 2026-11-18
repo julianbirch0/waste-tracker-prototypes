@@ -1864,3 +1864,82 @@ button:focus-visible, .board-scroll:focus-visible {
   .date-main-sort { border: 0; margin-left: 0; }
   .date-preset-grid { grid-template-columns: 1fr 1fr; }
 }
+
+
+/* V00017: stable date navigation layout.
+   The date field has a fixed width; its varying relative description
+   occupies a small second line and cannot push the +/- buttons sideways. */
+.date-toolbar {
+  align-items: center;
+}
+.date-display {
+  display: flex;
+  flex: 0 0 275px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 2px;
+  width: 275px;
+  min-width: 275px;
+  max-width: 275px;
+  min-height: 52px;
+  padding: 2px 6px;
+  text-align: center;
+}
+.date-display .date-current {
+  display: block;
+  flex: 0 0 auto;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  color: #214c64;
+  font-size: 26px;
+  font-weight: 780;
+  line-height: 1.12;
+  letter-spacing: -.5px;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.date-description {
+  display: block;
+  flex: 0 0 auto;
+  width: 100%;
+  min-height: 16px;
+  color: #728da0;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 16px;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.date-toolbar #date-today { min-width: 112px; }
+.date-toolbar #date-range-open { min-width: 122px; }
+.date-range-view .date-display {
+  flex-basis: 390px;
+  width: 390px;
+  min-width: 390px;
+  max-width: 390px;
+}
+.date-range-view .date-display .date-current { font-size: 23px; }
+@media (max-width: 660px) {
+  .date-display {
+    flex-basis: 235px;
+    width: 235px;
+    min-width: 235px;
+    max-width: 235px;
+  }
+  .date-display .date-current { font-size: 23px; }
+  .date-range-view .date-display {
+    flex-basis: min(370px, 92vw);
+    width: min(370px, 92vw);
+    min-width: 0;
+    max-width: min(370px, 92vw);
+  }
+  .date-range-view .date-display .date-current { font-size: 20px; }
+}
