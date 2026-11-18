@@ -1,4 +1,4 @@
-/* WasteTracker Day Board V00021
+/* WasteTracker Day Board V00022
    Standalone, file:// compatible. Custom pointer drag-and-drop; no dependencies. */
 (function () {
   "use strict";
@@ -2225,7 +2225,9 @@
   function candidateInvalidReason(candidate) {
     if (!candidate) return "";
     if (candidate.mode === "single") return "";
-    if (!candidate.weekdays.length) return "Select at least one day of the week.";
+    // Empty weekday selections are already obvious from the unticked boxes.
+    // Disable Apply silently rather than displaying a scolding error. 
+    if (!candidate.weekdays.length) return "";
     const days = Math.round((Date.UTC(fromIso(candidate.end).getFullYear(),
       fromIso(candidate.end).getMonth(), fromIso(candidate.end).getDate()) -
       Date.UTC(fromIso(candidate.start).getFullYear(),
@@ -2308,8 +2310,9 @@
     // a layout jump: the dialog has a fixed height and scrollable body.
     dateRangeError.textContent = invalid;
     dateRangeError.hidden = !invalid;
-    dateRangeApply.disabled = !candidate || Boolean(invalid) ||
-      sameDateFilter(candidate, dateSelection);
+    dateRangeApply.disabled = !candidate ||
+      (candidate.mode === "range" && candidate.weekdays.length === 0) ||
+      Boolean(invalid) || sameDateFilter(candidate, dateSelection);
     updateColumnLimitNotice();
   }
 
