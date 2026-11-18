@@ -4,22 +4,25 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light">
-  <title>Day Board | WasteTracker Prototype V00016</title>
+  <title>Day Board | WasteTracker Prototype V00017</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <main class="page">
     <header class="page-header">
       <div class="page-heading">
-        <h1>Day Board <span class="version">V00016</span></h1>
+        <h1>Day Board <span class="version">V00017</span></h1>
         <p class="subtitle">Carrier scheduling · Day Board</p>
       </div>
       <div class="date-toolbar-wrap">
         <nav class="date-toolbar" aria-label="Day Board date selection">
-          <button type="button" id="date-prev" class="date-step" aria-label="Previous day" title="Previous day">−</button>
-          <strong id="date-current" class="date-current" aria-live="polite">18-Nov-2026, Today</strong>
-          <button type="button" id="date-next" class="date-step" aria-label="Next day" title="Next day">+</button>
           <button type="button" id="date-today" class="date-action">Select Today</button>
+          <button type="button" id="date-prev" class="date-step" aria-label="Previous day" title="Previous day">−</button>
+          <div class="date-display" aria-live="polite" aria-atomic="true">
+            <strong id="date-current" class="date-current">18-Nov-2026</strong>
+            <span id="date-description" class="date-description">Today</span>
+          </div>
+          <button type="button" id="date-next" class="date-step" aria-label="Next day" title="Next day">+</button>
           <button type="button" id="date-range-open" class="date-action">Edit Date Filter</button>
           <div id="date-main-sort" class="date-main-sort" hidden>
             <span>Display order:</span>
