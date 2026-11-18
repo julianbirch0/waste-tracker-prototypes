@@ -1,4 +1,4 @@
-/* WasteTracker Day Board V00015
+/* WasteTracker Day Board V00016
    Standalone, file:// compatible. Custom pointer drag-and-drop; no dependencies. */
 (function () {
   "use strict";
@@ -84,10 +84,32 @@
       MONTHS[date.getMonth()] + "-" + date.getFullYear();
   }
 
+  function relativeDateDescription(key, reference) {
+    const today = reference || todayKey;
+    if (key === today) return "Today";
+    if (key === addDays(today, -1)) return "Yesterday";
+    if (key === addDays(today, 1)) return "Tomorrow";
+    const date = fromIso(key);
+    const weekday = ["Sunday", "Monday", "Tuesday", "Wednesday",
+      "Thursday", "Friday", "Saturday"][date.getDay()];
+    const monday = function (iso) { return addDays(iso, -dayIndex(iso)); };
+    const dayNumber = function (iso) {
+      const d = fromIso(iso);
+      return Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / DAY_MS;
+    };
+    const weeks = Math.round((dayNumber(monday(key)) - dayNumber(monday(today))) / 7);
+    if (weeks === 0) return key > today ? "This " + weekday : weekday + ", this week";
+    if (weeks === 1) return "Next " + weekday;
+    if (weeks === -1) return weekday + " last week";
+    if (weeks > 1) return weekday + " in " + weeks + " weeks";
+    return weekday + " " + Math.abs(weeks) + " weeks ago";
+  }
+
   const todayKey = isoLocal(new Date());
   let dateSelection = {
     mode: "single", day: todayKey, start: todayKey, end: todayKey,
-    weekdays: [0, 1, 2, 3, 4, 5, 6], order: "round-date"
+    weekdays: [0, 1, 2, 3, 4, 5, 6], order: "round-date",
+    source: "preset", preset: "today"
   };
   const dayStore = new Map();
   const dayTemplates = new Map();
@@ -676,6 +698,17 @@
     closeGroupFilter();
   });
 
+  const MAX_GRID_COLUMNS = 40;
+  const columnLimitElement = document.getElementById("date-column-limit");
+
+  function updateColumnLimitNotice() {
+    const count = isRangeView() ? displayTripsInOrder().length : 0;
+    const limited = count > MAX_GRID_COLUMNS;
+    columnLimitElement.textContent = limited
+      ? "Only the first 40 columns will be displayed in the grid." : "";
+    columnLimitElement.classList.toggle("is-visible", limited);
+  }
+
   function displayTripsInOrder() {
     const trips = activeWarningFilter
       ? sortedWarningTrips(activeWarningFilter)
@@ -712,7 +745,7 @@
     } else {
       // The full board shows only Trips in the chosen/expanded groups.
       // Unallocated remains the sticky first column even for "Nothing".
-      const shownTrips = displayTripsInOrder();
+      const shownTrips = displayTripsInOrder().slice(0, MAX_GRID_COLUMNS);
       const showAvailable = !activeWarningFilter && showUnallocated;
       board.innerHTML = (showAvailable ? renderUnallocated() : "") +
         shownTrips.map(renderTrip).join("");
@@ -721,6 +754,7 @@
       }
     }
     updateSummary();
+    updateColumnLimitNotice();
     scroller.scrollLeft = left;
     scroller.scrollTop = top;
     if (window.DayBoardMap) window.DayBoardMap.onBoardChange();
@@ -846,6 +880,7 @@
       // The accordion reflects selected groups; Map and Grid checkboxes
       // continue to control map-mode visibility independently.
       window.DayBoardMap.onGroupsChange();
+      updateColumnLimitNotice();
     } else {
       const left = scroller.scrollLeft;
       renderBoard();
@@ -1918,14 +1953,8 @@
     if (!dateRangeBackdrop.hidden) {
       if (event.key === "Escape") {
         event.preventDefault();
-        closeRangeCalendar();
+        closeDateFilter();
       }
-      return;
-    }
-    if (!dateSinglePopup.hidden && event.key === "Escape") {
-      event.preventDefault();
-      closeSingleCalendar();
-      dateCalendarButton.focus();
       return;
     }
     if (!driverDialogBackdrop.hidden || !vehicleDialogBackdrop.hidden) {
@@ -1991,47 +2020,53 @@
   }
 
 
-  // Date controls: the main selection is always prominent, and the range
-  // dialog operates on a draft until Apply. Dates use local noon to avoid DST
-  // transitions affecting the calendar or the previous/next buttons.
+  // Date filter: Preset/Custom choices remain provisional until Apply.
+  // The central date caption is deliberately conspicuous to prevent editing
+  // Trips on the wrong day. Today and all calendar dates use browser-local time.
   const dateLabelElement = document.getElementById("date-current");
   const dateTodayButton = document.getElementById("date-today");
-  const dateCalendarButton = document.getElementById("date-calendar");
-  const dateSinglePopup = document.getElementById("date-single-popup");
-  const dateSingleCalendar = document.getElementById("date-single-calendar");
+  const datePrevButton = document.getElementById("date-prev");
+  const dateNextButton = document.getElementById("date-next");
+  const dateSortWrap = document.getElementById("date-main-sort");
+  const dateSortLabel = document.getElementById("date-sort-label");
   const dateRangeBackdrop = document.getElementById("date-range-backdrop");
   const dateRangeDialog = dateRangeBackdrop.querySelector(".date-range-dialog");
   const dateRangeCalendar = document.getElementById("date-range-calendar");
   const dateRangeInstruction = document.getElementById("date-range-instruction");
+  const dateRangeWeekdayBlock = document.getElementById("date-range-weekday-block");
   const dateWeekdays = document.getElementById("date-range-weekdays");
-  const dateSortLabel = document.getElementById("date-sort-label");
   const dateRangeError = document.getElementById("date-range-error");
-  let singleCalendarMonth = todayKey.slice(0, 7) + "-01";
+  const presetPanel = document.getElementById("date-preset-panel");
+  const customPanel = document.getElementById("date-custom-panel");
+  const presetOptions = document.getElementById("date-preset-options");
+  const presetDescription = document.getElementById("date-preset-description");
+  const tabPreset = document.getElementById("date-tab-preset");
+  const tabCustom = document.getElementById("date-tab-custom");
+  const modeSingle = document.getElementById("date-mode-single");
+  const modeRange = document.getElementById("date-mode-range");
   let rangeCalendarMonth = todayKey.slice(0, 7) + "-01";
   let dateDraft = null;
 
   function updateDateDisplay() {
     const single = !isRangeView();
-    const key = dateSelection.day;
-    const relative = key === todayKey ? ", Today" :
-      key === addDays(todayKey, 1) ? ", Tomorrow" :
-      key === addDays(todayKey, -1) ? ", Yesterday" : "";
-    const visible = datesInSelection();
+    const count = datesInSelection().length;
     dateLabelElement.textContent = single
-      ? dateLabel(key) + relative
+      ? dateLabel(dateSelection.day) + ", " + relativeDateDescription(dateSelection.day)
       : dateLabel(dateSelection.start) + " – " + dateLabel(dateSelection.end) +
-        " · " + visible.length + (visible.length === 1 ? " day" : " days");
-    dateLabelElement.title = single
-      ? shortDate(key)
-      : visible.length + " selected days · " +
-        (dateSelection.order === "round-date" ? "Round then Date" : "Date then Round");
-    dateTodayButton.disabled = single && key === todayKey;
+        " · " + count + (count === 1 ? " day" : " days");
+    dateLabelElement.title = single ? shortDate(dateSelection.day)
+      : count + " selected days";
+    dateTodayButton.disabled = single && dateSelection.day === todayKey;
+    datePrevButton.hidden = !single;
+    dateNextButton.hidden = !single;
+    dateSortWrap.hidden = single;
+    dateSortLabel.textContent = dateSelection.order === "date-round"
+      ? "Date then Round" : "Round then Date";
     document.body.classList.toggle("date-range-view", !single);
   }
 
   function chooseDateSelection(next) {
-    // Save the current view before leaving it, including any cross-date Job
-    // movements and driver/vehicle assignments made in a range view.
+    // Preserve dated Jobs/assignments before switching filters.
     persistPlacement();
     const selectedRounds = new Set(Array.from(visibleTripIds).map(function (id) {
       return id.split("@")[0];
@@ -2066,12 +2101,7 @@
     renderBoard();
   }
 
-  function closeSingleCalendar() {
-    dateSinglePopup.hidden = true;
-    dateCalendarButton.setAttribute("aria-expanded", "false");
-  }
-
-  function closeRangeCalendar() {
+  function closeDateFilter() {
     dateRangeBackdrop.hidden = true;
     dateDraft = null;
     document.body.classList.remove("has-date-range-dialog");
@@ -2085,24 +2115,50 @@
     return isoLocal(date);
   }
 
-  function calendarMarkup(monthKey, mode) {
+  function startOfWeek(key) { return addDays(key, -dayIndex(key)); }
+
+  function presetSelection(key) {
+    let start, end;
+    if (key === "today" || key === "tomorrow") {
+      const day = key === "today" ? todayKey : addDays(todayKey, 1);
+      return { mode: "single", day: day, start: day, end: day,
+        weekdays: [0, 1, 2, 3, 4, 5, 6], order: "round-date",
+        source: "preset", preset: key };
+    }
+    if (key === "this-week" || key === "next-week") {
+      start = addDays(startOfWeek(todayKey), key === "next-week" ? 7 : 0);
+      end = addDays(start, 6);
+    } else if (key === "this-month" || key === "next-month") {
+      const date = fromIso(todayKey);
+      const offset = key === "next-month" ? 1 : 0;
+      start = isoLocal(new Date(date.getFullYear(), date.getMonth() + offset, 1, 12));
+      end = isoLocal(new Date(date.getFullYear(), date.getMonth() + offset + 1, 0, 12));
+    } else {
+      return null;
+    }
+    return { mode: "range", day: start, start: start, end: end,
+      weekdays: [0, 1, 2, 3, 4, 5, 6], order: dateSelection.order,
+      source: "preset", preset: key };
+  }
+
+  function calendarMarkup(monthKey) {
     const shownMonth = fromIso(monthKey);
     const firstDay = isoLocal(new Date(shownMonth.getFullYear(), shownMonth.getMonth(), 1, 12));
     const gridStart = addDays(firstDay, -dayIndex(firstDay));
-    const selected = mode === "single" && !isRangeView() ? dateSelection.day : null;
-    const start = mode === "range" && dateDraft ? dateDraft.start : null;
-    const end = mode === "range" && dateDraft ? dateDraft.end : null;
-    const weekdayNames = WEEKDAYS.map(function (day) {
+    const single = dateDraft && dateDraft.customMode === "single";
+    const selected = single ? dateDraft.day : null;
+    const start = !single && dateDraft ? dateDraft.start : null;
+    const end = !single && dateDraft ? dateDraft.end : null;
+    const weekdays = WEEKDAYS.map(function (day) {
       return '<span class="date-calendar-weekday">' + day + '</span>';
     }).join("");
     const days = Array.from({ length: 42 }, function (_, index) {
       const iso = addDays(gridStart, index), value = fromIso(iso);
-      const sameMonth = value.getMonth() === shownMonth.getMonth();
       const today = iso === todayKey;
       const inRange = start && end && iso >= start && iso <= end;
-      const chosen = selected === iso || start === iso || end === iso;
+      const chosen = (selected === iso) || start === iso || end === iso;
       return '<button type="button" class="date-calendar-day' +
-        (sameMonth ? '' : ' is-other-month') +
+        (value.getMonth() === shownMonth.getMonth() ? '' : ' is-other-month') +
         (today ? ' is-today' : '') +
         (inRange ? ' is-in-range' : '') +
         (chosen ? ' is-selected' : '') +
@@ -2117,179 +2173,209 @@
       '<button type="button" class="date-calendar-arrow" data-month-step="-1" aria-label="Previous month">‹</button>' +
       '<strong>' + MONTH_NAMES[shownMonth.getMonth()] + ' ' + shownMonth.getFullYear() + '</strong>' +
       '<button type="button" class="date-calendar-arrow" data-month-step="1" aria-label="Next month">›</button>' +
-      '</div><div class="date-calendar-grid">' + weekdayNames + days + '</div>';
+      '</div><div class="date-calendar-grid">' + weekdays + days + '</div>';
   }
 
-  function renderSingleCalendar() {
-    dateSingleCalendar.innerHTML = calendarMarkup(singleCalendarMonth, "single");
-  }
-
-  function renderRangeCalendar() {
-    dateRangeCalendar.innerHTML = calendarMarkup(rangeCalendarMonth, "range");
-    const instruction = dateDraft.stage === "end" ? "Select end date" :
-      dateDraft.start && dateDraft.end
+  function renderDateFilter() {
+    if (!dateDraft) return;
+    const custom = dateDraft.tab === "custom";
+    tabPreset.classList.toggle("is-active", !custom);
+    tabCustom.classList.toggle("is-active", custom);
+    tabPreset.setAttribute("aria-pressed", String(!custom));
+    tabCustom.setAttribute("aria-pressed", String(custom));
+    presetPanel.hidden = custom;
+    customPanel.hidden = !custom;
+    presetOptions.querySelectorAll('button[data-date-preset]').forEach(function (button) {
+      const active = dateDraft.preset === button.dataset.datePreset;
+      button.classList.toggle("is-active", active);
+      button.setAttribute("aria-pressed", String(active));
+    });
+    const candidate = presetSelection(dateDraft.preset);
+    presetDescription.textContent = candidate
+      ? (candidate.mode === "single" ? dateLabel(candidate.day)
+        : dateLabel(candidate.start) + " – " + dateLabel(candidate.end))
+      : "";
+    modeSingle.classList.toggle("is-active", dateDraft.customMode === "single");
+    modeRange.classList.toggle("is-active", dateDraft.customMode === "range");
+    modeSingle.setAttribute("aria-pressed", String(dateDraft.customMode === "single"));
+    modeRange.setAttribute("aria-pressed", String(dateDraft.customMode === "range"));
+    dateRangeWeekdayBlock.hidden = dateDraft.customMode !== "range";
+    if (!custom) return;
+    dateRangeCalendar.innerHTML = calendarMarkup(rangeCalendarMonth);
+    dateRangeInstruction.textContent = dateDraft.customMode === "single"
+      ? (dateDraft.day ? "Selected: " + dateLabel(dateDraft.day) : "Select date")
+      : dateDraft.stage === "end" ? "Select end date"
+      : dateDraft.start && dateDraft.end
         ? dateLabel(dateDraft.start) + " – " + dateLabel(dateDraft.end)
         : "Select start date";
-    dateRangeInstruction.textContent = instruction;
-    dateSortLabel.textContent = dateDraft.order === "round-date"
-      ? "Round then Date" : "Date then Round";
     dateWeekdays.querySelectorAll('input[type="checkbox"]').forEach(function (input) {
       input.checked = dateDraft.weekdays.has(Number(input.value));
     });
   }
 
-  function openSingleCalendar() {
-    if (!dateRangeBackdrop.hidden) return;
-    const showing = dateSinglePopup.hidden;
-    closeSingleCalendar();
-    if (!showing) return;
-    singleCalendarMonth = (isRangeView() ? dateSelection.start : dateSelection.day).slice(0, 7) + "-01";
-    renderSingleCalendar();
-    dateSinglePopup.hidden = false;
-    dateCalendarButton.setAttribute("aria-expanded", "true");
-  }
-
-  function openRangeCalendar() {
-    closeSingleCalendar();
-    const existing = isRangeView();
+  function openDateFilter() {
+    const custom = dateSelection.source === "custom";
     dateDraft = {
-      start: existing ? dateSelection.start : null,
-      end: existing ? dateSelection.end : null,
-      weekdays: new Set(existing ? dateSelection.weekdays : [0, 1, 2, 3, 4, 5, 6]),
-      order: existing ? dateSelection.order : "round-date",
-      stage: existing ? "done" : "start"
+      tab: custom ? "custom" : "preset",
+      preset: dateSelection.preset || "today",
+      customMode: dateSelection.mode,
+      day: dateSelection.mode === "single" ? dateSelection.day : null,
+      start: custom && isRangeView() ? dateSelection.start : null,
+      end: custom && isRangeView() ? dateSelection.end : null,
+      stage: custom && isRangeView() ? "done" : "start",
+      weekdays: new Set(dateSelection.mode === "range"
+        ? dateSelection.weekdays : [0, 1, 2, 3, 4, 5, 6])
     };
-    rangeCalendarMonth = (existing ? dateSelection.start : todayKey).slice(0, 7) + "-01";
-    dateRangeError.hidden = true;
+    rangeCalendarMonth = (dateDraft.day || dateDraft.start || todayKey).slice(0, 7) + "-01";
     dateRangeError.textContent = "";
-    renderRangeCalendar();
+    dateRangeError.hidden = true;
+    renderDateFilter();
     dateRangeBackdrop.hidden = false;
     document.body.classList.add("has-date-range-dialog");
     dateRangeDialog.focus();
   }
 
-  function onCalendarAction(event, mode) {
+  function changeCustomMode(mode) {
+    if (!dateDraft || !["single", "range"].includes(mode)) return;
+    dateDraft.customMode = mode;
+    if (mode === "range" && !dateDraft.start && !dateDraft.end) {
+      dateDraft.stage = "start";
+    }
+    dateRangeError.hidden = true;
+    renderDateFilter();
+  }
+
+  function onCalendarAction(event) {
     const step = event.target.closest("button[data-month-step]");
     if (step) {
-      if (mode === "single") {
-        singleCalendarMonth = monthShift(singleCalendarMonth, Number(step.dataset.monthStep));
-        renderSingleCalendar();
-      } else {
-        rangeCalendarMonth = monthShift(rangeCalendarMonth, Number(step.dataset.monthStep));
-        renderRangeCalendar();
-      }
+      rangeCalendarMonth = monthShift(rangeCalendarMonth, Number(step.dataset.monthStep));
+      renderDateFilter();
       return;
     }
-    const day = event.target.closest("button[data-calendar-day]");
-    if (!day) return;
-    const iso = day.dataset.calendarDay;
-    if (mode === "single") {
-      closeSingleCalendar();
-      chooseDateSelection({ mode: "single", day: iso, start: iso, end: iso,
-        weekdays: [0, 1, 2, 3, 4, 5, 6], order: "round-date" });
-      return;
-    }
-    if (dateDraft.stage === "start" || dateDraft.stage === "done") {
+    const item = event.target.closest("button[data-calendar-day]");
+    if (!item || !dateDraft || dateDraft.tab !== "custom") return;
+    const iso = item.dataset.calendarDay;
+    if (dateDraft.customMode === "single") {
+      dateDraft.day = iso;
+    } else if (dateDraft.stage === "start" || dateDraft.stage === "done") {
       dateDraft.start = iso;
       dateDraft.end = null;
       dateDraft.stage = "end";
-    } else if (iso >= dateDraft.start) {
-      dateDraft.end = iso;
-      dateDraft.stage = "done";
     } else {
-      dateDraft.start = iso;
-      dateDraft.end = null;
+      // Selecting the second date earlier than the first simply reverses
+      // the bounds; the user's first click becomes the end date.
+      dateDraft.end = iso < dateDraft.start ? dateDraft.start : iso;
+      dateDraft.start = iso < dateDraft.start ? iso : dateDraft.start;
+      dateDraft.stage = "done";
     }
     dateRangeError.hidden = true;
-    renderRangeCalendar();
+    renderDateFilter();
   }
 
-  function applyRangeSelection() {
-    if (!dateDraft.start || !dateDraft.end) {
-      dateRangeError.textContent = "Please select both start and end dates.";
+  function applyDateFilter() {
+    if (!dateDraft) return;
+    let next = null;
+    let error = "";
+    if (dateDraft.tab === "preset") {
+      next = presetSelection(dateDraft.preset);
+    } else if (dateDraft.customMode === "single") {
+      if (!dateDraft.day) error = "Please select a date.";
+      else next = { mode: "single", day: dateDraft.day,
+        start: dateDraft.day, end: dateDraft.day,
+        weekdays: [0, 1, 2, 3, 4, 5, 6], order: dateSelection.order,
+        source: "custom", preset: null };
+    } else if (!dateDraft.start || !dateDraft.end) {
+      error = "Please select both start and end dates.";
     } else if (!dateDraft.weekdays.size) {
-      dateRangeError.textContent = "Select at least one day of the week.";
+      error = "Select at least one day of the week.";
     } else {
-      const inclusive = Math.round((fromIso(dateDraft.end) - fromIso(dateDraft.start)) / DAY_MS) + 1;
-      if (inclusive > 31) {
-        dateRangeError.textContent = "Select up to 31 calendar days in this prototype.";
-      } else {
-        const next = {
-          mode: "range", day: dateDraft.start, start: dateDraft.start,
-          end: dateDraft.end, weekdays: Array.from(dateDraft.weekdays).sort(),
-          order: dateDraft.order
-        };
-        const candidates = [];
-        for (let day = next.start; day <= next.end; day = addDays(day, 1)) {
-          if (next.weekdays.includes(dayIndex(day))) candidates.push(day);
+      const count = Math.round((fromIso(dateDraft.end) - fromIso(dateDraft.start)) / DAY_MS) + 1;
+      if (count > 31) error = "Select up to 31 calendar days in this prototype.";
+      else {
+        const weekdays = Array.from(dateDraft.weekdays).sort();
+        let included = 0;
+        for (let day = dateDraft.start; day <= dateDraft.end; day = addDays(day, 1)) {
+          if (weekdays.includes(dayIndex(day))) included += 1;
         }
-        if (candidates.length) {
-          closeRangeCalendar();
-          chooseDateSelection(next);
-          return;
-        }
-        dateRangeError.textContent = "No selected weekdays fall within this date range.";
+        if (!included) error = "No selected weekdays fall within this date range.";
+        else next = { mode: "range", day: dateDraft.start,
+          start: dateDraft.start, end: dateDraft.end,
+          weekdays: weekdays, order: dateSelection.order,
+          source: "custom", preset: null };
       }
     }
-    dateRangeError.hidden = false;
+    if (next) {
+      closeDateFilter();
+      chooseDateSelection(next);
+    } else {
+      dateRangeError.textContent = error || "Please select a date filter.";
+      dateRangeError.hidden = false;
+    }
   }
 
   function bindDateControls() {
-    document.getElementById("date-prev").addEventListener("click", function () {
-      const range = isRangeView();
+    datePrevButton.addEventListener("click", function () {
+      if (isRangeView()) return;
       const day = addDays(dateSelection.day, -1);
-      chooseDateSelection(range
-        ? Object.assign({}, dateSelection, { day: addDays(dateSelection.start, -1),
-          start: addDays(dateSelection.start, -1), end: addDays(dateSelection.end, -1) })
-        : Object.assign({}, dateSelection, { day: day, start: day, end: day }));
+      chooseDateSelection({ mode: "single", day: day, start: day, end: day,
+        weekdays: [0, 1, 2, 3, 4, 5, 6], order: dateSelection.order,
+        source: "custom", preset: null });
     });
-    document.getElementById("date-next").addEventListener("click", function () {
-      const range = isRangeView();
+    dateNextButton.addEventListener("click", function () {
+      if (isRangeView()) return;
       const day = addDays(dateSelection.day, 1);
-      chooseDateSelection(range
-        ? Object.assign({}, dateSelection, { day: addDays(dateSelection.start, 1),
-          start: addDays(dateSelection.start, 1), end: addDays(dateSelection.end, 1) })
-        : Object.assign({}, dateSelection, { day: day, start: day, end: day }));
+      chooseDateSelection({ mode: "single", day: day, start: day, end: day,
+        weekdays: [0, 1, 2, 3, 4, 5, 6], order: dateSelection.order,
+        source: "custom", preset: null });
     });
     dateTodayButton.addEventListener("click", function () {
-      chooseDateSelection({ mode: "single", day: todayKey, start: todayKey, end: todayKey,
-        weekdays: [0, 1, 2, 3, 4, 5, 6], order: "round-date" });
-      closeSingleCalendar();
+      chooseDateSelection(presetSelection("today"));
     });
-    dateCalendarButton.addEventListener("click", openSingleCalendar);
-    dateSingleCalendar.addEventListener("click", function (event) {
-      onCalendarAction(event, "single");
+    document.getElementById("date-range-open").addEventListener("click", openDateFilter);
+    tabPreset.addEventListener("click", function () {
+      dateDraft.tab = "preset";
+      dateRangeError.hidden = true;
+      renderDateFilter();
     });
-    document.getElementById("date-range-open").addEventListener("click", openRangeCalendar);
-    dateRangeCalendar.addEventListener("click", function (event) {
-      onCalendarAction(event, "range");
+    tabCustom.addEventListener("click", function () {
+      dateDraft.tab = "custom";
+      dateRangeError.hidden = true;
+      renderDateFilter();
     });
+    presetOptions.addEventListener("click", function (event) {
+      const button = event.target.closest("button[data-date-preset]");
+      if (!button) return;
+      dateDraft.preset = button.dataset.datePreset;
+      dateRangeError.hidden = true;
+      renderDateFilter();
+    });
+    modeSingle.addEventListener("click", function () { changeCustomMode("single"); });
+    modeRange.addEventListener("click", function () { changeCustomMode("range"); });
+    dateRangeCalendar.addEventListener("click", onCalendarAction);
     dateWeekdays.addEventListener("change", function (event) {
       const input = event.target;
-      if (!input || input.type !== "checkbox") return;
+      if (!input || input.type !== "checkbox" || !dateDraft) return;
       const index = Number(input.value);
       if (input.checked) dateDraft.weekdays.add(index);
       else dateDraft.weekdays.delete(index);
       dateRangeError.hidden = true;
     });
     document.getElementById("date-sort-toggle").addEventListener("click", function () {
-      dateDraft.order = dateDraft.order === "round-date" ? "date-round" : "round-date";
-      renderRangeCalendar();
+      if (!isRangeView()) return;
+      dateSelection.order = dateSelection.order === "round-date" ? "date-round" : "round-date";
+      updateDateDisplay();
+      renderBoard();
     });
-    document.getElementById("date-range-apply").addEventListener("click", applyRangeSelection);
-    document.getElementById("date-range-cancel").addEventListener("click", closeRangeCalendar);
-    document.getElementById("date-range-close").addEventListener("click", closeRangeCalendar);
+    document.getElementById("date-range-apply").addEventListener("click", applyDateFilter);
+    document.getElementById("date-range-cancel").addEventListener("click", closeDateFilter);
+    document.getElementById("date-range-close").addEventListener("click", closeDateFilter);
     dateRangeBackdrop.addEventListener("pointerdown", function (event) {
-      if (event.target === dateRangeBackdrop) closeRangeCalendar();
-    });
-    document.addEventListener("pointerdown", function (event) {
-      if (!dateSinglePopup.hidden && !event.target.closest(".date-toolbar-wrap")) {
-        closeSingleCalendar();
-      }
+      if (event.target === dateRangeBackdrop) closeDateFilter();
     });
     dateRangeDialog.addEventListener("keydown", function (event) {
       if (event.key !== "Tab") return;
-      const controls = Array.from(dateRangeDialog.querySelectorAll('button:not(:disabled),input:not(:disabled)'));
+      const controls = Array.from(dateRangeDialog.querySelectorAll('button:not(:disabled),input:not(:disabled)'))
+        .filter(function (control) { return control.getClientRects().length > 0; });
       if (!controls.length) return;
       const first = controls[0], last = controls[controls.length - 1];
       if (event.shiftKey && document.activeElement === first) {
