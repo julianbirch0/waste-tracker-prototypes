@@ -1,4 +1,4 @@
-/* WasteTracker Day Board V00017
+/* WasteTracker Day Board V00018
    Standalone, file:// compatible. Custom pointer drag-and-drop; no dependencies. */
 (function () {
   "use strict";
@@ -81,7 +81,7 @@
   function dateLabel(iso) {
     const date = fromIso(iso);
     return String(date.getDate()).padStart(2, "0") + "-" +
-      MONTHS[date.getMonth()] + "-" + date.getFullYear();
+      MONTHS[date.getMonth()];
   }
 
   function relativeDateDescription(key, reference) {
@@ -701,12 +701,49 @@
   const MAX_GRID_COLUMNS = 40;
   const columnLimitElement = document.getElementById("date-column-limit");
 
+  // Predict the column count for the draft filter without applying it.
+  // This mirrors the normal Groups and Trips selection (or its saved
+  // selection while an issue pseudo-filter is active). In the prototype,
+  // every Round produces a dated Trip on every selected day.
+  function countColumnsForDateFilter(candidate) {
+    if (!candidate || candidate.mode !== "range") return 0;
+    const chosenTrips = activeWarningFilter && savedFilterBeforeWarning
+      ? savedFilterBeforeWarning.tripIds
+      : Array.from(visibleTripIds);
+    const roundIds = new Set(chosenTrips.map(function (id) { return id.split("@")[0]; }));
+    const includeUnallocated = activeWarningFilter && savedFilterBeforeWarning
+      ? savedFilterBeforeWarning.unallocated : showUnallocated;
+    let days = 0;
+    const allowed = new Set(candidate.weekdays);
+    for (let day = candidate.start, n = 0;
+         day <= candidate.end && n < 366;
+         day = addDays(day, 1), n += 1) {
+      if (allowed.has(dayIndex(day))) days += 1;
+    }
+    return days * roundIds.size + (includeUnallocated && days > 0 ? 1 : 0);
+  }
+
+  function draftColumnCandidate() {
+    if (!dateDraft) return null;
+    if (dateDraft.tab === "preset") return presetSelection(dateDraft.preset);
+    if (dateDraft.customMode !== "range" || !dateDraft.start || !dateDraft.end ||
+        !dateDraft.weekdays.size) return null;
+    return {
+      mode: "range", start: dateDraft.start, end: dateDraft.end,
+      weekdays: Array.from(dateDraft.weekdays)
+    };
+  }
+
   function updateColumnLimitNotice() {
-    // Unallocated is itself a grid column when selected, so it counts
-    // towards the 40-column maximum.
-    const count = isRangeView()
-      ? displayTripsInOrder().length + (!activeWarningFilter && showUnallocated ? 1 : 0)
-      : 0;
+    // The message lives in Edit Date Filter, not beneath the main toolbar.
+    // Re-evaluate on every draft change so Apply/Cancel keep their positions.
+    if (!dateDraft) {
+      columnLimitElement.textContent = "";
+      columnLimitElement.classList.remove("is-visible");
+      return;
+    }
+    const candidate = draftColumnCandidate();
+    const count = countColumnsForDateFilter(candidate);
     const limited = count > MAX_GRID_COLUMNS;
     columnLimitElement.textContent = limited
       ? "Only the first 40 columns will be displayed in the grid." : "";
@@ -2068,8 +2105,9 @@
     dateLabelElement.title = single ? shortDate(dateSelection.day)
       : count + " selected days";
     dateTodayButton.disabled = single && dateSelection.day === todayKey;
-    datePrevButton.hidden = !single;
-    dateNextButton.hidden = !single;
+    // Keep navigation in place in range mode to preserve fixed toolbar width.
+    datePrevButton.disabled = !single;
+    dateNextButton.disabled = !single;
     dateSortWrap.hidden = single;
     dateSortLabel.textContent = dateSelection.order === "date-round"
       ? "Date then Round" : "Round then Date";
@@ -2115,6 +2153,7 @@
   function closeDateFilter() {
     dateRangeBackdrop.hidden = true;
     dateDraft = null;
+    updateColumnLimitNotice();
     document.body.classList.remove("has-date-range-dialog");
     document.getElementById("date-range-open").focus();
   }
@@ -2211,7 +2250,10 @@
     modeSingle.setAttribute("aria-pressed", String(dateDraft.customMode === "single"));
     modeRange.setAttribute("aria-pressed", String(dateDraft.customMode === "range"));
     dateRangeWeekdayBlock.hidden = dateDraft.customMode !== "range";
-    if (!custom) return;
+    if (!custom) {
+      updateColumnLimitNotice();
+      return;
+    }
     dateRangeCalendar.innerHTML = calendarMarkup(rangeCalendarMonth);
     dateRangeInstruction.textContent = dateDraft.customMode === "single"
       ? (dateDraft.day ? "Selected: " + dateLabel(dateDraft.day) : "Select date")
@@ -2222,6 +2264,7 @@
     dateWeekdays.querySelectorAll('input[type="checkbox"]').forEach(function (input) {
       input.checked = dateDraft.weekdays.has(Number(input.value));
     });
+    updateColumnLimitNotice();
   }
 
   function openDateFilter() {
@@ -2370,6 +2413,7 @@
       if (input.checked) dateDraft.weekdays.add(index);
       else dateDraft.weekdays.delete(index);
       dateRangeError.hidden = true;
+      updateColumnLimitNotice();
     });
     document.getElementById("date-sort-toggle").addEventListener("click", function () {
       if (!isRangeView()) return;
