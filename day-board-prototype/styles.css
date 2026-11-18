@@ -2031,9 +2031,9 @@ button:focus-visible, .board-scroll:focus-visible {
 .board-counts-slot {
   display: flex;
   align-items: center;
-  flex: 0 0 500px;
-  width: 500px;
-  min-width: 500px;
+  flex: 0 0 400px;
+  width: 400px;
+  min-width: 400px;
   min-height: 34px;
   padding-right: 12px;
   border-right: 1px solid #e6edf1;
@@ -2087,7 +2087,7 @@ button:focus-visible, .board-scroll:focus-visible {
 }
 @media (max-width: 890px) {
   .board-counts-slot {
-    flex: 0 0 500px;
+    flex: 0 0 400px;
   }
   .board-context-controls { flex: 1 1 100%; }
 }
@@ -2105,3 +2105,7 @@ button:focus-visible, .board-scroll:focus-visible {
     flex-basis: 290px;
   }
 }
+
+
+/* V00020: compact fixed counts region — keeps Groups and Trips stationary
+   without leaving a broad unused gap after the four statistics. */
