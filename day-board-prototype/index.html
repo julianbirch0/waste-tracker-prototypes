@@ -4,14 +4,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light">
-  <title>Day Board | WasteTracker Prototype V00020</title>
+  <title>Day Board | WasteTracker Prototype V00021</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <main class="page">
     <header class="page-header">
       <div class="page-heading">
-        <h1>Day Board <span class="version">V00020</span></h1>
+        <h1>Day Board <span class="version">V00021</span></h1>
         <p class="subtitle">Carrier scheduling · Day Board</p>
       </div>
       <div class="date-toolbar-wrap">
@@ -147,44 +147,41 @@
   <div id="date-range-backdrop" class="date-range-backdrop" hidden>
     <section class="date-range-dialog" role="dialog" aria-modal="true" aria-labelledby="date-range-title" tabindex="-1">
       <header class="date-range-top">
-        <h2 id="date-range-title">Edit Date Filter</h2>
+        <h2 id="date-range-title">Date filter</h2>
         <button type="button" id="date-range-close" aria-label="Cancel and close" class="driver-dialog-close">×</button>
       </header>
       <div class="date-filter-tabs" role="group" aria-label="Date filter type">
-        <button type="button" id="date-tab-preset" class="date-filter-tab is-active" aria-pressed="true">Preset</button>
+        <button type="button" id="date-tab-preset" class="date-filter-tab is-active" aria-pressed="true">Presets</button>
         <button type="button" id="date-tab-custom" class="date-filter-tab" aria-pressed="false">Custom</button>
       </div>
       <div class="date-range-scroll">
         <div id="date-preset-panel" class="date-preset-panel">
-          <div class="date-range-section-label">Choose a date preset</div>
           <div class="date-preset-grid" id="date-preset-options">
             <button type="button" class="date-preset-option" data-date-preset="today">Today</button>
             <button type="button" class="date-preset-option" data-date-preset="tomorrow">Tomorrow</button>
-            <button type="button" class="date-preset-option" data-date-preset="this-week">This week</button>
-            <button type="button" class="date-preset-option" data-date-preset="next-week">Next week</button>
-            <button type="button" class="date-preset-option" data-date-preset="this-month">This month</button>
-            <button type="button" class="date-preset-option" data-date-preset="next-month">Next month</button>
+            <button type="button" class="date-preset-option" data-date-preset="this-week">This Week</button>
+            <button type="button" class="date-preset-option" data-date-preset="next-week">Next Week</button>
+            <button type="button" class="date-preset-option" data-date-preset="this-month">This Month</button>
+            <button type="button" class="date-preset-option" data-date-preset="next-month">Next Month</button>
           </div>
-          <p id="date-preset-description" class="date-preset-description"></p>
         </div>
         <div id="date-custom-panel" hidden>
-          <div class="date-custom-mode" role="group" aria-label="Custom date selection">
-            <button type="button" id="date-mode-single" class="date-mode-button" aria-pressed="true">Single date</button>
-            <button type="button" id="date-mode-range" class="date-mode-button" aria-pressed="false">Date range</button>
-          </div>
           <div id="date-range-calendar"></div>
-          <p id="date-range-instruction" class="date-range-instruction">Select date</p>
-          <div id="date-range-weekday-block" class="date-range-weekday-block" hidden>
-            <div class="date-range-section-label">Days of the week</div>
-            <div class="date-range-weekdays" id="date-range-weekdays">
-              <label><input type="checkbox" value="0" checked><span>Mon</span></label>
-              <label><input type="checkbox" value="1" checked><span>Tue</span></label>
-              <label><input type="checkbox" value="2" checked><span>Wed</span></label>
-              <label><input type="checkbox" value="3" checked><span>Thu</span></label>
-              <label><input type="checkbox" value="4" checked><span>Fri</span></label>
-              <label><input type="checkbox" value="5" checked><span>Sat</span></label>
-              <label><input type="checkbox" value="6" checked><span>Sun</span></label>
-            </div>
+          <p id="date-range-instruction" class="date-range-instruction">Select start date</p>
+        </div>
+        <div id="date-range-weekday-block" class="date-range-weekday-block" hidden>
+          <div class="date-weekdays-heading">
+            <span class="date-range-section-label">Days of the week</span>
+            <button type="button" id="date-weekday-toggle" class="date-weekday-toggle">Deselect all</button>
+          </div>
+          <div class="date-range-weekdays" id="date-range-weekdays">
+            <label><input type="checkbox" value="0" checked><span>Mon</span></label>
+            <label><input type="checkbox" value="1" checked><span>Tue</span></label>
+            <label><input type="checkbox" value="2" checked><span>Wed</span></label>
+            <label><input type="checkbox" value="3" checked><span>Thu</span></label>
+            <label><input type="checkbox" value="4" checked><span>Fri</span></label>
+            <label><input type="checkbox" value="5" checked><span>Sat</span></label>
+            <label><input type="checkbox" value="6" checked><span>Sun</span></label>
           </div>
         </div>
         <div id="date-range-error" class="date-range-error" aria-live="polite" hidden></div>
@@ -192,7 +189,7 @@
       <div id="date-column-limit" class="date-column-limit date-dialog-column-limit" role="status" aria-live="polite"></div>
       <footer class="date-range-actions">
         <button type="button" class="btn btn-secondary" id="date-range-cancel">Cancel</button>
-        <button type="button" class="btn btn-primary" id="date-range-apply">Apply</button>
+        <button type="button" class="btn btn-primary" id="date-range-apply" disabled>Apply</button>
       </footer>
     </section>
   </div>
