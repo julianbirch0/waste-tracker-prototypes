@@ -2109,3 +2109,201 @@ button:focus-visible, .board-scroll:focus-visible {
 
 /* V00020: compact fixed counts region — keeps Groups and Trips stationary
    without leaving a broad unused gap after the four statistics. */
+
+
+/* V00021 — Reports-inspired date filter: equal-size Presets/Custom states. */
+.date-range-dialog {
+  width: min(620px, calc(100vw - 32px));
+  height: min(670px, calc(100dvh - 32px));
+  max-height: calc(100dvh - 32px);
+  min-height: 0;
+  border-radius: 12px;
+  background: #fff;
+}
+.date-range-top {
+  min-height: 62px;
+  padding: 15px 24px;
+  border-bottom: 1px solid #e6edf3;
+}
+.date-range-top h2 {
+  font-size: 20px;
+  font-weight: 650;
+  color: #27394f;
+}
+.date-filter-tabs {
+  display: grid;
+  flex: 0 0 auto;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  margin: 15px 24px 7px;
+  padding: 5px;
+  background: #f0f3f7;
+  border: 0;
+  border-radius: 11px;
+}
+.date-filter-tab {
+  min-height: 42px;
+  border: 0;
+  border-radius: 8px;
+  color: #52657d;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 650;
+}
+.date-filter-tab.is-active {
+  border: 0;
+  background: #35a99c;
+  color: #fff;
+  box-shadow: 0 2px 5px rgba(25,120,108,.11);
+}
+.date-filter-tab:hover:not(.is-active) {
+  border: 0;
+  background: #e5edf2;
+}
+.date-range-scroll {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 13px 24px 14px;
+}
+.date-preset-panel {
+  flex: 0 0 auto;
+  padding: 0;
+  margin: auto 0;
+}
+.date-preset-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 11px;
+  margin: 0;
+}
+.date-preset-option {
+  min-height: 48px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  color: #546880;
+  background: #f0f3f7;
+  font-size: 13px;
+  font-weight: 650;
+}
+.date-preset-option:hover:not(.is-active) {
+  background: #e6eff0;
+  border-color: #c3ddd8;
+}
+.date-preset-option.is-active {
+  background: #35a99c;
+  color: #fff;
+  border-color: #35a99c;
+}
+.date-range-scroll:has(#date-range-weekday-block:not([hidden])) .date-preset-panel {
+  margin: 16px 0 24px;
+}
+#date-custom-panel {
+  flex: 0 0 auto;
+}
+.date-range-scroll .date-calendar-header {
+  padding: 0 0 8px;
+}
+.date-range-scroll .date-calendar-header strong {
+  font-size: 21px;
+}
+.date-range-scroll .date-calendar-grid {
+  gap: 5px 5px;
+}
+.date-range-scroll .date-calendar-weekday {
+  height: 27px;
+  font-size: 13px;
+}
+.date-range-scroll .date-calendar-day {
+  height: 36px;
+  font-size: 14px;
+}
+.date-range-instruction {
+  margin: 7px 0 0;
+  padding: 7px 0 9px;
+  border-bottom: 0;
+  color: #7086a0;
+  font-size: 12px;
+}
+.date-range-weekday-block {
+  flex: 0 0 auto;
+  padding: 10px 0 12px;
+  margin: 8px 0 0;
+  border-top: 1px solid #e9edf2;
+}
+.date-weekdays-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+.date-weekdays-heading .date-range-section-label {
+  color: #637a94;
+  font-size: 12px;
+}
+.date-weekday-toggle {
+  border: 0;
+  padding: 3px 0;
+  margin: 0;
+  color: #428f84;
+  background: transparent;
+  font-size: 11px;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.date-weekday-toggle:hover { color: #176f65; }
+.date-weekday-toggle:focus-visible { outline: 2px solid #75bcb0; outline-offset: 3px; }
+.date-range-weekdays { margin-top: 8px; }
+.date-range-weekdays label {
+  min-height: 37px;
+  padding: 5px 4px;
+  gap: 6px;
+  background: #f8fafc;
+  border-color: #e0e8ef;
+}
+.date-range-weekdays label:has(input:checked) {
+  background: #edf8f3;
+  border-color: #c9e2d9;
+}
+.date-range-weekdays span { font-size: 12px; }
+.date-range-error {
+  flex: 0 0 auto;
+  margin: 9px 0 0;
+  font-size: 11px;
+}
+.date-dialog-column-limit {
+  flex: 0 0 32px;
+  min-height: 32px;
+  max-height: 32px;
+  padding: 7px 14px;
+  background: #fff;
+  border: 0;
+  color: transparent;
+}
+.date-dialog-column-limit.is-visible {
+  background: #fff7ed;
+  border-top: 1px solid #f0e2c9;
+  color: #a66a22;
+}
+.date-range-actions {
+  min-height: 65px;
+  padding: 12px 24px 15px;
+  border-top: 1px solid #e7edf2;
+  background: #fff;
+}
+.date-range-actions #date-range-apply:disabled {
+  background: #e6ebee;
+  border-color: #e1e7eb;
+  color: #a2afb8;
+  opacity: 1;
+  cursor: default;
+}
+@media (max-width: 660px) {
+  .date-range-dialog { height: min(660px, calc(100dvh - 20px)); }
+  .date-filter-tabs { margin-left: 13px; margin-right: 13px; }
+  .date-range-scroll { padding-left: 13px; padding-right: 13px; }
+  .date-range-weekdays { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
