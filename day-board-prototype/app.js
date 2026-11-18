@@ -1,4 +1,4 @@
-/* WasteTracker Day Board V00020
+/* WasteTracker Day Board V00021
    Standalone, file:// compatible. Custom pointer drag-and-drop; no dependencies. */
 (function () {
   "use strict";
@@ -726,14 +726,8 @@
   }
 
   function draftColumnCandidate() {
-    if (!dateDraft) return null;
-    if (dateDraft.tab === "preset") return presetSelection(dateDraft.preset);
-    if (dateDraft.customMode !== "range" || !dateDraft.start || !dateDraft.end ||
-        !dateDraft.weekdays.size) return null;
-    return {
-      mode: "range", start: dateDraft.start, end: dateDraft.end,
-      weekdays: Array.from(dateDraft.weekdays)
-    };
+    const candidate = proposedDateSelection();
+    return candidate && candidate.mode === "range" ? candidate : null;
   }
 
   function updateColumnLimitNotice() {
@@ -2073,9 +2067,8 @@
   }
 
 
-  // Date filter: Preset/Custom choices remain provisional until Apply.
-  // The central date caption is deliberately conspicuous to prevent editing
-  // Trips on the wrong day. Today and all calendar dates use browser-local time.
+  // Date filter: Presets and Custom mirror the Reports styling. Every
+  // selection stays provisional until Apply, except Today/Tomorrow shortcuts.
   const dateLabelElement = document.getElementById("date-current");
   const dateDescriptionElement = document.getElementById("date-description");
   const dateTodayButton = document.getElementById("date-today");
@@ -2089,24 +2082,20 @@
   const dateRangeInstruction = document.getElementById("date-range-instruction");
   const dateRangeWeekdayBlock = document.getElementById("date-range-weekday-block");
   const dateWeekdays = document.getElementById("date-range-weekdays");
+  const dateWeekdayToggle = document.getElementById("date-weekday-toggle");
   const dateRangeError = document.getElementById("date-range-error");
+  const dateRangeApply = document.getElementById("date-range-apply");
   const presetPanel = document.getElementById("date-preset-panel");
   const customPanel = document.getElementById("date-custom-panel");
   const presetOptions = document.getElementById("date-preset-options");
-  const presetDescription = document.getElementById("date-preset-description");
   const tabPreset = document.getElementById("date-tab-preset");
   const tabCustom = document.getElementById("date-tab-custom");
-  const modeSingle = document.getElementById("date-mode-single");
-  const modeRange = document.getElementById("date-mode-range");
   let rangeCalendarMonth = todayKey.slice(0, 7) + "-01";
   let dateDraft = null;
 
   function updateDateDisplay() {
     const single = !isRangeView();
     const count = datesInSelection().length;
-    // Keep the numeric date and its variable-length description on separate
-    // lines. The fixed-width date-display container prevents the navigation
-    // buttons from moving when labels such as Today / Next Wednesday change.
     dateLabelElement.textContent = single
       ? dateLabel(dateSelection.day)
       : dateLabel(dateSelection.start) + " – " + dateLabel(dateSelection.end);
@@ -2116,7 +2105,6 @@
     dateLabelElement.title = single ? shortDate(dateSelection.day)
       : count + " selected days";
     dateTodayButton.disabled = single && dateSelection.day === todayKey;
-    // Keep navigation in place in range mode to preserve fixed toolbar width.
     datePrevButton.disabled = !single;
     dateNextButton.disabled = !single;
     dateSortWrap.hidden = single;
@@ -2126,7 +2114,7 @@
   }
 
   function chooseDateSelection(next) {
-    // Preserve dated Jobs/assignments before switching filters.
+    // Save dated Jobs/assignments before leaving their selected dates.
     persistPlacement();
     const selectedRounds = new Set(Array.from(visibleTripIds).map(function (id) {
       return id.split("@")[0];
@@ -2161,6 +2149,18 @@
     renderBoard();
   }
 
+  function sameDateFilter(first, second) {
+    if (!first || !second || first.mode !== second.mode) return false;
+    if (first.mode === "single") return first.day === second.day;
+    if (first.start !== second.start || first.end !== second.end) return false;
+    const sorted = function (days) {
+      return (days || []).slice().sort(function (a, b) { return a - b; }).join(",");
+    };
+    // Source (Preset/Custom) and display order do not change which Jobs
+    // appear, so neither can enable Apply on its own.
+    return sorted(first.weekdays) === sorted(second.weekdays);
+  }
+
   function closeDateFilter() {
     dateRangeBackdrop.hidden = true;
     dateDraft = null;
@@ -2183,7 +2183,7 @@
     if (key === "today" || key === "tomorrow") {
       const day = key === "today" ? todayKey : addDays(todayKey, 1);
       return { mode: "single", day: day, start: day, end: day,
-        weekdays: [0, 1, 2, 3, 4, 5, 6], order: "round-date",
+        weekdays: [0, 1, 2, 3, 4, 5, 6], order: dateSelection.order,
         source: "preset", preset: key };
     }
     if (key === "this-week" || key === "next-week") {
@@ -2202,14 +2202,48 @@
       source: "preset", preset: key };
   }
 
+  function proposedDateSelection() {
+    if (!dateDraft) return null;
+    const weekdays = Array.from(dateDraft.weekdays).sort(function (a, b) { return a - b; });
+    if (dateDraft.tab === "preset") {
+      if (!dateDraft.preset) return null;
+      const candidate = presetSelection(dateDraft.preset);
+      if (candidate && candidate.mode === "range") candidate.weekdays = weekdays;
+      return candidate;
+    }
+    if (!dateDraft.start) return null;
+    if (!dateDraft.end) {
+      return { mode: "single", day: dateDraft.start, start: dateDraft.start,
+        end: dateDraft.start, weekdays: [0, 1, 2, 3, 4, 5, 6],
+        order: dateSelection.order, source: "custom", preset: null };
+    }
+    return { mode: "range", day: dateDraft.start, start: dateDraft.start,
+      end: dateDraft.end, weekdays: weekdays, order: dateSelection.order,
+      source: "custom", preset: null, lastEndpoint: dateDraft.lastEndpoint };
+  }
+
+  function candidateInvalidReason(candidate) {
+    if (!candidate) return "";
+    if (candidate.mode === "single") return "";
+    if (!candidate.weekdays.length) return "Select at least one day of the week.";
+    const days = Math.round((Date.UTC(fromIso(candidate.end).getFullYear(),
+      fromIso(candidate.end).getMonth(), fromIso(candidate.end).getDate()) -
+      Date.UTC(fromIso(candidate.start).getFullYear(),
+      fromIso(candidate.start).getMonth(), fromIso(candidate.start).getDate())) / DAY_MS) + 1;
+    if (days < 1) return "The end date must not precede the start date.";
+    if (days > 31) return "Select up to 31 calendar days in this prototype.";
+    for (let date = candidate.start; date <= candidate.end; date = addDays(date, 1)) {
+      if (candidate.weekdays.includes(dayIndex(date))) return "";
+    }
+    return "No selected weekdays fall within this date range.";
+  }
+
   function calendarMarkup(monthKey) {
     const shownMonth = fromIso(monthKey);
     const firstDay = isoLocal(new Date(shownMonth.getFullYear(), shownMonth.getMonth(), 1, 12));
     const gridStart = addDays(firstDay, -dayIndex(firstDay));
-    const single = dateDraft && dateDraft.customMode === "single";
-    const selected = single ? dateDraft.day : null;
-    const start = !single && dateDraft ? dateDraft.start : null;
-    const end = !single && dateDraft ? dateDraft.end : null;
+    const start = dateDraft ? dateDraft.start : null;
+    const end = dateDraft ? dateDraft.end : null;
     const weekdays = WEEKDAYS.map(function (day) {
       return '<span class="date-calendar-weekday">' + day + '</span>';
     }).join("");
@@ -2217,7 +2251,7 @@
       const iso = addDays(gridStart, index), value = fromIso(iso);
       const today = iso === todayKey;
       const inRange = start && end && iso >= start && iso <= end;
-      const chosen = (selected === iso) || start === iso || end === iso;
+      const chosen = start === iso || end === iso;
       return '<button type="button" class="date-calendar-day' +
         (value.getMonth() === shownMonth.getMonth() ? '' : ' is-other-month') +
         (today ? ' is-today' : '') +
@@ -2246,68 +2280,62 @@
     tabCustom.setAttribute("aria-pressed", String(custom));
     presetPanel.hidden = custom;
     customPanel.hidden = !custom;
+
     presetOptions.querySelectorAll('button[data-date-preset]').forEach(function (button) {
       const active = dateDraft.preset === button.dataset.datePreset;
       button.classList.toggle("is-active", active);
       button.setAttribute("aria-pressed", String(active));
     });
-    const candidate = presetSelection(dateDraft.preset);
-    presetDescription.textContent = candidate
-      ? (candidate.mode === "single" ? dateLabel(candidate.day)
-        : dateLabel(candidate.start) + " – " + dateLabel(candidate.end))
-      : "";
-    modeSingle.classList.toggle("is-active", dateDraft.customMode === "single");
-    modeRange.classList.toggle("is-active", dateDraft.customMode === "range");
-    modeSingle.setAttribute("aria-pressed", String(dateDraft.customMode === "single"));
-    modeRange.setAttribute("aria-pressed", String(dateDraft.customMode === "range"));
-    dateRangeWeekdayBlock.hidden = dateDraft.customMode !== "range";
-    if (!custom) {
-      updateColumnLimitNotice();
-      return;
-    }
-    dateRangeCalendar.innerHTML = calendarMarkup(rangeCalendarMonth);
-    dateRangeInstruction.textContent = dateDraft.customMode === "single"
-      ? (dateDraft.day ? "Selected: " + dateLabel(dateDraft.day) : "Select date")
-      : dateDraft.stage === "end" ? "Select end date"
-      : dateDraft.start && dateDraft.end
-        ? dateLabel(dateDraft.start) + " – " + dateLabel(dateDraft.end)
-        : "Select start date";
+
+    const candidate = proposedDateSelection();
+    const showWeekdays = candidate && candidate.mode === "range" &&
+      (custom ? Boolean(dateDraft.end) : Boolean(dateDraft.preset));
+    dateRangeWeekdayBlock.hidden = !showWeekdays;
+    dateWeekdayToggle.textContent = dateDraft.weekdays.size === 7 ? "Deselect all" : "Select all";
     dateWeekdays.querySelectorAll('input[type="checkbox"]').forEach(function (input) {
       input.checked = dateDraft.weekdays.has(Number(input.value));
     });
+
+    if (custom) {
+      dateRangeCalendar.innerHTML = calendarMarkup(rangeCalendarMonth);
+      dateRangeInstruction.textContent = !dateDraft.start ? "Select start date"
+        : !dateDraft.end ? "Select end date"
+        : dateLabel(dateDraft.start) + " – " + dateLabel(dateDraft.end);
+    }
+
+    const invalid = candidateInvalidReason(candidate);
+    // A selection with no included days is invalid, but it must not cause
+    // a layout jump: the dialog has a fixed height and scrollable body.
+    dateRangeError.textContent = invalid;
+    dateRangeError.hidden = !invalid;
+    dateRangeApply.disabled = !candidate || Boolean(invalid) ||
+      sameDateFilter(candidate, dateSelection);
     updateColumnLimitNotice();
   }
 
   function openDateFilter() {
-    const custom = dateSelection.source === "custom";
+    // Only an existing *custom range* opens directly on Custom.
+    const existingCustom = dateSelection.source === "custom";
+    const range = existingCustom && isRangeView();
     dateDraft = {
-      tab: custom ? "custom" : "preset",
-      preset: dateSelection.preset || "today",
-      customMode: dateSelection.mode,
-      day: dateSelection.mode === "single" ? dateSelection.day : null,
-      start: custom && isRangeView() ? dateSelection.start : null,
-      end: custom && isRangeView() ? dateSelection.end : null,
-      stage: custom && isRangeView() ? "done" : "start",
-      weekdays: new Set(dateSelection.mode === "range"
-        ? dateSelection.weekdays : [0, 1, 2, 3, 4, 5, 6])
+      tab: range ? "custom" : "preset",
+      // The user must explicitly choose a preset; nothing starts highlighted.
+      preset: null,
+      start: existingCustom ? dateSelection.start : null,
+      end: range ? dateSelection.end : null,
+      // The last edited endpoint matters if the user thinks end-first.
+      lastEndpoint: range ? (dateSelection.lastEndpoint || "end") :
+        (existingCustom ? "start" : null),
+      weekdays: new Set(range ? dateSelection.weekdays : [0, 1, 2, 3, 4, 5, 6])
     };
-    rangeCalendarMonth = (dateDraft.day || dateDraft.start || todayKey).slice(0, 7) + "-01";
+    // A custom range spanning two months must start on the start month.
+    rangeCalendarMonth = (dateDraft.start || todayKey).slice(0, 7) + "-01";
     dateRangeError.textContent = "";
     dateRangeError.hidden = true;
     renderDateFilter();
     dateRangeBackdrop.hidden = false;
     document.body.classList.add("has-date-range-dialog");
     dateRangeDialog.focus();
-  }
-
-  function changeCustomMode(mode) {
-    if (!dateDraft || !["single", "range"].includes(mode)) return;
-    dateDraft.customMode = mode;
-    if (mode === "range" && !dateDraft.start && !dateDraft.end) {
-      dateDraft.stage = "start";
-    }
-    dateRangeError.hidden = true;
-    renderDateFilter();
   }
 
   function onCalendarAction(event) {
@@ -2320,62 +2348,55 @@
     const item = event.target.closest("button[data-calendar-day]");
     if (!item || !dateDraft || dateDraft.tab !== "custom") return;
     const iso = item.dataset.calendarDay;
-    if (dateDraft.customMode === "single") {
-      dateDraft.day = iso;
-    } else if (dateDraft.stage === "start" || dateDraft.stage === "done") {
+    const start = dateDraft.start, end = dateDraft.end;
+    if (!start) {
       dateDraft.start = iso;
       dateDraft.end = null;
-      dateDraft.stage = "end";
+      dateDraft.lastEndpoint = "start";
+    } else if (!end) {
+      if (iso === start) {
+        // Clicking the sole selected date deselects everything.
+        dateDraft.start = null;
+        dateDraft.lastEndpoint = null;
+      } else if (iso < start) {
+        dateDraft.start = iso;
+        dateDraft.end = start;
+        dateDraft.lastEndpoint = "start";
+      } else {
+        dateDraft.end = iso;
+        dateDraft.lastEndpoint = "end";
+      }
+    } else if (iso === start) {
+      // Clicking an endpoint removes that endpoint, leaving the other
+      // selected as a single date.
+      dateDraft.start = end;
+      dateDraft.end = null;
+      dateDraft.lastEndpoint = "start";
+    } else if (iso === end) {
+      dateDraft.end = null;
+      dateDraft.lastEndpoint = "start";
+    } else if (iso < start) {
+      dateDraft.start = iso;
+      dateDraft.lastEndpoint = "start";
+    } else if (iso > end) {
+      dateDraft.end = iso;
+      dateDraft.lastEndpoint = "end";
+    } else if (dateDraft.lastEndpoint === "start") {
+      // Inside the range, modify whichever boundary was last edited.
+      dateDraft.start = iso;
     } else {
-      // Selecting the second date earlier than the first simply reverses
-      // the bounds; the user's first click becomes the end date.
-      dateDraft.end = iso < dateDraft.start ? dateDraft.start : iso;
-      dateDraft.start = iso < dateDraft.start ? iso : dateDraft.start;
-      dateDraft.stage = "done";
+      dateDraft.end = iso;
+      dateDraft.lastEndpoint = "end";
     }
-    dateRangeError.hidden = true;
     renderDateFilter();
   }
 
   function applyDateFilter() {
-    if (!dateDraft) return;
-    let next = null;
-    let error = "";
-    if (dateDraft.tab === "preset") {
-      next = presetSelection(dateDraft.preset);
-    } else if (dateDraft.customMode === "single") {
-      if (!dateDraft.day) error = "Please select a date.";
-      else next = { mode: "single", day: dateDraft.day,
-        start: dateDraft.day, end: dateDraft.day,
-        weekdays: [0, 1, 2, 3, 4, 5, 6], order: dateSelection.order,
-        source: "custom", preset: null };
-    } else if (!dateDraft.start || !dateDraft.end) {
-      error = "Please select both start and end dates.";
-    } else if (!dateDraft.weekdays.size) {
-      error = "Select at least one day of the week.";
-    } else {
-      const count = Math.round((fromIso(dateDraft.end) - fromIso(dateDraft.start)) / DAY_MS) + 1;
-      if (count > 31) error = "Select up to 31 calendar days in this prototype.";
-      else {
-        const weekdays = Array.from(dateDraft.weekdays).sort();
-        let included = 0;
-        for (let day = dateDraft.start; day <= dateDraft.end; day = addDays(day, 1)) {
-          if (weekdays.includes(dayIndex(day))) included += 1;
-        }
-        if (!included) error = "No selected weekdays fall within this date range.";
-        else next = { mode: "range", day: dateDraft.start,
-          start: dateDraft.start, end: dateDraft.end,
-          weekdays: weekdays, order: dateSelection.order,
-          source: "custom", preset: null };
-      }
-    }
-    if (next) {
-      closeDateFilter();
-      chooseDateSelection(next);
-    } else {
-      dateRangeError.textContent = error || "Please select a date filter.";
-      dateRangeError.hidden = false;
-    }
+    if (!dateDraft || dateRangeApply.disabled) return;
+    const next = proposedDateSelection();
+    if (!next || candidateInvalidReason(next) || sameDateFilter(next, dateSelection)) return;
+    closeDateFilter();
+    chooseDateSelection(next);
   }
 
   function bindDateControls() {
@@ -2394,37 +2415,48 @@
         source: "custom", preset: null });
     });
     dateTodayButton.addEventListener("click", function () {
-      chooseDateSelection(presetSelection("today"));
+      if (isRangeView() || dateSelection.day !== todayKey) {
+        chooseDateSelection(presetSelection("today"));
+      }
     });
     document.getElementById("date-range-open").addEventListener("click", openDateFilter);
     tabPreset.addEventListener("click", function () {
       dateDraft.tab = "preset";
-      dateRangeError.hidden = true;
       renderDateFilter();
     });
     tabCustom.addEventListener("click", function () {
       dateDraft.tab = "custom";
-      dateRangeError.hidden = true;
       renderDateFilter();
     });
     presetOptions.addEventListener("click", function (event) {
       const button = event.target.closest("button[data-date-preset]");
       if (!button) return;
-      dateDraft.preset = button.dataset.datePreset;
-      dateRangeError.hidden = true;
+      const key = button.dataset.datePreset;
+      if (key === "today" || key === "tomorrow") {
+        // One-click shortcuts: selecting either is equivalent to Apply.
+        const next = presetSelection(key);
+        closeDateFilter();
+        if (!sameDateFilter(next, dateSelection)) chooseDateSelection(next);
+        return;
+      }
+      dateDraft.preset = key;
+      dateDraft.weekdays = new Set([0, 1, 2, 3, 4, 5, 6]);
       renderDateFilter();
     });
-    modeSingle.addEventListener("click", function () { changeCustomMode("single"); });
-    modeRange.addEventListener("click", function () { changeCustomMode("range"); });
     dateRangeCalendar.addEventListener("click", onCalendarAction);
     dateWeekdays.addEventListener("change", function (event) {
       const input = event.target;
       if (!input || input.type !== "checkbox" || !dateDraft) return;
-      const index = Number(input.value);
-      if (input.checked) dateDraft.weekdays.add(index);
-      else dateDraft.weekdays.delete(index);
-      dateRangeError.hidden = true;
-      updateColumnLimitNotice();
+      const day = Number(input.value);
+      if (input.checked) dateDraft.weekdays.add(day);
+      else dateDraft.weekdays.delete(day);
+      renderDateFilter();
+    });
+    dateWeekdayToggle.addEventListener("click", function () {
+      if (!dateDraft) return;
+      dateDraft.weekdays = dateDraft.weekdays.size === 7
+        ? new Set() : new Set([0, 1, 2, 3, 4, 5, 6]);
+      renderDateFilter();
     });
     document.getElementById("date-sort-toggle").addEventListener("click", function () {
       if (!isRangeView()) return;
@@ -2432,7 +2464,7 @@
       updateDateDisplay();
       renderBoard();
     });
-    document.getElementById("date-range-apply").addEventListener("click", applyDateFilter);
+    dateRangeApply.addEventListener("click", applyDateFilter);
     document.getElementById("date-range-cancel").addEventListener("click", closeDateFilter);
     document.getElementById("date-range-close").addEventListener("click", closeDateFilter);
     dateRangeBackdrop.addEventListener("pointerdown", function (event) {
