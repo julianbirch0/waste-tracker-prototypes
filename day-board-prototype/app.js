@@ -1,4 +1,4 @@
-/* WasteTracker Day Board V00016
+/* WasteTracker Day Board V00017
    Standalone, file:// compatible. Custom pointer drag-and-drop; no dependencies. */
 (function () {
   "use strict";
@@ -2029,6 +2029,7 @@
   // The central date caption is deliberately conspicuous to prevent editing
   // Trips on the wrong day. Today and all calendar dates use browser-local time.
   const dateLabelElement = document.getElementById("date-current");
+  const dateDescriptionElement = document.getElementById("date-description");
   const dateTodayButton = document.getElementById("date-today");
   const datePrevButton = document.getElementById("date-prev");
   const dateNextButton = document.getElementById("date-next");
@@ -2055,10 +2056,15 @@
   function updateDateDisplay() {
     const single = !isRangeView();
     const count = datesInSelection().length;
+    // Keep the numeric date and its variable-length description on separate
+    // lines. The fixed-width date-display container prevents the navigation
+    // buttons from moving when labels such as Today / Next Wednesday change.
     dateLabelElement.textContent = single
-      ? dateLabel(dateSelection.day) + ", " + relativeDateDescription(dateSelection.day)
-      : dateLabel(dateSelection.start) + " – " + dateLabel(dateSelection.end) +
-        " · " + count + (count === 1 ? " day" : " days");
+      ? dateLabel(dateSelection.day)
+      : dateLabel(dateSelection.start) + " – " + dateLabel(dateSelection.end);
+    dateDescriptionElement.textContent = single
+      ? relativeDateDescription(dateSelection.day)
+      : count + (count === 1 ? " selected day" : " selected days");
     dateLabelElement.title = single ? shortDate(dateSelection.day)
       : count + " selected days";
     dateTodayButton.disabled = single && dateSelection.day === todayKey;
