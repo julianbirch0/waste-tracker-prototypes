@@ -1701,3 +1701,166 @@ button:focus-visible, .board-scroll:focus-visible {
 .group-filter-warning-option input:disabled { opacity: .5; cursor: default; }
 .group-filter-warning-option:has(input:disabled) { color: #ad9f89; cursor: default; }
 .group-filter-warning-option small { flex: 0 0 auto; }
+
+
+/* V00016: unmistakable date, reports-style Preset/Custom filter and soft ticks. */
+[hidden] { display: none !important; }
+
+.date-toolbar-wrap { display: flex; flex-direction: column; align-items: center; }
+.date-toolbar { min-height: 54px; padding: 6px 9px; gap: 7px; }
+.date-current {
+  min-width: 300px;
+  max-width: 800px;
+  font-size: 28px;
+  line-height: 1.16;
+  font-weight: 780;
+  letter-spacing: -.65px;
+  white-space: nowrap;
+  padding: 0 13px;
+  color: #214c64;
+}
+.date-column-limit {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 22px;
+  width: 100%;
+  padding: 2px 5px 0;
+  color: transparent;
+  font-size: 11px;
+  font-weight: 650;
+  line-height: 1.3;
+  text-align: center;
+  white-space: nowrap;
+}
+.date-column-limit.is-visible { color: #ad7228; }
+.date-main-sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-left: 4px;
+  padding-left: 11px;
+  border-left: 1px solid #d8e5e9;
+  color: #7085a0;
+  font-size: 11px;
+  white-space: nowrap;
+}
+.date-main-sort strong { color: #415c73; font-size: 11.5px; }
+.date-main-sort .date-sort-toggle { flex: 0 0 32px; }
+.date-range-dialog { width: min(650px, 100%); }
+.date-filter-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px;
+  padding: 12px 24px 10px;
+  background: #fbfcfd;
+  border-bottom: 1px solid #e7edf2;
+}
+.date-filter-tab {
+  min-height: 36px;
+  border: 1px solid #cedfe8;
+  border-radius: 6px;
+  color: #678098;
+  background: #fff;
+  font-size: 12px;
+  font-weight: 700;
+}
+.date-filter-tab.is-active {
+  color: #227f75;
+  border-color: #a6d8cb;
+  background: #edf8f4;
+}
+.date-filter-tab:hover { border-color: #7ebfb0; }
+.date-preset-panel { padding: 10px 1px 20px; }
+.date-preset-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 12px 0 0;
+}
+.date-preset-option {
+  min-height: 44px;
+  border: 1px solid #dbe6ec;
+  border-radius: 7px;
+  background: #fff;
+  color: #49647c;
+  font-size: 12px;
+  font-weight: 650;
+}
+.date-preset-option:hover { background: #f0f9f6; border-color: #8dc8b8; }
+.date-preset-option.is-active {
+  background: #eaf7f1;
+  border-color: #7cbdac;
+  color: #247d71;
+}
+.date-preset-description {
+  min-height: 26px;
+  margin: 17px 0 0;
+  text-align: center;
+  font-size: 13px;
+  color: #738ba1;
+  font-weight: 600;
+}
+.date-custom-mode {
+  display: flex;
+  justify-content: center;
+  gap: 9px;
+  margin: 0 0 14px;
+}
+.date-mode-button {
+  min-width: 135px;
+  min-height: 34px;
+  padding: 6px 13px;
+  background: #fff;
+  border: 1px solid #d0dfe7;
+  border-radius: 6px;
+  color: #647e92;
+  font-size: 11.5px;
+  font-weight: 650;
+}
+.date-mode-button.is-active {
+  color: #248174;
+  border-color: #9ccfbf;
+  background: #eff9f4;
+}
+.date-mode-button:hover { border-color: #7dbfb1; }
+.date-range-weekdays label {
+  background: #fff;
+  border-color: #d7e6ed;
+}
+.date-range-weekdays label:has(input:checked) {
+  background: #f4faf7;
+  border-color: #c4e1d7;
+}
+.date-range-weekdays input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  flex: 0 0 16px;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  border: 1px solid #afc3c9;
+  border-radius: 4px;
+  background: #fff;
+}
+.date-range-weekdays input[type="checkbox"]:checked {
+  border-color: #86c4b3;
+  background: #e9f7f1 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath d='M3.1 8.2l3.1 3.0 6.6-6.5' fill='none' stroke='%232a8578' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 14px 14px no-repeat;
+}
+.date-range-weekdays input[type="checkbox"]:focus-visible {
+  outline: 2px solid #438f83;
+  outline-offset: 2px;
+}
+@media (max-width: 1580px) {
+  .page-header { min-height: 152px; }
+}
+@media (max-width: 1060px) {
+  .date-toolbar { flex-wrap: wrap; }
+  .date-current { max-width: min(760px, 86vw); font-size: 25px; }
+  .date-column-limit { white-space: normal; }
+}
+@media (max-width: 660px) {
+  .date-current { min-width: 0; font-size: 22px; max-width: 94vw; }
+  .date-main-sort { border: 0; margin-left: 0; }
+  .date-preset-grid { grid-template-columns: 1fr 1fr; }
+}
