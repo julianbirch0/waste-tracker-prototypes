@@ -4,32 +4,30 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light">
-  <title>Day Board | WasteTracker Prototype V00015</title>
+  <title>Day Board | WasteTracker Prototype V00016</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <main class="page">
     <header class="page-header">
       <div class="page-heading">
-        <h1>Day Board <span class="version">V00015</span></h1>
+        <h1>Day Board <span class="version">V00016</span></h1>
         <p class="subtitle">Carrier scheduling · Day Board</p>
       </div>
       <div class="date-toolbar-wrap">
         <nav class="date-toolbar" aria-label="Day Board date selection">
-          <button type="button" id="date-prev" class="date-step" aria-label="Previous day or range" title="Previous">−</button>
-          <strong id="date-current" class="date-current" aria-live="polite">17-Nov-2026, Today</strong>
-          <button type="button" id="date-next" class="date-step" aria-label="Next day or range" title="Next">+</button>
-          <button type="button" id="date-calendar" class="date-action date-calendar-trigger" aria-label="Select a single date" aria-expanded="false" title="Choose a date">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18"/><path d="M8 14h3M14 14h2M8 18h3"/>
-            </svg>
-          </button>
+          <button type="button" id="date-prev" class="date-step" aria-label="Previous day" title="Previous day">−</button>
+          <strong id="date-current" class="date-current" aria-live="polite">18-Nov-2026, Today</strong>
+          <button type="button" id="date-next" class="date-step" aria-label="Next day" title="Next day">+</button>
           <button type="button" id="date-today" class="date-action">Select Today</button>
-          <button type="button" id="date-range-open" class="date-action">Select Date Range</button>
+          <button type="button" id="date-range-open" class="date-action">Edit Date Filter</button>
+          <div id="date-main-sort" class="date-main-sort" hidden>
+            <span>Display order:</span>
+            <strong id="date-sort-label">Round then Date</strong>
+            <button type="button" id="date-sort-toggle" class="date-sort-toggle" aria-label="Swap display order" title="Swap display order">⇄</button>
+          </div>
         </nav>
-        <div id="date-single-popup" class="date-single-popup" hidden>
-          <div id="date-single-calendar"></div>
-        </div>
+        <div id="date-column-limit" class="date-column-limit" role="status" aria-live="polite"></div>
       </div>
       <div class="header-actions">
         <button type="button" class="btn btn-primary" id="toggle-map" aria-expanded="false" aria-controls="map-workspace">Show map</button>
@@ -143,26 +141,46 @@
   </div>
   <div id="date-range-backdrop" class="date-range-backdrop" hidden>
     <section class="date-range-dialog" role="dialog" aria-modal="true" aria-labelledby="date-range-title" tabindex="-1">
-      <header class="date-range-top"><h2 id="date-range-title">Select Date Range</h2><button type="button" id="date-range-close" aria-label="Cancel and close" class="driver-dialog-close">×</button></header>
+      <header class="date-range-top">
+        <h2 id="date-range-title">Edit Date Filter</h2>
+        <button type="button" id="date-range-close" aria-label="Cancel and close" class="driver-dialog-close">×</button>
+      </header>
+      <div class="date-filter-tabs" role="group" aria-label="Date filter type">
+        <button type="button" id="date-tab-preset" class="date-filter-tab is-active" aria-pressed="true">Preset</button>
+        <button type="button" id="date-tab-custom" class="date-filter-tab" aria-pressed="false">Custom</button>
+      </div>
       <div class="date-range-scroll">
-        <div id="date-range-calendar"></div>
-        <p id="date-range-instruction" class="date-range-instruction">Select start date</p>
-        <div class="date-range-weekday-block">
-          <div class="date-range-section-label">Days of the week</div>
-          <div class="date-range-weekdays" id="date-range-weekdays">
-            <label><input type="checkbox" value="0" checked><span>Mon</span></label>
-            <label><input type="checkbox" value="1" checked><span>Tue</span></label>
-            <label><input type="checkbox" value="2" checked><span>Wed</span></label>
-            <label><input type="checkbox" value="3" checked><span>Thu</span></label>
-            <label><input type="checkbox" value="4" checked><span>Fri</span></label>
-            <label><input type="checkbox" value="5" checked><span>Sat</span></label>
-            <label><input type="checkbox" value="6" checked><span>Sun</span></label>
+        <div id="date-preset-panel" class="date-preset-panel">
+          <div class="date-range-section-label">Choose a date preset</div>
+          <div class="date-preset-grid" id="date-preset-options">
+            <button type="button" class="date-preset-option" data-date-preset="today">Today</button>
+            <button type="button" class="date-preset-option" data-date-preset="tomorrow">Tomorrow</button>
+            <button type="button" class="date-preset-option" data-date-preset="this-week">This week</button>
+            <button type="button" class="date-preset-option" data-date-preset="next-week">Next week</button>
+            <button type="button" class="date-preset-option" data-date-preset="this-month">This month</button>
+            <button type="button" class="date-preset-option" data-date-preset="next-month">Next month</button>
           </div>
+          <p id="date-preset-description" class="date-preset-description"></p>
         </div>
-        <div class="date-sort-row">
-          <span class="date-range-section-label">Display order:</span>
-          <strong id="date-sort-label">Round then Date</strong>
-          <button type="button" id="date-sort-toggle" class="date-sort-toggle" aria-label="Swap display order" title="Swap display order">⇄</button>
+        <div id="date-custom-panel" hidden>
+          <div class="date-custom-mode" role="group" aria-label="Custom date selection">
+            <button type="button" id="date-mode-single" class="date-mode-button" aria-pressed="true">Single date</button>
+            <button type="button" id="date-mode-range" class="date-mode-button" aria-pressed="false">Date range</button>
+          </div>
+          <div id="date-range-calendar"></div>
+          <p id="date-range-instruction" class="date-range-instruction">Select date</p>
+          <div id="date-range-weekday-block" class="date-range-weekday-block" hidden>
+            <div class="date-range-section-label">Days of the week</div>
+            <div class="date-range-weekdays" id="date-range-weekdays">
+              <label><input type="checkbox" value="0" checked><span>Mon</span></label>
+              <label><input type="checkbox" value="1" checked><span>Tue</span></label>
+              <label><input type="checkbox" value="2" checked><span>Wed</span></label>
+              <label><input type="checkbox" value="3" checked><span>Thu</span></label>
+              <label><input type="checkbox" value="4" checked><span>Fri</span></label>
+              <label><input type="checkbox" value="5" checked><span>Sat</span></label>
+              <label><input type="checkbox" value="6" checked><span>Sun</span></label>
+            </div>
+          </div>
         </div>
         <div id="date-range-error" class="date-range-error" aria-live="polite" hidden></div>
       </div>
