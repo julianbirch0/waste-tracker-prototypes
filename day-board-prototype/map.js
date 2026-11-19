@@ -190,7 +190,12 @@
       '<div class="map-filter-items">' +
       (groups || '<div class="map-filter-empty">No Trips available from the main filter.</div>') +
       '</div>' +
-      '<div class="group-filter-hint">Map choices only. The Day Board grid is unaffected.</div>';
+      '<div class="group-filter-hint">' +
+        (selectedCount > ROUTE_PALETTE.length
+          ? selectedCount + ' Trips plotted. Colours repeat after ' + ROUTE_PALETTE.length +
+            '; narrow your map selection for clarity. '
+          : '') +
+        'Map choices only. The Day Board grid is unaffected.</div>';
     const newScroll = filterPanel.querySelector(".map-filter-items");
     if (newScroll) newScroll.scrollTop = oldScroll;
     const master = filterPanel.querySelector('input[data-map-level="all"]');
