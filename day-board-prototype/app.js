@@ -541,7 +541,9 @@
       : '<span class="column-meta-empty">Unassigned</span>';
     const swapIcon = '<span class="trip-swap-icon" aria-hidden="true">⇄</span>';
     const group = groups.find(function (item) { return item.id === trip.groupId; });
-    return '<div class="trip-column" data-group-id="' + escapeHtml(trip.groupId) + '">' +
+    const tripAccent = window.DayBoardMap ? window.DayBoardMap.colourForTrip(trip) : "#278f83";
+    return '<div class="trip-column" data-group-id="' + escapeHtml(trip.groupId) +
+      '" style="--trip-accent:' + tripAccent + '">' +
       '<div class="column-header">' +
         '<div class="column-heading-line"><span class="column-trip-title">' +
           '<span class="column-name" title="Group: ' +
@@ -807,30 +809,14 @@
     renderGroupFilter();
     const left = scroller.scrollLeft;
     const top = scroller.scrollTop;
-    const mapColumns = window.DayBoardMap && window.DayBoardMap.visibleColumns();
-    let displayedJobs = 0;
-    if (mapColumns) {
-      // Map mode renders only chosen columns, including an optional
-      // Unallocated column. Their order follows the user's checkbox choices.
-      board.innerHTML = mapColumns.map(function (id) {
-        if (id === "unallocated") {
-          displayedJobs += state.unallocated.length;
-          return renderUnallocated();
-        }
-        const trip = getTrip(id);
-        if (trip) displayedJobs += trip.unsequenced.length + trip.sequenced.length;
-        return trip ? renderTrip(trip) : "";
-      }).join("");
-    } else {
-      // Unallocated stays visible in the full grid, including warning filters
-      // and the case where no Trips are selected.
-      const shownTrips = displayTripsInOrder().slice(0, MAX_GRID_COLUMNS - 1);
-      displayedJobs = state.unallocated.length +
-        shownTrips.reduce(function (total, trip) {
-          return total + trip.unsequenced.length + trip.sequenced.length;
-        }, 0);
-      board.innerHTML = renderUnallocated() + shownTrips.map(renderTrip).join("");
-    }
+    // Main Groups & Trips filter alone determines every column in the grid.
+    // Map mode only constrains the width of its scrollable viewport.
+    const shownTrips = displayTripsInOrder().slice(0, MAX_GRID_COLUMNS - 1);
+    const displayedJobs = state.unallocated.length +
+      shownTrips.reduce(function (sum, trip) {
+        return sum + trip.unsequenced.length + trip.sequenced.length;
+      }, 0);
+    board.innerHTML = renderUnallocated() + shownTrips.map(renderTrip).join("");
     updateSummary(displayedJobs);
     updateColumnLimitNotice();
     scroller.scrollLeft = left;
@@ -839,40 +825,60 @@
     if (window.DayBoardStatus) window.DayBoardStatus.refresh();
   }
 
+  function roundChoices(groupId) {
+    const seen = new Set();
+    return state.trips.filter(function (trip) {
+      if (trip.groupId !== groupId || seen.has(trip.roundId)) return false;
+      seen.add(trip.roundId);
+      return true;
+    });
+  }
+
+  function selectedRoundIds() {
+    return new Set(state.trips.filter(function (trip) {
+      return visibleTripIds.has(trip.id);
+    }).map(function (trip) { return trip.roundId; }));
+  }
+
   function groupSelectionText() {
     if (activeWarningFilter) return warningGroupDetails[activeWarningFilter].shortName;
-    if (visibleTripIds.size === state.trips.length) return "All";
-    if (!visibleTripIds.size) return "No Trips";
-    return visibleTripIds.size + " of " + state.trips.length + " Trips";
+    const totalRounds = new Set(state.trips.map(function (t) { return t.roundId; })).size;
+    const chosen = selectedRoundIds().size;
+    if (chosen === totalRounds) return "All";
+    if (!chosen) return "No Trips";
+    return chosen + " of " + totalRounds + " Trips";
   }
 
   function selectedTripsInGroup(groupId) {
-    return state.trips.filter(function (trip) {
-      return trip.groupId === groupId && visibleTripIds.has(trip.id);
+    const selected = selectedRoundIds();
+    return roundChoices(groupId).filter(function (round) {
+      return selected.has(round.roundId);
     }).length;
   }
 
+  // The main dropdown ALWAYS lists the named Rounds, never dated instances.
+  // Dates and weekdays are solely the responsibility of Edit Date Filter.
   function renderGroupFilter() {
-    const previousList = groupFilterPanel.querySelector(".group-filter-options");
-    const previousScrollTop = previousList ? previousList.scrollTop : 0;
+    const previous = groupFilterPanel.querySelector(".group-filter-options");
+    const scrollTop = previous ? previous.scrollTop : 0;
+    const ordinary = !activeWarningFilter;
+    const selected = ordinary ? selectedRoundIds() : new Set();
+    const totalRounds = new Set(state.trips.map(function (t) { return t.roundId; })).size;
     groupFilterButton.innerHTML = escapeHtml(groupSelectionText()) +
       ' <span aria-hidden="true" class="group-filter-chevron">▾</span>';
-    const ordinary = !activeWarningFilter;
-    const selectedTotal = ordinary ? visibleTripIds.size : 0;
-    const total = state.trips.length;
     groupFilterPanel.innerHTML =
       '<label class="group-filter-select-all">' +
         '<input type="checkbox" data-group-select-all' +
-          (selectedTotal === total ? ' checked' : '') + '>' +
+        (selected.size === totalRounds ? ' checked' : '') + '>' +
         '<span>Select All</span>' +
       '</label>' +
       '<div class="group-filter-divider" role="separator"></div>' +
       '<div class="group-filter-options">' +
         groups.map(function (group) {
-          const trips = state.trips.filter(function (trip) {
-            return trip.groupId === group.id;
-          });
-          const selectedCount = ordinary ? selectedTripsInGroup(group.id) : 0;
+          const rounds = roundChoices(group.id);
+          const selectedCount = rounds.filter(function (t) {
+            return selected.has(t.roundId);
+          }).length;
           const expanded = expandedFilterGroups.has(group.id);
           return '<section class="group-filter-group">' +
             '<div class="group-filter-group-heading">' +
@@ -883,57 +889,51 @@
                 escapeHtml(group.name) + '"><span aria-hidden="true">›</span></button>' +
               '<label class="group-filter-option group-filter-parent">' +
                 '<input type="checkbox" data-group-option="' + escapeHtml(group.id) + '"' +
-                (selectedCount === trips.length ? ' checked' : '') + '>' +
+                (selectedCount === rounds.length ? ' checked' : '') + '>' +
                 '<span>' + escapeHtml(group.name) + '</span>' +
-                '<small>' + selectedCount + '/' + trips.length + '</small>' +
+                '<small>' + selectedCount + '/' + rounds.length + '</small>' +
               '</label>' +
             '</div>' +
             '<div class="group-filter-children" id="filter-children-' +
               escapeHtml(group.id) + '"' + (expanded ? '' : ' hidden') + '>' +
-              trips.map(function (trip) {
-                return '<label class="group-filter-trip"><input type="checkbox" data-trip-option="' +
-                  escapeHtml(trip.id) + '"' +
-                  (ordinary && visibleTripIds.has(trip.id) ? ' checked' : '') + '>' +
-                  '<span>' + escapeHtml(trip.name) +
-                    (isRangeView() ? ' · ' + escapeHtml(shortDate(trip.date)) : '') +
-                    '</span></label>';
+              rounds.map(function (round) {
+                return '<label class="group-filter-trip"><input type="checkbox" data-round-option="' +
+                  escapeHtml(round.roundId) + '"' +
+                  (ordinary && selected.has(round.roundId) ? ' checked' : '') + '>' +
+                  '<span>' + escapeHtml(round.name) + '</span></label>';
               }).join("") +
             '</div>' +
           '</section>';
         }).join("") +
-        // The special warning filters are deliberately last and compact.
-        // Their purpose here is to reflect the active Show-button filter;
-        // users do not need to browse a second list of affected Trips.
-        '<div class="group-filter-specials"' + (isRangeView() ? ' hidden' : '') + '>' +
-          (isRangeView() ? [] : warningKinds).map(function (kind) {
-            const affected = warningTrips(kind);
+        '<div class="group-filter-specials">' +
+          warningKinds.map(function (kind) {
+            const affected = isRangeView() ? [] : warningTrips(kind);
             return '<label class="group-filter-option group-filter-warning-option">' +
-                '<input type="checkbox" data-warning-group="' + kind + '"' +
-                  (activeWarningFilter === kind ? ' checked' : '') +
-                  (affected.length ? '' : ' disabled') + '>' +
-                '<span>' + escapeHtml(warningGroupDetails[kind].title) + '</span>' +
-                '<small>' + affected.length + '</small>' +
-              '</label>';
+              '<input type="checkbox" data-warning-group="' + kind + '"' +
+                (activeWarningFilter === kind ? ' checked' : '') +
+                (affected.length ? '' : ' disabled') + '>' +
+              '<span>' + escapeHtml(warningGroupDetails[kind].title) + '</span>' +
+              '<small>' + affected.length + '</small>' +
+            '</label>';
           }).join("") +
         '</div>' +
       '</div>' +
       '<div class="group-filter-hint">' +
         (activeWarningFilter ? 'Live issue filter — resolved Trips disappear automatically.' :
-          'Select the exact Trips to display in the Day Board.') +
+          'Choose named Rounds; Edit Date Filter determines their dates.') +
       '</div>';
     const list = groupFilterPanel.querySelector(".group-filter-options");
-    if (list) list.scrollTop = previousScrollTop;
-
+    if (list) list.scrollTop = scrollTop;
     const master = groupFilterPanel.querySelector('input[data-group-select-all]');
-    if (master) master.indeterminate = selectedTotal > 0 && selectedTotal < total;
+    if (master) master.indeterminate = selected.size > 0 && selected.size < totalRounds;
     groups.forEach(function (group) {
       const checkbox = groupFilterPanel.querySelector('input[data-group-option="' + group.id + '"]');
       if (!checkbox) return;
-      const count = ordinary ? selectedTripsInGroup(group.id) : 0;
-      const all = state.trips.filter(function (trip) {
-        return trip.groupId === group.id;
+      const chosen = roundChoices(group.id).filter(function (t) {
+        return selected.has(t.roundId);
       }).length;
-      checkbox.indeterminate = count > 0 && count < all;
+      const total = roundChoices(group.id).length;
+      checkbox.indeterminate = chosen > 0 && chosen < total;
     });
   }
 
@@ -946,22 +946,18 @@
     }).map(function (group) { return group.id; }));
     renderGroupFilter();
 
-    if (window.DayBoardMap && window.DayBoardMap.isOpen()) {
-      // The accordion reflects selected groups; Map and Grid checkboxes
-      // continue to control map-mode visibility independently.
-      window.DayBoardMap.onGroupsChange();
-      updateColumnLimitNotice();
-    } else {
-      const left = scroller.scrollLeft;
-      renderBoard();
-      scroller.scrollLeft = Math.max(0,
-        Math.min(left, scroller.scrollWidth - scroller.clientWidth));
-    }
+    const left = scroller.scrollLeft;
+    renderBoard();
+    scroller.scrollLeft = Math.max(0,
+      Math.min(left, scroller.scrollWidth - scroller.clientWidth));
   }
 
-  function toggleTripSelection(tripId, selected) {
+  function toggleTripSelection(roundId, selected) {
     const ids = activeWarningFilter ? new Set() : new Set(visibleTripIds);
-    if (selected) ids.add(tripId); else ids.delete(tripId);
+    state.trips.filter(function (trip) { return trip.roundId === roundId; })
+      .forEach(function (trip) {
+        if (selected) ids.add(trip.id); else ids.delete(trip.id);
+      });
     chooseTripSelection(Array.from(ids));
   }
 
@@ -1030,8 +1026,8 @@
       toggleGroup(group.dataset.groupOption, group.checked);
       return;
     }
-    const trip = event.target.closest('input[data-trip-option]');
-    if (trip) toggleTripSelection(trip.dataset.tripOption, trip.checked);
+    const trip = event.target.closest('input[data-round-option]');
+    if (trip) toggleTripSelection(trip.dataset.roundOption, trip.checked);
   });
   document.addEventListener("pointerdown", function (event) {
     if (!groupFilterPanel.hidden && !groupFilterWrap.contains(event.target)) {
@@ -2087,6 +2083,20 @@
     const card = board.querySelector('.job-card[data-job-id="' + jobId + '"]');
     if (!card) return;
     const column = card.closest(".trip-column");
+    // A marker can point to a Trip beyond the three visible map-mode columns.
+    // Scroll that existing column into view rather than modifying the filter.
+    if (column && !column.classList.contains("unallocated-column")) {
+      const visible = scroller.getBoundingClientRect();
+      const target = column.getBoundingClientRect();
+      const rail = board.querySelector(".unallocated-column");
+      const railWidth = rail ? rail.getBoundingClientRect().width : 0;
+      const delta = target.left < visible.left + railWidth
+        ? target.left - (visible.left + railWidth)
+        : (target.right > visible.right ? target.right - visible.right : 0);
+      if (delta) scroller.scrollTo({
+        left: Math.max(0, scroller.scrollLeft + delta), behavior: "smooth"
+      });
+    }
     const header = column && column.querySelector(".column-header");
     const sticky = column && column.querySelector(".unsequenced-block");
     const scrollRect = scroller.getBoundingClientRect();
@@ -2176,7 +2186,7 @@
         selectedRounds.add(id.split("@")[0]);
       });
     }
-    if (window.DayBoardMap && window.DayBoardMap.isOpen()) window.DayBoardMap.hideMap();
+    // Keep the map open; it synchronises its dated choices with the Date Filter.
     dateSelection = next;
     activeWarningFilter = null;
     savedFilterBeforeWarning = null;
