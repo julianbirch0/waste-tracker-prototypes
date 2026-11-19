@@ -1,4 +1,4 @@
-/* WasteTracker Day Board V00028 — Job status prototype.
+/* WasteTracker Day Board V00029 — Job status prototype.
    Self-contained, file:// friendly; no backend or external services. */
 (function () {
   "use strict";
@@ -275,6 +275,18 @@
         '</div>';
     }).join("") || '<div class="status-option-reason">No status actions available for this selection.</div>';
   }
+  function updateActionHeading() {
+    if (!bar) return;
+    const label = bar.querySelector(".status-trigger-label");
+    if (label) label.textContent = menuOpen
+      ? "Available actions" : "Expand to see available actions";
+    const trigger = bar.querySelector(".status-actions-trigger");
+    if (trigger) {
+      trigger.setAttribute("aria-expanded", String(menuOpen));
+      trigger.setAttribute("aria-label", menuOpen
+        ? "Collapse available actions" : "Expand to see available actions");
+    }
+  }
   function closeMenu() {
     menuOpen = false;
     if (bar) bar.classList.remove("is-expanded");
@@ -283,7 +295,7 @@
       menu.setAttribute("aria-hidden", "true");
       menu.inert = true;
     }
-    if (bar) bar.querySelector(".status-actions-trigger").setAttribute("aria-expanded", "false");
+    updateActionHeading();
   }
   function refresh() {
     if (!bar || !bridge) return;
@@ -502,14 +514,15 @@
     bar.className = "date-action-panel";
     bar.hidden = true;
     bar.innerHTML = '<div class="date-action-main">' +
-      '<button type="button" class="status-actions-trigger" aria-expanded="false" aria-controls="job-actions-list">' +
-        '<span>Actions</span>' +
+      '<strong class="status-selected-count"></strong>' +
+      '<button type="button" class="status-clear" title="Deselect Jobs" aria-label="Deselect Jobs">Deselect</button>' +
+      '<button type="button" class="status-actions-trigger" aria-expanded="false" ' +
+        'aria-label="Expand to see available actions" aria-controls="job-actions-list">' +
+        '<span class="status-trigger-label">Expand to see available actions</span>' +
         '<span class="status-chevron" aria-hidden="true">' +
           '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" ' +
           'stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">' +
-          '<path d="m6 9 6 6 6-6"></path></svg></span></button>' +
-      '<strong class="status-selected-count"></strong>' +
-      '<button type="button" class="status-clear" title="Deselect Jobs" aria-label="Deselect Jobs">Deselect</button></div>' +
+          '<path d="m6 9 6 6 6-6"></path></svg></span></button></div>' +
       '<div class="status-menu" id="job-actions-list" aria-hidden="true" inert></div>';
     document.querySelector(".date-toolbar").appendChild(bar);
     menu = bar.querySelector(".status-menu");
@@ -527,7 +540,7 @@
       menu.classList.toggle("is-expanded", menuOpen);
       menu.setAttribute("aria-hidden", String(!menuOpen));
       menu.inert = !menuOpen;
-      this.setAttribute("aria-expanded", String(menuOpen));
+      updateActionHeading();
     });
     bar.querySelector(".status-clear").addEventListener("click", function () {
       bridge.clearSelection();
