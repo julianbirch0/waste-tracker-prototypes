@@ -1,4 +1,4 @@
-# Day Board prototype — V00026
+# Day Board prototype — V00027
 
 A standalone, local-file-friendly WasteTracker Day Board prototype.
 
@@ -15,7 +15,7 @@ There is **no localhost, build step, framework, CDN or web service**. Keep index
 - 12 Trip columns, each showing the **parent Round name only**, with **both Vehicle and Driver editable through separate ⇄ dialogs**.
 - **Round groups** are represented by four invented operational groups: Skips Team, Trade & Bins, Recycling & Deliveries, and Specialist Fleet. These are mock assignments independent of the existing Round Definition prototype.
 - The **Groups and Trips** multi-select above the Day Board defaults to everything selected. A **Select All** checkbox is followed by a subtle divider, a non-expandable **Unallocated** entry, four expandable ordinary groups with individual Trip checkboxes, and finally four **compact warning pseudo-filters**: **Trips with no driver assigned**, **Trips with duplicate driver**, **Trips with no vehicle assigned**, and **Trips with duplicate vehicle**. These four warning filters sit **at the bottom** of the dropdown, with **no expandable child Trip lists**; they primarily reflect the live filters activated by the amber warnings' **Show** buttons. They are disabled when they have no affected Trips; choosing either one activates exactly the same live issue filter as its warning's Show button. Clicking the active pseudo-group again restores the prior ordinary filter; choosing a normal group or Trip exits the special filter and starts a new manual selection. Ordinary group checkboxes select/deselect all their Trips, partial selections show mixed states, and Unallocated can be independently hidden. Chevrons expand/collapse without changing selections.
-- **V00026: Job status and contextual Actions prototype.** Select one or more Jobs to show the floating Actions control. Cards use muted background colours and display the full status at the bottom (two lines where useful), with slightly more vertical breathing room.
+- **V00026–V00027: Job status and contextual Actions prototype.** Select one or more Jobs to show the floating Actions control. Cards use muted background colours and display the full status at the bottom (two lines where useful), with slightly more vertical breathing room.
 - A **horizontally sticky Unallocated column** on the left, now using the **same muted amber background as Unsequenced Jobs** throughout its header and body.
 - Trip headers that remain visible when scrolling vertically.
 - An **always-visible sticky Unsequenced area** immediately below each Trip header, including a compact empty drop target when there are no unsequenced Jobs.
@@ -39,6 +39,13 @@ There is **no localhost, build step, framework, CDN or web service**. Keep index
 - The demonstration data retains the **V00008 browser storage key** to preserve previously saved Job, driver and vehicle changes. Starting with V00025, edits are stored against dated Trip/Job instances (storage format V4).
 - Browser storage of changed positions when supported by the browser's file:// storage rules. The board still works in memory if browser storage is unavailable.
 - **Reset sample data** to restore the initial positions (also clears Undo/Redo history).
+
+## Date and Actions toolbar (V00027)
+
+- The date navigator now occupies **two distinct widths**: a compact width for a **single date** and a wider width for a **date range**. Both use a gentle width transition on **Apply**, **Select Today**, or any date-mode change. The text remains centred; the previous over-wide gap between the date and the step buttons is removed.
+- When **one or more Jobs are selected**, the same date box switches to a **softly darker Actions mode**. Its date/date-range remains visible as a smaller line at the top. The relative date caption and **Select Today**, **−**, **+**, and **Edit Date Filter** controls are temporarily hidden; they reappear as soon as the Job selection is cleared.
+- **Actions** is a prominent expandable heading with the count of selected Jobs and a clear-selection control. Expanding it reveals the **existing context-sensitive status actions and disabled explanations**, and the same box **grows downwards over the content below it** with a transition. There is **no separate bottom-floating Actions control**.
+- Date navigation, filtering, status rules, modal dialogs, local persistence, and Undo/Redo boundaries retain their V00026 behaviour.
 
 ## Job statuses and Actions (V00026)
 
