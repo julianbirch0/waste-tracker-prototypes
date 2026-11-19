@@ -1,12 +1,12 @@
 /*
- * WasteTracker – Round Planning (review build, 6 November 2026).
+ * WasteTracker – Round Planning (review build, 19 November 2026).
  * No framework, server, API or internet connection required.
  * The Agreement editor, actual trip scheduling and road routing remain out of scope.
  */
 (function () {
   'use strict';
   const data = window.RoundPlanningData;
-  if (!data || !Array.isArray(data.rounds) || !Array.isArray(data.agreements)) {
+  if (!data || !Array.isArray(data.rounds) || !Array.isArray(data.agreements) || !Array.isArray(data.services)) {
     document.body.textContent = 'Sample data not loaded. Keep data.js alongside index.html.';
     return;
   }
@@ -14,8 +14,19 @@
   const esc = value => String(value == null ? '' : value).replace(/[&<>"']/g, c =>
     ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
   const WD = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
-  const STORAGE_KEY = 'wastetracker.round-planning.prototype.v2';
+  const STORAGE_KEY = 'wastetracker.round-planning.prototype.v3';
   const rows = $('agreement-rows');
+  const tableScroll = $('table-scroll');
+  const table = document.querySelector('.planning-table');
+  const undoButton = $('undo');
+  const redoButton = $('redo');
+  const MAX_HISTORY = 100;
+  let undoStack = [], redoStack = [];
+  let selectedIds = new Set();
+  let selectionAnchor = null;
+  let pointerStart = null, liveDrag = null, dropHint = null, dragBadge = null;
+  let suppressClick = false, autoScrollHandle = null;
+  let lastPointer = null;
   const backdrop = $('modal-backdrop');
   const modal = $('modal');
   const actions = $('modal-actions');
@@ -31,9 +42,6 @@
   let currentRoundId = linkedRound ? linkedRound.id : (data.rounds.length ? data.rounds[0].id : '');
   let currentWeek = 1;
   let draft = getOrder(currentRoundId);
-  let draggingId = null;
-  let dropTarget = null;
-  let dropAfter = false;
   let modalMode = '';
   let focusBefore = null;
   let mapVisible = true;
@@ -56,35 +64,43 @@
   function labelDate(d) {
     return d.getUTCDate() + '-' + d.toLocaleDateString('en-GB', { month: 'short', timeZone: 'UTC' });
   }
-  function regularActivities(a) {
-    if (Array.isArray(a.activities)) return a.activities.filter(x => x.type === 'regular');
-    return [{ type:'regular', roundIds: a.roundIds || [], everyWeeks: 1, startDate: '2020-01-06' }];
+  function service(id) { return data.services.find(s => s.id === id); }
+  function parentAgreement(s) { return s && data.agreements.find(a => a.id === s.agreementId); }
+  function membership(s, roundId) {
+    return Boolean(s && Array.isArray(s.roundIds) && s.roundIds.includes(roundId));
   }
-  function membership(a, roundId) {
-    return regularActivities(a).some(x => Array.isArray(x.roundIds) && x.roundIds.includes(roundId));
+  function hasEnded(s) {
+    const today = new Date(), todayKey = today.getFullYear() + '-' +
+      String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0');
+    return Boolean(s.endDate && s.endDate < todayKey);
   }
-  function dueInWeek(a, roundId, week) {
+  function dueInWeek(s, roundId, week) {
     const r = round(roundId);
-    if (!r) return false;
+    if (!r || !membership(s,roundId)) return false;
     const dayOffset = WD.indexOf(r.days[0]);
     const targetDate = weekStart(week);
     targetDate.setUTCDate(targetDate.getUTCDate() + dayOffset);
-    return regularActivities(a).some(x => {
-      if (!Array.isArray(x.roundIds) || !x.roundIds.includes(roundId)) return false;
-      const start = new Date((x.startDate || '2020-01-06') + 'T00:00:00Z');
-      if (Number.isNaN(start.getTime()) || targetDate < start) return false;
-      if (x.endDate && targetDate > new Date(x.endDate + 'T23:59:59Z')) return false;
-      const startMonday = mondayUTC(new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate())));
-      const weeks = Math.round((weekStart(week) - startMonday) / 604800000);
-      return weeks >= 0 && weeks % Math.max(1, Number(x.everyWeeks) || 1) === 0;
-    });
+    const start = new Date((s.startDate || '2020-01-06') + 'T00:00:00Z');
+    if (Number.isNaN(start.getTime()) || targetDate < start) return false;
+    if (s.endDate && targetDate > new Date(s.endDate + 'T23:59:59Z')) return false;
+    const startMonday = mondayUTC(new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate())));
+    const weeks = Math.round((weekStart(week) - startMonday) / 604800000);
+    return weeks >= 0 && weeks % Math.max(1,Number(s.everyWeeks)||1) === 0;
   }
-  function visible(a) {
-    if (!membership(a, currentRoundId)) return false;
-    if (currentWeek === 0) return [1,2,3,4].some(n => dueInWeek(a, currentRoundId, n));
-    return dueInWeek(a, currentRoundId, currentWeek);
+  function visible(s) {
+    if (!membership(s,currentRoundId) || hasEnded(s)) return false;
+    // All means all current and future Regular Services, not only 4 weeks.
+    // On-hold Services continue following recurrence for week-specific views.
+    return currentWeek === 0 || dueInWeek(s,currentRoundId,currentWeek);
   }
-  function assignedIds(id) { return data.agreements.filter(a => membership(a,id)).map(a => a.id); }
+  function assignedIds(id) {
+    // Keep ended Services in the persisted master sequence, but hide them.
+    return data.services.filter(s => membership(s,id)).map(s => s.id);
+  }
+  function frequencyLabel(s) {
+    const every = Math.max(1,Number(s.everyWeeks)||1);
+    return every===1 ? 'Weekly' : 'Every ' + every + ' weeks';
+  }
   function loadOrders() {
     try {
       const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
@@ -99,29 +115,85 @@
     } catch (_) { storageAvailable = false; return false; }
   }
   function getOrder(id) {
-    const all = assignedIds(id);
-    const previous = savedOrders[id];
+    const all = assignedIds(id), previous = savedOrders[id];
     const storedSeq = previous && Array.isArray(previous.sequenced) ? previous.sequenced : null;
     const storedUnseq = previous && Array.isArray(previous.unsequenced) ? previous.unsequenced : null;
-    const sequenced = [];
-    const unsequenced = [];
+    const sequenced=[], unsequenced=[];
     if (storedSeq && storedUnseq) {
       storedSeq.forEach(x => { if (all.includes(x) && !sequenced.includes(x)) sequenced.push(x); });
       storedUnseq.forEach(x => { if (all.includes(x) && !sequenced.includes(x) && !unsequenced.includes(x)) unsequenced.push(x); });
       all.forEach(x => { if (!sequenced.includes(x) && !unsequenced.includes(x)) unsequenced.push(x); });
     } else {
-      all.forEach(x => {
-        const a = agreement(x);
-        (a && a.initiallySequenced && [1,2,3,4].some(n => dueInWeek(a,id,n)) ? sequenced : unsequenced).push(x);
-      });
+      all.forEach(x => (service(x).initiallySequenced ? sequenced : unsequenced).push(x));
     }
-    return { sequenced, unsequenced };
+    return {sequenced,unsequenced};
   }
   function dirty() { return JSON.stringify(draft) !== JSON.stringify(getOrder(currentRoundId)); }
-  function showMessage(t,kind) { msg.textContent = t; msg.dataset.type = kind || 'success'; msg.hidden = false; }
-  function clearMessage() { msg.textContent = ''; msg.hidden = true; }
-  function setDirty() { $('dirty-indicator').textContent = dirty() ? 'Unsaved changes' : ''; }
-  function visibleIds(type) { return draft[type].filter(id => { const a=agreement(id); return a && visible(a); }); }
+  function showMessage(t,kind) { msg.textContent=t;msg.dataset.type=kind||'success';msg.hidden=false; }
+  function clearMessage() { msg.textContent='';msg.hidden=true; }
+  function setDirty() { $('dirty-indicator').textContent=dirty()?'Unsaved changes':''; }
+  function visibleIds(type) { return draft[type].filter(id => {const s=service(id);return s&&visible(s);}); }
+  function visibleOrder() { return visibleIds('unsequenced').concat(visibleIds('sequenced')); }
+  function clearSelection() {
+    selectedIds.clear();selectionAnchor=null;refreshSelection();
+  }
+  function refreshSelection() {
+    rows.querySelectorAll('tr[data-service-id]').forEach(tr => {
+      const active=selectedIds.has(tr.dataset.serviceId);
+      tr.classList.toggle('is-selected',active);
+      tr.setAttribute('aria-selected',String(active));
+    });
+    $('selection-count').textContent=selectedIds.size ?
+      selectedIds.size+' service'+(selectedIds.size===1?'':'s')+' selected' : '';
+    renderMap();
+  }
+  function selectService(id,modifiers) {
+    const order=visibleOrder();
+    if (!order.includes(id)) return;
+    const anchor=selectionAnchor;
+    if (modifiers.shiftKey && anchor && order.includes(anchor)) {
+      if (!modifiers.ctrlKey && !modifiers.metaKey) selectedIds.clear();
+      const a=order.indexOf(anchor),b=order.indexOf(id);
+      order.slice(Math.min(a,b),Math.max(a,b)+1).forEach(x=>selectedIds.add(x));
+    } else if (modifiers.ctrlKey || modifiers.metaKey) {
+      if(selectedIds.has(id))selectedIds.delete(id);else selectedIds.add(id);
+      selectionAnchor=id;
+    } else {
+      selectedIds=new Set([id]);selectionAnchor=id;
+    }
+    refreshSelection();
+  }
+  function clearHistory() {undoStack=[];redoStack=[];updateHistoryButtons();}
+  function updateHistoryButtons() {
+    undoButton.disabled=!undoStack.length;
+    redoButton.disabled=!redoStack.length;
+  }
+  function commitEdit(before) {
+    if(JSON.stringify(before)===JSON.stringify(draft))return false;
+    undoStack.push({before,after:clone(draft)});
+    if(undoStack.length>MAX_HISTORY)undoStack.shift();
+    redoStack=[];updateHistoryButtons();
+    clearMessage();renderRows();return true;
+  }
+  function stepHistory(direction) {
+    const source=direction==='undo'?undoStack:redoStack;
+    const destination=direction==='undo'?redoStack:undoStack;
+    if(!source.length)return;
+    const entry=source.pop();
+    draft=clone(entry[direction==='undo'?'before':'after']);
+    destination.push(entry);
+    selectedIds=new Set([...selectedIds].filter(id=>visibleOrder().includes(id)));
+    updateHistoryButtons();clearMessage();renderRows();
+  }
+  function updateStickyOffsets() {
+    if(!tableScroll)return;
+    let top=table.tHead.getBoundingClientRect().height;
+    rows.querySelectorAll('tr[data-zone="unsequenced"],tr.unsequenced-row').forEach(tr=>{
+      tr.style.setProperty('--sticky-top',top+'px');
+      top+=tr.getBoundingClientRect().height;
+    });
+    tableScroll.style.setProperty('--sticky-stack-height',top+'px');
+  }
   function renderControls() {
     const r = round(currentRoundId);
     const names = [...new Set(data.rounds.map(item => item.name))];
@@ -141,102 +213,93 @@
       ws.innerHTML = weekHTML; ws.value = String(currentWeek);
     });
   }
-  function sectionHeader(name, type) {
-    return '<tr class="section-heading" data-zone="' + type + '"><td colspan="11"><span>' +
-      esc(name) + '</span></td></tr>';
+  function sectionHeader(name,type) {
+    return '<tr class="section-heading" data-zone="'+type+'"><td colspan="10"><span>'+
+      esc(name)+'</span></td></tr>';
   }
   function renderRows(focusId) {
-    const unseq = visibleIds('unsequenced');
-    const seq = visibleIds('sequenced');
-    if (!unseq.length && !seq.length) {
-      rows.innerHTML = '<tr><td colspan="11" class="empty-row">No Regular Activities are due for this Round in the selected week. Try All or another week.</td></tr>';
+    const unseq=visibleIds('unsequenced'), seq=visibleIds('sequenced');
+    if(!unseq.length&&!seq.length) {
+      rows.innerHTML='<tr><td colspan="10" class="empty-row">No Regular Services are due for this Round in the selected week. Try All or another week.</td></tr>';
     } else {
-      let html = '';
-      if (unseq.length) html += sectionHeader('Unsequenced agreements','unsequenced');
-      const rowHTML = (id, type) => {
-        const a = agreement(id), sequence = draft.sequenced.indexOf(id) + 1;
-        const location = [a.location,a.postcode].filter(Boolean).join(', ');
-        return '<tr data-agreement-id="' + esc(id) + '" data-section="' + type + '" class="' +
-          (type === 'unsequenced' ? 'unsequenced-row' : '') + '">' +
-          '<td><button class="drag-handle" type="button" draggable="true" data-action="drag" ' +
-          'aria-label="Reorder agreement ' + esc(a.number) + '. Use Up or Down arrow keys." title="Drag to reorder">⠿</button></td>' +
-          '<td class="seq">' + (type === 'sequenced' ? sequence : '—') + '</td>' +
-          '<td>' + esc(a.number) + '</td><td>' + esc(a.timing) + '</td><td>' + esc(a.customer) + '</td>' +
-          '<td><span class="site-line">' + esc(a.site) + '</span><span class="site-sub">' + esc(location) + '</span></td>' +
-          '<td>' + esc(a.material) + '</td><td>' + esc(a.container) + '</td>' +
-          '<td class="qty">' + esc(a.quantity) + '</td>' +
-          '<td class="notes-cell">' + esc(a.notes || '') + '</td>' +
+      const rowHTML=(id,type,index)=>{
+        const s=service(id),a=parentAgreement(s);
+        if(!s||!a)return '';
+        const location=[a.location,a.postcode].filter(Boolean).join(', ');
+        const held=s.onHold?'<span class="hold-label">On hold</span>':'';
+        const description='<strong>'+esc(s.activity)+'</strong><span class="service-frequency">'+esc(frequencyLabel(s))+'</span>'+held;
+        return '<tr tabindex="0" data-service-id="'+esc(id)+'" data-section="'+type+'" aria-selected="'+selectedIds.has(id)+
+          '" class="'+(type==='unsequenced'?'unsequenced-row ':'')+(s.onHold?'on-hold-row ':'')+
+          (selectedIds.has(id)?'is-selected':'')+'">'+
+          '<td class="seq">'+(type==='sequenced'?index+1:'—')+'</td>'+
+          '<td class="service-description">'+description+'</td>'+
+          '<td>'+esc(s.timing||a.timing)+'</td><td>'+esc(a.customer)+'</td>'+
+          '<td><span class="site-line">'+esc(a.site)+'</span><span class="site-sub">'+esc(location)+'</span></td>'+
+          '<td>'+esc(a.material)+'</td><td>'+esc(s.container||a.container)+'</td>'+
+          '<td class="qty">'+esc(s.quantity)+'</td>'+
+          '<td class="notes-cell">'+esc(s.notes||a.notes||'')+'</td>'+
           '<td class="action-cell"><button type="button" class="view-button" data-action="view">View Agreement</button></td></tr>';
       };
-      html += unseq.map(id => rowHTML(id,'unsequenced')).join('');
-      if (unseq.length) html += sectionHeader('Scheduled agreements','sequenced');
-      html += seq.map(id => rowHTML(id,'sequenced')).join('');
-      rows.innerHTML = html;
+      let html='';
+      if(unseq.length)html+=sectionHeader('Unsequenced services','unsequenced');
+      html+=unseq.map((id,index)=>rowHTML(id,'unsequenced',index)).join('');
+      if(unseq.length)html+=sectionHeader('Sequenced services','sequenced');
+      html+=seq.map((id,index)=>rowHTML(id,'sequenced',index)).join('');
+      rows.innerHTML=html;
     }
-    $('unsequence-drop').hidden = true;
+    $('unsequence-drop').hidden=true;
     setDirty();
-    renderMap();
     applyColumnVisibility();
-    if (focusId) {
-      const handle = [...rows.querySelectorAll('[data-action="drag"]')].find(
-        e => e.closest('tr').dataset.agreementId === focusId);
-      if (handle) handle.focus();
+    refreshSelection();
+    updateStickyOffsets();
+    if(focusId){
+      const tr=[...rows.querySelectorAll('tr[data-service-id]')].find(e=>e.dataset.serviceId===focusId);
+      if(tr)tr.focus({preventScroll:true});
     }
   }
   function persist() {
-    savedOrders[currentRoundId] = clone(draft);
-    const ok = saveOrders();
+    savedOrders[currentRoundId]=clone(draft);
+    const ok=saveOrders();
+    clearHistory();
     renderRows();
-    showMessage(ok ? 'Sequence saved for ' + roundTitle(currentRoundId) + '.' :
+    showMessage(ok?'Sequence saved for '+roundTitle(currentRoundId)+'.':
       'Saved for this open page only: browser storage is unavailable.',ok?'success':'warning');
   }
-  function discard() { draft = getOrder(currentRoundId); clearMessage(); renderRows(); }
+  function discard() {
+    draft=getOrder(currentRoundId);clearHistory();clearSelection();clearMessage();renderRows();
+  }
   function navigate(rid,week) {
-    const changedRound = rid !== currentRoundId || week !== currentWeek;
-    currentRoundId=rid; currentWeek=week; draft=getOrder(currentRoundId);
-    if (changedRound) { mapZoom=1; mapPanX=0; mapPanY=0; }
-    clearMessage(); renderControls(); renderRows();
+    const changed=rid!==currentRoundId||week!==currentWeek;
+    currentRoundId=rid;currentWeek=week;draft=getOrder(currentRoundId);
+    if(changed){mapZoom=1;mapPanX=0;mapPanY=0;}
+    selectedIds.clear();selectionAnchor=null;clearHistory();
+    clearMessage();renderControls();renderRows();
+    tableScroll.scrollTop=0;
   }
-  function insertBeforeOrAfter(id, target, after) {
-    if (!target || id === target) return;
-    const type = draft.sequenced.includes(target) ? 'sequenced' : 'unsequenced';
-    if (!draft[type].includes(target)) return;
-    const firstVisible = visibleIds(type)[0];
-    draft.sequenced = draft.sequenced.filter(x => x !== id);
-    draft.unsequenced = draft.unsequenced.filter(x => x !== id);
-    let pos = draft[type].indexOf(target) + (after ? 1 : 0);
-    // Dropping above the first visible sequenced row means #1 in the MASTER list.
-    if (!after && type === 'sequenced' && target === firstVisible) pos = 0;
-    if (!after && type === 'unsequenced' && target === firstVisible) pos = 0;
-    draft[type].splice(pos,0,id);
-    clearMessage(); renderRows(id);
-  }
-  function moveToStart(id,type) {
-    draft.sequenced = draft.sequenced.filter(x => x !== id);
-    draft.unsequenced = draft.unsequenced.filter(x => x !== id);
-    draft[type].unshift(id);
-    clearMessage(); renderRows(id);
+  function moveSelected(target,after,zone) {
+    const before=clone(draft);
+    const moving=before.unsequenced.concat(before.sequenced).filter(id=>selectedIds.has(id));
+    if(!moving.length)return false;
+    const type=zone||(draft.sequenced.includes(target)?'sequenced':'unsequenced');
+    if(!['sequenced','unsequenced'].includes(type)||target&&moving.includes(target))return false;
+    const firstVisible=visibleIds(type).find(id=>!selectedIds.has(id));
+    draft.sequenced=draft.sequenced.filter(id=>!selectedIds.has(id));
+    draft.unsequenced=draft.unsequenced.filter(id=>!selectedIds.has(id));
+    let position=0;
+    if(target){
+      position=draft[type].indexOf(target);
+      if(position<0){draft=before;return false;}
+      if(after)position+=1;
+      if(!after&&target===firstVisible)position=0;
+    }
+    draft[type].splice(position,0,...moving);
+    return commitEdit(before);
   }
   function moveByKeyboard(id,delta) {
-    const list = visibleIds('unsequenced').concat(visibleIds('sequenced'));
-    const i = list.indexOf(id), other = list[i+delta];
-    if (!other) return;
-    if (delta<0) insertBeforeOrAfter(id,other,false);
-    else insertBeforeOrAfter(id,other,true);
-  }
-  function clearDragStyles() {
-    rows.querySelectorAll('.dragging,.drop-before,.drop-after,.drop-zone').forEach(el =>
-      el.classList.remove('dragging','drop-before','drop-after','drop-zone'));
-    dropTarget=null;
-  }
-  function beginDrag(id) {
-    draggingId=id;
-    $('unsequence-drop').hidden=false;
-    const tr=rows.querySelector('[data-agreement-id="' + id + '"]');
-    if(tr) tr.classList.add('dragging');
-  }
-  function endDrag() {
-    draggingId=null; clearDragStyles(); $('unsequence-drop').hidden=true;
+    if(!selectedIds.has(id)){selectedIds=new Set([id]);selectionAnchor=id;}
+    const list=visibleOrder(),i=list.indexOf(id),other=list[i+delta];
+    if(!other||selectedIds.has(other))return;
+    moveSelected(other,delta>0);
   }
   function modalClose() {
     backdrop.hidden=true; modalMode=''; actions.replaceChildren();
