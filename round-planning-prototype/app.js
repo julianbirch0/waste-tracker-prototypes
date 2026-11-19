@@ -659,6 +659,7 @@
     if(!checkbox)return;
     visibleColumns[checkbox.dataset.column]=checkbox.checked;
     applyColumnVisibility();
+    updateStickyOffsets();
   });
 
   renderControls();renderRows();setMapVisibility(true);
