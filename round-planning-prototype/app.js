@@ -243,7 +243,7 @@
       let html='';
       if(unseq.length)html+=sectionHeader('Unsequenced services','unsequenced');
       html+=unseq.map((id,index)=>rowHTML(id,'unsequenced',index)).join('');
-      if(unseq.length)html+=sectionHeader('Sequenced services','sequenced');
+      if(unseq.length||seq.length)html+=sectionHeader('Sequenced services','sequenced');
       html+=seq.map((id,index)=>rowHTML(id,'sequenced',index)).join('');
       rows.innerHTML=html;
     }
