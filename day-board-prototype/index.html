@@ -4,15 +4,16 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light">
-  <title>Day Board | WasteTracker Prototype V00034</title>
+  <title>Day Board | WasteTracker Prototype V00035</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.16.0/dist/maplibre-gl.css">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <main class="page">
     <header class="page-header">
       <div class="page-heading">
-        <h1>Day Board <span class="version">V00034</span></h1>
+        <h1>Day Board <span class="version">V00035</span></h1>
         <p class="subtitle">Carrier scheduling · Day Board</p>
       </div>
       <div class="date-toolbar-wrap">
@@ -70,7 +71,7 @@
           <div class="map-main">
             <div class="map-topline">
               <div class="map-title"><strong>Job locations</strong><span id="map-job-total">0 locations</span>
-                <small class="map-caption">Real map · Sample Job positions are illustrative</small>
+                <small class="map-caption">OpenFreeMap · Sample Job positions are illustrative</small>
               </div>
               <div class="map-filter-wrap" id="map-filter-wrap">
                 <button type="button" class="group-filter-button map-filter-button" id="map-filter-button"
@@ -80,7 +81,7 @@
               </div>
             </div>
             <div class="map-stage" id="day-map-stage">
-              <div id="day-map" aria-label="Interactive OpenStreetMap showing illustrative Job positions"></div>
+              <div id="day-map" aria-label="Interactive OpenFreeMap showing illustrative Job positions"></div>
               <div class="map-tools" role="group" aria-label="Map utilities">
                 <button type="button" id="map-fit" title="Fit selected Job locations">Fit</button>
               </div>
@@ -194,9 +195,12 @@
   </div>
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
-  <!-- Open index.html directly; Leaflet and map tiles load online when the map is used. -->
+  <!-- Open index.html directly; Leaflet, MapLibre GL and OpenFreeMap load online. -->
   <script src="data.js"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- MapLibre v5 keeps a bundled worker compatible with local file:// pages. -->
+  <script src="https://unpkg.com/maplibre-gl@5.16.0/dist/maplibre-gl.js"></script>
+  <script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.1.4/leaflet-maplibre-gl.js"></script>
   <script src="map.js"></script>
   <script src="status.js"></script>
   <script src="app.js"></script>
