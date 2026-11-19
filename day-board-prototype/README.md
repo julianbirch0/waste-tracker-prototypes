@@ -1,4 +1,4 @@
-# Day Board prototype — V00027
+# Day Board prototype — V00028
 
 A standalone, local-file-friendly WasteTracker Day Board prototype.
 
@@ -39,6 +39,14 @@ There is **no localhost, build step, framework, CDN or web service**. Keep index
 - The demonstration data retains the **V00008 browser storage key** to preserve previously saved Job, driver and vehicle changes. Starting with V00025, edits are stored against dated Trip/Job instances (storage format V4).
 - Browser storage of changed positions when supported by the browser's file:// storage rules. The board still works in memory if browser storage is unavailable.
 - **Reset sample data** to restore the initial positions (also clears Undo/Redo history).
+
+## Date and Actions polish (V00028)
+
+- Restores the **compact date toolbar height** (68px on desktop) in both normal and Actions modes; the box no longer expands into the warning row simply because a Job is selected.
+- Doubles the **single-date ↔ date-range width animation** from 460ms to **920ms** for a more deliberate, smoother expansion/contraction.
+- Anchors the date at the **horizontal centre** in both modes, so it rises smoothly to the top centre in Actions mode rather than appearing to slide in from the right.
+- In Actions mode, **Actions** and the **slightly larger selected-Job count** are both centred. The old text chevron is replaced by a clean SVG chevron, and the **×** control is replaced by an underlined **Deselect** text control.
+- Opening the menu still makes the existing toolbar extend down **over** the Day Board, without reflowing it. No changes to status eligibility or workflows.
 
 ## Date and Actions toolbar (V00027)
 
