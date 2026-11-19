@@ -188,15 +188,22 @@
   // Sample coordinates in V00032 are only an invented 1100 x 720 layout.
   // Project them onto a Swindon-area basemap. Real latitude/longitude
   // fields, when available, take precedence without changing the map code.
-  function latLng(job) {
+  function latLng(job, trip) {
     if (Number.isFinite(job.latitude) && Number.isFinite(job.longitude)) {
       return [job.latitude, job.longitude];
     }
     if (Number.isFinite(job.lat) && Number.isFinite(job.lng)) {
       return [job.lat, job.lng];
     }
-    return [51.625 - Number(job.mapY || 360) * 0.00018,
-      -1.970 + Number(job.mapX || 550) * 0.00035];
+    const baseLat = 51.625 - Number(job.mapY == null ? 360 : job.mapY) * 0.00018;
+    const baseLng = -1.970 + Number(job.mapX == null ? 550 : job.mapX) * 0.00035;
+    // Each mock date repeats the same invented stops. A small, consistent
+    // date offset keeps overlapping demo markers/routes separately visible.
+    if (!trip || !trip.date) return [baseLat, baseLng];
+    const serial = Math.floor(Date.parse(trip.date + "T12:00:00Z") / 86400000);
+    const angle = (serial % 9) * Math.PI * 2 / 9;
+    return [baseLat + Math.sin(angle) * 0.0010,
+      baseLng + Math.cos(angle) * 0.0015];
   }
   function initialiseMap() {
     if (leaflet) return true;
@@ -237,7 +244,7 @@
   function markerForJob(jobId, kind, seq, colour, trip) {
     const job = state().jobs[jobId];
     if (!job) return;
-    const point = latLng(job);
+    const point = latLng(job, trip);
     lastPinPositions.push(point);
     const chosen = bridge.getSelectedIds().includes(jobId);
     const marker = window.L.marker(point, {
@@ -277,7 +284,7 @@
       if (!eligible.has(trip.id) || !selectedOnMap.has(trip.id)) return;
       const colour = colourForTrip(trip);
       const route = trip.sequenced.map(function (jobId) {
-        return current.jobs[jobId] ? latLng(current.jobs[jobId]) : null;
+        return current.jobs[jobId] ? latLng(current.jobs[jobId], trip) : null;
       }).filter(Boolean);
       if (route.length > 1) window.L.polyline(route, {
         color: colour, weight: 3.5, opacity: 0.73, interactive: false
