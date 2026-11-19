@@ -395,7 +395,7 @@
     if (key === "replan" && !/^\d{4}-\d{2}-\d{2}$/.test(date)) return;
     const qty = String(data.get("quantity") || "");
     const weight = String(data.get("weight") || "");
-    let lastJob = null;
+    const createdIds = [];
     jobs.forEach(function (job) {
       let next = "";
       switch (key) {
@@ -451,7 +451,7 @@
         remember(copy);
         job.replacementJobId = copy.id;
         remember(job);
-        lastJob = copy;
+        createdIds.push(copy.id);
       }
       if (key === "abandon" || key === "cancel") propagate(job, "abandoned");
       else if (key === "accepted" || (key === "complete" && isFinal(job))) propagate(job, "resolved");
@@ -465,7 +465,7 @@
       key === "replan" ? jobs.length + " replacement " + (jobs.length === 1 ? "Job" : "Jobs") +
         " created in Unallocated for " + date + "."
         : jobs.length + (jobs.length === 1 ? " Job updated." : " Jobs updated."));
-    if (key === "replan" && lastJob) {
+    if (key === "replan" && createdIds.length) {
       const link = document.getElementById("status-replan-link");
       if (link) link.remove();
       const next = document.createElement("button");
@@ -474,7 +474,7 @@
       next.textContent = "View replanned " + (jobs.length === 1 ? "Job" : "Jobs") + " on " + date;
       next.addEventListener("click", function () {
         next.remove();
-        bridge.navigateToDate(date);
+        bridge.navigateToDate(date, createdIds);
       });
       bar.appendChild(next);
     }
