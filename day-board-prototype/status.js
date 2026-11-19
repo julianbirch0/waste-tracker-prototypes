@@ -118,6 +118,11 @@
     if (!value) return null;
     return Object.assign({}, value, saved.overrides[id] || {});
   }
+  function hydrateJob(job) {
+    if (!job) return null;
+    const override = saved.overrides[job.id];
+    return override ? Object.assign({}, job, JSON.parse(JSON.stringify(override))) : job;
+  }
   function remember(job) {
     const values = {};
     ["status", "statusHistory", "actuals", "replannedFrom", "replacementJobId",
@@ -551,6 +556,7 @@
 
   window.DayBoardStatus = {
     bind: bind, refresh: refresh, restoreDay: restoreDay, resolveClone: resolveClone,
-    reset: reset, title: title, lines: lines, colour: colour, status: status
+    reset: reset, title: title, lines: lines, colour: colour, status: status,
+    hydrateJob: hydrateJob
   };
 }());
