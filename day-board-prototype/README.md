@@ -1,4 +1,4 @@
-# Day Board prototype — V00025
+# Day Board prototype — V00026
 
 A standalone, local-file-friendly WasteTracker Day Board prototype.
 
@@ -8,14 +8,14 @@ A standalone, local-file-friendly WasteTracker Day Board prototype.
 2. Open the **day-board-prototype** folder in your local checkout.
 3. Double-click **index.html** to open it in Edge or Chrome.
 
-There is **no localhost, build step, framework, CDN or web service**. Keep index.html, styles.css, data.js, map.js and app.js in the same folder.
+There is **no localhost, build step, framework, CDN or web service**. Keep index.html, styles.css, data.js, map.js, status.js and app.js in the same folder.
 
 ## What is included
 
 - 12 Trip columns, each showing the **parent Round name only**, with **both Vehicle and Driver editable through separate ⇄ dialogs**.
 - **Round groups** are represented by four invented operational groups: Skips Team, Trade & Bins, Recycling & Deliveries, and Specialist Fleet. These are mock assignments independent of the existing Round Definition prototype.
 - The **Groups and Trips** multi-select above the Day Board defaults to everything selected. A **Select All** checkbox is followed by a subtle divider, a non-expandable **Unallocated** entry, four expandable ordinary groups with individual Trip checkboxes, and finally four **compact warning pseudo-filters**: **Trips with no driver assigned**, **Trips with duplicate driver**, **Trips with no vehicle assigned**, and **Trips with duplicate vehicle**. These four warning filters sit **at the bottom** of the dropdown, with **no expandable child Trip lists**; they primarily reflect the live filters activated by the amber warnings' **Show** buttons. They are disabled when they have no affected Trips; choosing either one activates exactly the same live issue filter as its warning's Show button. Clicking the active pseudo-group again restores the prior ordinary filter; choosing a normal group or Trip exits the special filter and starts a new manual selection. Ordinary group checkboxes select/deselect all their Trips, partial selections show mixed states, and Unallocated can be independently hidden. Chevrons expand/collapse without changing selections.
-- Every Job card now has a subtle light-blue **planned** status pill; this is a placeholder for future Job status workflows.
+- **V00026: Job status and contextual Actions prototype.** Select one or more Jobs to show the floating Actions control. Cards use muted background colours and display the full status at the bottom (two lines where useful), with slightly more vertical breathing room.
 - A **horizontally sticky Unallocated column** on the left, now using the **same muted amber background as Unsequenced Jobs** throughout its header and body.
 - Trip headers that remain visible when scrolling vertically.
 - An **always-visible sticky Unsequenced area** immediately below each Trip header, including a compact empty drop target when there are no unsequenced Jobs.
@@ -28,7 +28,7 @@ There is **no localhost, build step, framework, CDN or web service**. Keep index
 - **Vertical auto-scroll while dragging:** hold a Job near the top of the visible column (just below the sticky header/Unsequenced section) to scroll earlier Sequenced Jobs into view, or near the bottom to reveal later Jobs. Scrolling continues while the pointer stays still, and stops on release/cancel. **No automatic horizontal scrolling** occurs during drags, including drags between columns.
 - **Unsequenced safeguard:** while dragging a Sequenced Job, the sticky Unsequenced section is not a valid drop target until that Trip's **sequence position 01 is fully visible** below the sticky area. If position 01 is part of the dragged selection, the user must scroll all the way to the top. Jobs already in a Trip's Unsequenced section can still be reordered there.
 - Dragging multiple Jobs is **one Undo operation**, including when moving across the Unsequenced/Sequenced divider or between Trips.
-- A muted amber Unsequenced treatment; otherwise neutral cards.
+- Muted amber Unsequenced areas; Job card backgrounds now reflect their status: neutral Planned, blue In progress, amber Needs attention, green Completed/Resolved, and grey Cancelled/Abandoned.
 - Round-specific sample work: skip Rounds show skips, bin Rounds show bins, RoRo shows RoRos, Muck Away shows loose loads, and so on. Unallocated remains mixed.
 - Subtle sequence positions (**01**, **02**, etc.) which are distinct from the Job reference and recalculated after each move.
 - Immediate application of each move, without Save/Discard.
@@ -39,6 +39,20 @@ There is **no localhost, build step, framework, CDN or web service**. Keep index
 - The demonstration data retains the **V00008 browser storage key** to preserve previously saved Job, driver and vehicle changes. Starting with V00025, edits are stored against dated Trip/Job instances (storage format V4).
 - Browser storage of changed positions when supported by the browser's file:// storage rules. The board still works in memory if browser storage is unavailable.
 - **Reset sample data** to restore the initial positions (also clears Undo/Redo history).
+
+## Job statuses and Actions (V00026)
+
+- Statuses and replanned Jobs are **working prototype data**, not connected to WasteTracker, receiving facilities, or the DEFRA API. This version remains an **office Day Board**; driver-specific screens and role switching are not simulated.
+- Click a Job, or Shift/Ctrl-click several Jobs in **one Trip**. The floating **Actions** menu shows context-sensitive actions. Ineligible actions remain visible but disabled with a short explanation. **Unallocated Jobs offer only Cancel as a status action.**
+- **Service completion** supports Deliver, Collect, Exchange, Empty, Wait and Load, and illustrative organisation-defined **Other** services (*Refill soap dispenser* and *Inspect equipment*). Bulk service completion requires all selected Jobs to have the **same service** (the activity for standard services, the exact named service for Other). A single Job offers **optional** quantity, weight where appropriate, and an operational note; bulk completion has no per-Job actuals.
+- **Facility progression** is On way to facility → At facility → Accepted/Rejected by facility. A rejection can go back to On way to facility. Different waste-moving services can share a bulk facility update, as long as every Job is eligible. Sample deliveries and non-waste Other services complete without visiting a facility.
+- **Failures** distinguish customer and non-customer fault. Single-Job failure reporting offers a follow-up decision: leave outstanding, replan or abandon. Bulk failure reporting accepts one optional note applied to all selected Jobs.
+- **Replanning** (single or bulk) creates a **new linked Planned Job** in Unallocated on **one chosen date**, which can be today. The original remains Failed – replanned on its previous Trip. Replanning stays on the current Day Board date, with an optional link to the new date. Later successful completion resolves ancestor failures; abandonment or cancellation of the replacement abandons them. Fault classifications remain intact.
+- **Cancellation** requires Planned/unattempted Jobs, confirms the action and offers one optional reason (shared across a bulk selection). Cancelling a replanned replacement also abandons its earlier failed Jobs.
+- A separate **Corrections** menu section supports simple reversals (service completion → Planned) and correction of an outstanding failure's fault classification. Operational updates, including corrections, record a lightweight status history and clear **planning Undo/Redo**. Complex corrections after On way to facility are deliberately deferred.
+- **Moving between Trips or Unallocated is only permitted for Planned Jobs.** Any Job may be reordered **within its existing Trip**, regardless of status. Status changes never automatically remove or reshuffle cards.
+- Job statuses, optional actuals, recorded notes, replanning links, and replacement Jobs persist in a **separate browser-local storage record**. Existing V00025 placement/assignment data is retained. **Reset sample data** also clears this status record.
+- This deliberately does **not** implement the future full-page Job view, configurable Agreement-specific actuals, an organisation-wide Other-service dictionary editor, receiving-facility integrations or formal correction workflows.
 
 ## Summary toolbar layout (V00025)
 
