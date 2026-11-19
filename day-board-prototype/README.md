@@ -1,4 +1,4 @@
-# Day Board prototype — V00030
+# Day Board prototype — V00031
 
 A standalone, local-file-friendly WasteTracker Day Board prototype.
 
@@ -15,7 +15,7 @@ There is **no localhost, build step, framework, CDN or web service**. Keep index
 - 12 Trip columns, each showing the **parent Round name only**, with **both Vehicle and Driver editable through separate ⇄ dialogs**.
 - **Round groups** are represented by four invented operational groups: Skips Team, Trade & Bins, Recycling & Deliveries, and Specialist Fleet. These are mock assignments independent of the existing Round Definition prototype.
 - The **Groups and Trips** multi-select above the Day Board defaults to everything selected. A **Select All** checkbox is followed by a subtle divider, a non-expandable **Unallocated** entry, four expandable ordinary groups with individual Trip checkboxes, and finally four **compact warning pseudo-filters**: **Trips with no driver assigned**, **Trips with duplicate driver**, **Trips with no vehicle assigned**, and **Trips with duplicate vehicle**. These four warning filters sit **at the bottom** of the dropdown, with **no expandable child Trip lists**; they primarily reflect the live filters activated by the amber warnings' **Show** buttons. They are disabled when they have no affected Trips; choosing either one activates exactly the same live issue filter as its warning's Show button. Clicking the active pseudo-group again restores the prior ordinary filter; choosing a normal group or Trip exits the special filter and starts a new manual selection. Ordinary group checkboxes select/deselect all their Trips, partial selections show mixed states, and Unallocated can be independently hidden. Chevrons expand/collapse without changing selections.
-- **V00026–V00030: Job status and contextual Actions prototype.** Select one or more Jobs to switch the date toolbar into contextual Actions mode. Cards use muted background colours and display the full status at the bottom (two lines where useful), with slightly more vertical breathing room.
+- **V00026–V00031: Job status and contextual Actions prototype.** Select one or more Jobs to switch the date toolbar into contextual Actions mode. Cards use muted background colours and display the full status at the bottom (two lines where useful), with slightly more vertical breathing room.
 - A **horizontally sticky Unallocated column** on the left, now using the **same muted amber background as Unsequenced Jobs** throughout its header and body.
 - Trip headers that remain visible when scrolling vertically.
 - An **always-visible sticky Unsequenced area** immediately below each Trip header, including a compact empty drop target when there are no unsequenced Jobs.
@@ -39,6 +39,29 @@ There is **no localhost, build step, framework, CDN or web service**. Keep index
 - The demonstration data retains the **V00008 browser storage key** to preserve previously saved Job, driver and vehicle changes. Starting with V00025, edits are stored against dated Trip/Job instances (storage format V4).
 - Browser storage of changed positions when supported by the browser's file:// storage rules. The board still works in memory if browser storage is unavailable.
 - **Reset sample data** to restore the initial positions (also clears Undo/Redo history).
+
+## Assignment controls and driver eligibility (V00031)
+
+- In the Trip header, the **Vehicle** and **Driver** name/registration and adjacent smaller swap icon are now **one clickable control**. The icon inherits the same colour as its associated text. Tooltip and control label are exactly **Swap vehicle** and **Swap driver**.
+- **Vehicle is a prerequisite for driver assignment.** When a Trip has **no vehicle**, its Driver row has **no name or swap/assign button**. The **Swap vehicle** control remains available. Opening the Driver picker directly is blocked if the Trip has no vehicle.
+- **Unassigning a vehicle automatically unassigns its driver** when Save and Close is clicked. This is one planning Undo/Redo entry; undo restores both original assignments together. Older locally saved orphan-driver combinations are normalised on load. The initial sample Wait and Load Trip has no driver because its vehicle is unassigned.
+- The **Display order** value (*Round then Date* / *Date then Round*) and adjacent smaller swap icon are now a single clickable control. **Display order:** itself is not clickable. The combined control has no visible border in its resting state.
+- Existing Job status behaviour and all other Board interactions are unchanged.
+
+### Production/Jira requirement — qualified drivers per vehicle
+
+The existing production system already stores a relationship between drivers and vehicles. **Reuse that existing association** to determine driver eligibility; do not introduce a duplicate qualifications dictionary for this workflow.
+
+**Acceptance criteria:**
+
+1. A Driver can be assigned to a Trip **only if the Trip has a vehicle assigned**.
+2. Opening the Driver assignment/swap dialog displays **only drivers eligible for that Trip's currently assigned vehicle**, as determined by the existing production driver↔vehicle association. Drivers not qualified for that vehicle cannot be selected, whether assigned elsewhere or currently unassigned.
+3. **Swapping drivers** between two Trips must check eligibility in **both directions**, against each Trip's vehicle. Do not offer or execute a swap that would place either driver in an ineligible vehicle.
+4. **Unassigning a vehicle** must automatically unassign the driver from the same Trip as part of **one atomic update**, including for persistent storage and Undo/Redo. A Trip without a vehicle must have no Driver assignment control.
+5. **Changing/swapping vehicles** must recheck any existing assigned driver against the new vehicle. The final driver/vehicle combination must never be invalid; the implementation should require the user to select an eligible driver or explicitly leave it unassigned.
+6. The same rules must apply at API/backend validation as well as in the UI, and to any Round-default or other workflow that produces or changes Trip driver/vehicle assignments.
+
+**Prototype boundary:** This version enforces the **vehicle-required** dependency, but deliberately **does not invent example qualifications or filter drivers using fictional qualification data**. The full eligibility filter and bidirectional swap checks belong in the production implementation with the real existing association.
 
 ## View Job details and amendments (V00030)
 
