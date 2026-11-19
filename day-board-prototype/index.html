@@ -4,14 +4,15 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light">
-  <title>Day Board | WasteTracker Prototype V00032</title>
+  <title>Day Board | WasteTracker Prototype V00033</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <main class="page">
     <header class="page-header">
       <div class="page-heading">
-        <h1>Day Board <span class="version">V00032</span></h1>
+        <h1>Day Board <span class="version">V00033</span></h1>
         <p class="subtitle">Carrier scheduling · Day Board</p>
       </div>
       <div class="date-toolbar-wrap">
@@ -68,33 +69,28 @@
         <section class="map-workspace" id="map-workspace" aria-label="Job location map" hidden>
           <div class="map-main">
             <div class="map-topline">
-              <div><strong>Job locations</strong><span id="map-job-total">0 locations</span></div>
-              <span class="map-caption">Illustrative map · Straight lines, not road routes</span>
+              <div class="map-title"><strong>Job locations</strong><span id="map-job-total">0 locations</span>
+                <small class="map-caption">Real map · Sample Job positions are illustrative</small>
+              </div>
+              <div class="map-filter-wrap" id="map-filter-wrap">
+                <button type="button" class="group-filter-button map-filter-button" id="map-filter-button"
+                  aria-haspopup="true" aria-expanded="false" aria-controls="map-filter-panel">Show on Map: All <span aria-hidden="true">▾</span></button>
+                <div class="group-filter-panel map-filter-panel" id="map-filter-panel"
+                  aria-label="Select groups, named Rounds and dated Trips to show on map" hidden></div>
+              </div>
             </div>
             <div class="map-stage" id="day-map-stage">
-              <svg id="day-map" viewBox="0 0 1100 720" role="img" aria-label="Illustrative map showing Job locations and straight lines linking sequenced Jobs"></svg>
-              <div class="map-tools" role="group" aria-label="Map controls">
-                <button type="button" id="map-zoom-in" aria-label="Zoom in" title="Zoom in">+</button>
-                <button type="button" id="map-zoom-out" aria-label="Zoom out" title="Zoom out">−</button>
-                <button type="button" id="map-fit" title="Fit visible Job locations">Fit</button>
+              <div id="day-map" aria-label="Interactive OpenStreetMap showing illustrative Job positions"></div>
+              <div class="map-tools" role="group" aria-label="Map utilities">
+                <button type="button" id="map-fit" title="Fit selected Job locations">Fit</button>
               </div>
-              <div class="map-popup" id="map-popup" role="status" hidden></div>
               <div class="map-key"><span><i class="map-key-dot map-key-unallocated"></i>Unallocated</span><span><i class="map-key-dot map-key-unsequenced"></i>Unsequenced</span><span><i class="map-key-line"></i>Point-to-point sequence</span></div>
             </div>
           </div>
-          <aside class="map-layers" aria-label="Map and grid visibility">
-            <div class="map-layers-header">
-              <strong>Trips &amp; layers</strong>
-              <span>Expanded groups show on full board</span>
-            </div>
-            <div class="layer-column-labels"><span>Round / Trip</span><span>Map</span><span>Grid</span></div>
-            <div id="map-layer-list" class="map-layer-list"></div>
-            <div id="grid-cap-caption" class="grid-cap-caption">0 of 4 grid columns selected</div>
-          </aside>
         </section>
       </div>
       <div class="board-footnote">
-        <span>Full board: filter by Group or Trip · Map view: choose up to four grid columns.</span>
+        <span>The Date Filter controls days; the main Groups and Trips filter controls the grid; Show on Map only controls map markers.</span>
         <span class="prototype-note">Prototype only · Changes saved in this browser where supported; never sent to WasteTracker</span>
       </div>
     </section>
@@ -198,8 +194,9 @@
   </div>
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
-  <!-- Local-file friendly: no framework, CDN, imports, fetch or web server. -->
+  <!-- Open index.html directly; Leaflet and map tiles load online when the map is used. -->
   <script src="data.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="map.js"></script>
   <script src="status.js"></script>
   <script src="app.js"></script>
