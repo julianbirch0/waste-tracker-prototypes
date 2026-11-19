@@ -345,3 +345,169 @@ tr.drop-after td { border-bottom: 3px solid var(--teal) !important; }
   border: 1px solid var(--line); padding: 12px 16px; box-shadow: 0 8px 20px #172a3c1b;
   display: grid; gap: 9px; border-radius: 6px; min-width: 165px; }
 .columns-panel label { display: flex; gap: 8px; align-items: center; cursor: pointer; }
+
+
+/* 19 November service-sequencing review — Day Board selection conventions.
+   This table owns its vertical scroll: column headings and unsequenced services
+   remain visible while the longer sequenced section moves underneath. */
+.page { padding-bottom: 105px; }
+.table-scroll {
+  position: relative;
+  height: min(62vh, 670px);
+  min-height: 370px;
+  overflow: auto;
+  overscroll-behavior: contain;
+  border: 1px solid #d5e1e9;
+  scrollbar-gutter: stable;
+}
+.planning-table {
+  min-width: 1320px;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+.planning-table .col-seq { width: 4%; }
+.planning-table .col-service { width: 12%; }
+.planning-table .col-timing { width: 9%; }
+.planning-table .col-customer { width: 15%; }
+.planning-table .col-site { width: 16%; }
+.planning-table .col-material { width: 14%; }
+.planning-table .col-container { width: 10%; }
+.planning-table .col-qty { width: 4%; }
+.planning-table .col-notes { width: 8%; }
+.planning-table .col-action { width: 8%; }
+.planning-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: #e2e8f0;
+  box-shadow: inset 0 -1px 0 #ccd8e1;
+}
+.planning-table tbody tr[data-service-id] {
+  cursor: grab;
+  user-select: none;
+}
+.planning-table tbody tr[data-service-id]:active { cursor: grabbing; }
+.planning-table tbody tr[data-service-id]:focus-visible { outline: 2px solid #317f80; outline-offset: -2px; }
+.planning-table tr[data-zone="unsequenced"] > td,
+.planning-table tr.unsequenced-row > td {
+  position: sticky;
+  top: var(--sticky-top, 40px);
+  z-index: 15;
+  box-shadow: inset 0 -1px 0 #e1d5bf;
+}
+.planning-table tr[data-zone="unsequenced"] > td {
+  background: #fff !important;
+  z-index: 16;
+}
+.planning-table tr.unsequenced-row > td { background: #fff3e3; }
+.planning-table tr.unsequenced-row:hover > td { background: #fcebd3; }
+.planning-table tr[data-service-id].is-selected > td,
+.planning-table tr.unsequenced-row.is-selected > td {
+  background: #dff4ed !important;
+  box-shadow: inset 0 1px 0 #87beb0, inset 0 -1px 0 #87beb0;
+}
+.planning-table tr[data-service-id].is-selected td:first-child {
+  border-left: 3px solid #319d8a;
+  padding-left: 5px;
+}
+.planning-table tr[data-service-id].dragging > td { opacity: .65; }
+.planning-table tr[data-service-id].drop-before > td {
+  border-top: 3px solid #258f83 !important;
+}
+.planning-table tr[data-service-id].drop-after > td {
+  border-bottom: 3px solid #258f83 !important;
+}
+.planning-table tr.section-heading.drop-zone > td {
+  background: #dcf6ee !important;
+  outline: 2px dashed #258f83;
+  outline-offset: -3px;
+}
+.planning-table .service-description strong {
+  display: block;
+  color: #294b5f;
+  font-size: 12.5px;
+  font-weight: 680;
+}
+.service-frequency {
+  display: block;
+  margin-top: 3px;
+  color: #74879b;
+  font-size: 11px;
+}
+.hold-label {
+  display: inline-block;
+  margin-top: 5px;
+  padding: 2px 6px;
+  border: 1px solid #c1cdd6;
+  border-radius: 4px;
+  background: #eef2f5;
+  color: #657b8a;
+  font-size: 10.5px;
+  font-weight: 650;
+}
+.planning-table tr.on-hold-row:not(.is-selected):not(.unsequenced-row) > td {
+  background: #f7f9fb;
+}
+.planning-table tr.on-hold-row:not(.is-selected):not(.unsequenced-row):hover > td {
+  background: #eff4f7;
+}
+.drag-badge {
+  position: fixed;
+  z-index: 1600;
+  pointer-events: none;
+  padding: 8px 13px;
+  color: #fff;
+  background: #286e73;
+  border: 1px solid #246268;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 700;
+  box-shadow: 0 8px 20px #1d384c44;
+  white-space: nowrap;
+}
+body.dragging-services, body.dragging-services * {
+  user-select: none !important;
+}
+#unsequence-drop { position: sticky; top: 0; z-index: 45; margin: 6px 0; }
+#unsequence-drop.is-drop-target { background: #d9f4ea; border-color: #349d88; }
+.map-point[role="button"] { cursor: pointer; outline: none; }
+.map-point[role="button"]:hover circle:first-of-type,
+.map-point[role="button"]:focus-visible circle:first-of-type {
+  stroke: #164c60;
+  stroke-width: 5;
+}
+.map-point.is-on-hold { opacity: .78; }
+.footer-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 800;
+  min-height: 66px;
+  margin: 0;
+  padding: 12px 19px;
+  border-top: 1px solid #cad7e1;
+  background: rgba(255,255,255,.97);
+  box-shadow: 0 -4px 20px rgba(23,46,68,.10);
+  backdrop-filter: blur(5px);
+}
+.footer-right { flex-wrap: wrap; justify-content: flex-end; }
+.footer-bar .history-button { min-width: 72px; }
+.footer-bar .history-button:disabled {
+  color: #b7c4ce;
+  background: #f6f8fa;
+  border-color: #e6ebef;
+  cursor: default;
+}
+.selection-count { color: #287e75; font-size: 12px; font-weight: 700; }
+.footer-note { max-width: min(520px,48vw); }
+@media (max-width: 1050px) {
+  .footer-note { display: none; }
+  .footer-bar { gap: 8px; padding: 9px 12px; }
+}
+@media (max-width: 600px) {
+  .footer-bar { align-items: flex-start; }
+  .footer-left { flex: 0 1 auto; }
+  .footer-right { gap: 6px; }
+  .footer-bar .history-button { min-width: 53px; padding: 6px; }
+}
