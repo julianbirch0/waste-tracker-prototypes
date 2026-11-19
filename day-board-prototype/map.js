@@ -1,4 +1,4 @@
-/* WasteTracker Day Board V00036 — Leaflet / OpenStreetMap prototype.
+/* WasteTracker Day Board V00037 — Leaflet / OpenFreeMap prototype.
    Demo Job points are illustrative, NOT geocoded customer addresses.
    Main Groups & Trips controls the grid and the available map choices;
    this map controls its own plotted dated Trips only. */
@@ -7,8 +7,9 @@
 
   const UNALLOCATED = "unallocated";
   const ORANGE = "#d79542";
-  // Route colours are allocated in map-filter order to the trips that are
-  // ACTUALLY displayed. Unticking a trip frees its colour for the next one.
+  // Route colours belong to dated Trips in GRID display order. The map
+  // selector merely controls visibility; it never changes colour assignments.
+  // After 12 grid Trips, the palette repeats (1 = 13, 2 = 14, etc.).
   // Orange is reserved for Unallocated Jobs.
   const ROUTE_PALETTE = [
     "#245BCE", // 1 - Blue
@@ -57,31 +58,13 @@
     const byId = new Map(state().trips.map(function (trip) { return [trip.id, trip]; }));
     return bridge.getDisplayTripIds().map(function (id) { return byId.get(id); }).filter(Boolean);
   }
-  // Match the visual order of the Show on Map checkboxes: Group, Round, Date.
-  // This deliberately does NOT depend on the Day Board's date-first sort mode.
-  function orderedMapTrips() {
-    const eligible = eligibleTrips();
-    const ordered = [];
-    state().groups.forEach(function (group) {
-      const inGroup = eligible.filter(function (trip) { return trip.groupId === group.id; });
-      const seen = new Set();
-      inGroup.forEach(function (trip) {
-        if (seen.has(trip.roundId)) return;
-        seen.add(trip.roundId);
-        ordered.push.apply(ordered, inGroup
-          .filter(function (item) { return item.roundId === trip.roundId; })
-          .sort(function (a, b) { return a.date.localeCompare(b.date); }));
-      });
-    });
-    return ordered;
-  }
+  // The main Groups & Trips and Date filters produce the grid Trip order.
+  // Allocate across ALL of those columns, including currently hidden map
+  // routes, so a map checkbox cannot shift another Trip's colour.
   function assignedRouteColours() {
     const colours = new Map();
-    let colourIndex = 0;
-    orderedMapTrips().forEach(function (trip) {
-      if (!selectedOnMap.has(trip.id)) return;
-      colours.set(trip.id, ROUTE_PALETTE[colourIndex % ROUTE_PALETTE.length]);
-      colourIndex += 1;
+    eligibleTrips().forEach(function (trip, index) {
+      colours.set(trip.id, ROUTE_PALETTE[index % ROUTE_PALETTE.length]);
     });
     return colours;
   }
@@ -128,10 +111,11 @@
     return '<label class="map-filter-row map-filter-' + level + '">' +
       '<input type="checkbox" data-map-level="' + level + '" data-map-key="' + escapeHtml(key) +
       '"' + (checked ? ' checked' : '') + ' aria-label="Show on map: ' + escapeHtml(name) + '">' +
-      // Only dated Trip rows receive a route colour; their colour disappears
-      // when unticked. Parent Groups and Rounds are not individual routes.
+      // Dated Trips retain their colour in this list even when unticked,
+      // shown more faintly to distinguish an assigned-but-hidden route.
+      // Group and Round rows are not individual plotted routes.
       (level === 'date'
-        ? '<i class="map-filter-swatch' + (colour ? '' : ' map-filter-swatch-empty') +
+        ? '<i class="map-filter-swatch' + (!checked ? ' map-filter-swatch-inactive' : '') +
           '"' + (colour ? ' style="background:' + colour + '"' : '') +
           ' aria-hidden="true"></i>'
         : '') +
@@ -145,6 +129,9 @@
     const allIds = eligible.map(function (trip) { return trip.id; });
     const selectedCount = allIds.filter(function (id) { return selectedOnMap.has(id); }).length;
     const routeColours = assignedRouteColours();
+    const plottedColours = allIds.filter(function (id) { return selectedOnMap.has(id); })
+      .map(function (id) { return routeColours.get(id); }).filter(Boolean);
+    const hasRepeatedPlottedColours = new Set(plottedColours).size < plottedColours.length;
     const scroll = filterPanel.querySelector(".map-filter-items");
     const oldScroll = scroll ? scroll.scrollTop : 0;
     filterButton.innerHTML = '<span>Show on Map: ' +
@@ -191,9 +178,9 @@
       (groups || '<div class="map-filter-empty">No Trips available from the main filter.</div>') +
       '</div>' +
       '<div class="group-filter-hint">' +
-        (selectedCount > ROUTE_PALETTE.length
-          ? selectedCount + ' Trips plotted. Colours repeat after ' + ROUTE_PALETTE.length +
-            '; narrow your map selection for clarity. '
+        (hasRepeatedPlottedColours
+          ? 'Some plotted Trips share a colour (the 12-colour grid palette repeats). ' +
+            'Narrow the main Groups and Trips selection to distinguish them. '
           : '') +
         'Map choices only. The Day Board grid is unaffected.</div>';
     const newScroll = filterPanel.querySelector(".map-filter-items");
@@ -337,6 +324,7 @@
     });
     const routeColours = assignedRouteColours();
     current.trips.forEach(function (trip) {
+      if (!selectedOnMap.has(trip.id)) return;
       const colour = routeColours.get(trip.id);
       if (!colour) return;
       const route = trip.sequenced.map(function (jobId) {
