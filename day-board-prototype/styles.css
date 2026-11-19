@@ -2956,3 +2956,95 @@ button:focus-visible, .board-scroll:focus-visible {
   .date-action-panel .status-menu,
   .date-action-main .status-chevron { transition-duration: 0ms; }
 }
+
+
+/* V00030 — De-emphasised, independently collapsible amendments.
+   Normal actions remain the main controls; only eligible amendments appear. */
+.date-action-panel .status-amendments {
+  margin: 11px 9px 3px;
+  border-top: 1px solid rgba(67,101,122,.16);
+  text-align: center;
+}
+.date-action-panel .status-amendments-trigger {
+  display: inline-flex;
+  width: auto;
+  max-width: 100%;
+  min-height: 38px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 11px 10px 7px;
+  margin: 0 auto;
+  color: #688295;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.date-action-panel .status-amendments-trigger:hover {
+  color: #315f76;
+  background: rgba(255,255,255,.34);
+}
+.date-action-panel .status-amendments-trigger:focus-visible {
+  outline: 2px solid #5295a3;
+  outline-offset: 1px;
+}
+.date-action-panel .status-amendments-chevron {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transform: rotate(0deg);
+  transition: transform 250ms ease;
+}
+.date-action-panel .status-amendments-chevron svg { display: block; }
+.date-action-panel .status-amendments.is-expanded .status-amendments-chevron {
+  transform: rotate(180deg);
+}
+.date-action-panel .status-amendments-list {
+  max-height: 0;
+  padding: 0;
+  margin: 0;
+  opacity: 0;
+  overflow: hidden;
+  visibility: hidden;
+  transition: max-height 330ms cubic-bezier(.2,.72,.2,1),
+    padding 250ms ease, opacity 220ms ease,
+    visibility 0s linear 330ms;
+}
+.date-action-panel .status-amendments.is-expanded .status-amendments-list {
+  max-height: 430px;
+  padding: 5px 0 8px;
+  opacity: 1;
+  visibility: visible;
+  transition: max-height 330ms cubic-bezier(.2,.72,.2,1),
+    padding 250ms ease, opacity 220ms ease,
+    visibility 0s;
+}
+.date-action-panel .status-amendments-list .status-option > button {
+  background: rgba(255,255,255,.60);
+  border-color: rgba(138,164,177,.58);
+  color: #517086;
+}
+.date-action-panel .status-amendments-list .status-option > button:hover:not(:disabled) {
+  background: #fff;
+  color: #235e66;
+}
+.status-details-preview dl { margin: 0; display: grid; gap: 0; }
+.status-details-preview dl > div {
+  display: grid;
+  grid-template-columns: 100px minmax(0,1fr);
+  gap: 14px;
+  padding: 10px 0;
+  border-bottom: 1px solid #eaf0f4;
+}
+.status-details-preview dt { color: #8292a3; font-size: 12px; font-weight: 600; }
+.status-details-preview dd { margin: 0; color: #344c65; font-size: 12px; overflow-wrap: anywhere; }
+@media (max-width: 480px) {
+  .status-details-preview dl > div { grid-template-columns: 1fr; gap: 2px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .date-action-panel .status-amendments-chevron,
+  .date-action-panel .status-amendments-list { transition-duration: 0ms; }
+}
