@@ -2592,62 +2592,84 @@ button:focus-visible, .board-scroll:focus-visible {
 }
 
 
-/* V00027 — The date navigator becomes the contextual Actions panel.
-   Its footprint stays in the header; opening Actions overlays the board. */
+/* V00028 — Compact, centred date/action toolbar.
+   Both date modes use the same height. The width change takes 920ms;
+   Actions expands over the board without changing header geometry. */
 .date-toolbar-wrap {
   --date-toolbar-width: 535px;
   width: min(var(--date-toolbar-width), calc(100vw - 28px));
-  min-height: 92px;
-  transition: width 460ms cubic-bezier(.2,.75,.2,1);
+  height: 68px;
+  min-height: 68px;
+  transition: width 920ms cubic-bezier(.22,1,.36,1);
 }
 .date-range-view .date-toolbar-wrap { --date-toolbar-width: 710px; }
+
 .date-toolbar {
   box-sizing: border-box;
   position: relative;
   width: 100%;
-  min-height: 92px;
-  padding: 12px 13px;
+  height: 68px;
+  min-height: 68px;
+  padding: 6px 13px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 9px;
   flex-wrap: nowrap;
-  justify-content: space-between;
-  transition: background-color 240ms ease, border-color 240ms ease,
-    box-shadow 240ms ease;
+  background: #f4f9fb;
+  transition: background-color 260ms ease, border-color 260ms ease,
+    box-shadow 260ms ease;
 }
+.date-toolbar #date-prev { margin-right: auto; }
+.date-toolbar #date-next { margin-left: auto; }
+.date-toolbar #date-today { min-width: 108px; }
+.date-toolbar #date-range-open { min-width: 120px; }
+
+/* Fixed horizontal centre in both modes, including during the transition.
+   This prevents the small date appearing to fly in from the right. */
 .date-toolbar .date-display,
 .date-range-view .date-toolbar .date-display {
-  flex: 0 1 150px;
-  width: 150px;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  flex: none;
+  width: 140px;
   min-width: 0;
-  max-width: 150px;
-  transition: flex-basis 460ms cubic-bezier(.2,.75,.2,1),
-    max-width 460ms cubic-bezier(.2,.75,.2,1);
+  max-width: 140px;
+  min-height: 48px;
+  height: auto;
+  padding: 0;
+  margin: 0;
+  transform: translate(-50%, -50%);
+  transition: top 340ms ease, transform 340ms ease,
+    width 920ms cubic-bezier(.22,1,.36,1),
+    max-width 920ms cubic-bezier(.22,1,.36,1);
 }
 .date-range-view .date-toolbar .date-display {
-  flex-basis: 315px;
-  width: 315px;
-  max-width: 315px;
+  width: 310px;
+  max-width: 310px;
 }
 .date-toolbar .date-display .date-current,
 .date-range-view .date-toolbar .date-display .date-current {
   font-size: 26px;
+  transition: font-size 270ms ease, color 270ms ease;
 }
-.date-toolbar #date-today { min-width: 108px; }
-.date-toolbar #date-range-open { min-width: 120px; }
 
-/* Changing the date mode gently grows the box in both directions.
-   Only actions mode overlays the content below — no document reflow on expand. */
+/* Selection overlays the same toolbar in place. Its closed height is
+   identical to date-navigation mode: no overlap with the warning row. */
 .date-toolbar.has-job-actions {
   position: absolute;
-  inset: 0 auto auto 0;
+  top: 0;
+  left: 0;
   z-index: 120;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 0;
-  padding: 12px 16px 9px;
+  display: block;
+  width: 100%;
+  height: auto;
+  min-height: 68px;
+  padding: 0 15px;
   background: #dceaf0;
   border-color: #acc8d6;
-  box-shadow: 0 10px 25px rgba(37,67,88,.15);
+  box-shadow: 0 7px 22px rgba(37,67,88,.13);
   white-space: normal;
   overflow: visible;
 }
@@ -2658,15 +2680,18 @@ button:focus-visible, .board-scroll:focus-visible {
 .date-toolbar.has-job-actions .date-description { display: none; }
 .date-toolbar.has-job-actions .date-display,
 .date-range-view .date-toolbar.has-job-actions .date-display {
-  flex: 0 0 auto;
-  align-self: stretch;
-  width: 100%;
+  left: 50%;
+  top: 5px;
+  width: calc(100% - 34px);
   min-width: 0;
-  max-width: 100%;
-  min-height: 19px;
-  height: 19px;
+  max-width: calc(100% - 34px);
+  min-height: 15px;
+  height: 15px;
   padding: 0;
   margin: 0;
+  transform: translateX(-50%);
+  pointer-events: none;
+  z-index: 1;
 }
 .date-toolbar.has-job-actions .date-display .date-current,
 .date-range-view .date-toolbar.has-job-actions .date-display .date-current {
@@ -2674,69 +2699,106 @@ button:focus-visible, .board-scroll:focus-visible {
   font-size: 13px;
   font-weight: 700;
   letter-spacing: .15px;
-  line-height: 18px;
+  line-height: 15px;
 }
+
 .date-action-panel {
   display: flex;
   flex-direction: column;
-  align-self: stretch;
-  min-width: 0;
   width: 100%;
+  min-width: 0;
   margin: 0;
+  padding-top: 18px;
 }
 .date-action-main {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0,1fr) auto minmax(0,1fr);
+  grid-template-rows: 26px 18px;
   align-items: center;
-  gap: 14px;
-  min-height: 48px;
+  justify-items: center;
+  gap: 0 8px;
+  min-height: 0;
+  padding: 0 0 4px;
+  margin: 0;
 }
 .date-action-main .status-actions-trigger {
+  grid-column: 2;
+  grid-row: 1;
   display: inline-flex;
   align-items: center;
-  gap: 9px;
-  flex: 0 0 auto;
+  justify-content: center;
+  gap: 8px;
   min-width: 0;
-  padding: 4px 5px 4px 0;
-  border: 0;
+  padding: 0;
+  margin: 0;
+  border: none;
   border-radius: 5px;
-  color: #254e65;
   background: transparent;
-  font: 700 25px/1.25 -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
-  letter-spacing: -.35px;
-  text-align: left;
+  color: #254e65;
+  font: 700 22px/1.2 -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+  letter-spacing: -.3px;
+  text-align: center;
 }
-.date-action-main .status-actions-trigger:hover { color: #167c77; }
+.date-action-main .status-actions-trigger:hover { color: #177a75; }
 .date-action-main .status-actions-trigger:focus-visible {
   outline: 2px solid #398c9c;
   outline-offset: 3px;
 }
 .date-action-main .status-chevron {
-  display: inline-block;
-  font-size: 24px;
-  font-weight: 500;
-  transform: translateY(-3px) rotate(0deg);
-  transform-origin: 50% 55%;
-  transition: transform 250ms ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  color: #436b82;
+  transform: rotate(0deg);
+  transform-origin: center;
+  transition: transform 260ms ease;
 }
-.date-action-panel.is-expanded .status-chevron {
-  transform: translateY(1px) rotate(180deg);
-}
+.date-action-main .status-chevron svg { display: block; }
+.date-action-panel.is-expanded .status-chevron { transform: rotate(180deg); }
 .date-action-main .status-selected-count {
-  flex: 1 1 auto;
+  grid-column: 2;
+  grid-row: 2;
+  justify-self: center;
+  min-width: max-content;
+  padding: 0;
+  margin: 0;
   color: #58748b;
-  text-align: right;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 650;
+  line-height: 18px;
+  text-align: center;
   white-space: nowrap;
 }
 .date-action-main .status-clear {
-  flex: 0 0 30px;
-  color: #708d9e;
-  font-size: 22px;
+  grid-column: 3;
+  grid-row: 2;
+  justify-self: end;
+  align-self: center;
+  width: auto;
+  height: auto;
+  min-width: 0;
+  padding: 1px 0;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  color: #58768c;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 16px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
 }
-.date-action-main .status-clear:hover { color: #214e65; background: rgba(255,255,255,.5); }
+.date-action-main .status-clear:hover {
+  color: #176f6b;
+  background: transparent;
+}
 
-/* The menu grows as part of the same blue panel, not as a separate popup. */
+/* Opening Actions extends the existing blue box down over the Day Board.
+   Only the extension animates; the toolbar's reserved footprint stays put. */
 .date-action-panel .status-menu {
   position: relative;
   top: auto;
@@ -2763,7 +2825,7 @@ button:focus-visible, .board-scroll:focus-visible {
 }
 .date-action-panel .status-menu.is-expanded {
   max-height: min(56vh, 540px);
-  padding: 11px 3px 12px;
+  padding: 10px 3px 12px;
   overflow-y: auto;
   opacity: 1;
   visibility: visible;
@@ -2773,9 +2835,7 @@ button:focus-visible, .board-scroll:focus-visible {
     padding 300ms ease, opacity 220ms ease,
     visibility 0s;
 }
-.date-action-panel .status-option {
-  padding: 1px 2px;
-}
+.date-action-panel .status-option { padding: 1px 2px; }
 .date-action-panel .status-option > button {
   min-height: 41px;
   padding: 10px 13px;
@@ -2791,6 +2851,7 @@ button:focus-visible, .board-scroll:focus-visible {
 .date-action-panel .status-option-reason { color: #658095; }
 .date-action-panel .status-menu-section { border-top-color: #c4d8e2; color: #637f91; }
 .date-action-panel .status-replan-link {
+  position: absolute;
   top: calc(100% + 10px);
   bottom: auto;
   left: 0;
@@ -2798,37 +2859,54 @@ button:focus-visible, .board-scroll:focus-visible {
   z-index: 2;
 }
 @media (max-width: 770px) {
-  .date-toolbar-wrap { width: min(var(--date-toolbar-width), calc(100vw - 26px)); }
-  .date-toolbar { gap: 5px; padding: 9px 8px; }
-  .date-toolbar .date-display { flex: 1 1 115px; }
-  .date-range-view .date-toolbar .date-display { flex: 1 1 235px; }
+  .date-toolbar-wrap {
+    width: min(var(--date-toolbar-width), calc(100vw - 26px));
+  }
+  .date-toolbar { gap: 5px; padding: 6px 8px; }
   .date-toolbar #date-today { min-width: 94px; padding-inline: 5px; }
   .date-toolbar #date-range-open { min-width: 113px; padding-inline: 5px; }
 }
 @media (max-width: 530px) {
-  .date-toolbar-wrap { min-height: 125px; }
+  /* Allow a taller two-row layout only on genuinely small screens. */
+  .date-toolbar-wrap { height: 104px; min-height: 104px; }
   .date-toolbar:not(.has-job-actions) {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    min-height: 125px;
+    display: grid;
+    grid-template-columns: auto minmax(95px,1fr) auto;
+    grid-template-rows: 42px 42px;
+    gap: 4px 6px;
+    height: 104px;
+    min-height: 104px;
+  }
+  .date-toolbar:not(.has-job-actions) #date-prev {
+    grid-column: 1; grid-row: 1; margin: 0;
+  }
+  .date-toolbar:not(.has-job-actions) #date-next {
+    grid-column: 3; grid-row: 1; margin: 0;
+  }
+  .date-toolbar:not(.has-job-actions) #date-today {
+    grid-column: 1; grid-row: 2;
+  }
+  .date-toolbar:not(.has-job-actions) #date-range-open {
+    grid-column: 3; grid-row: 2;
   }
   .date-toolbar:not(.has-job-actions) .date-display,
   .date-range-view .date-toolbar:not(.has-job-actions) .date-display {
-    flex: 1 0 calc(100% - 250px);
-    min-width: 120px;
-    max-width: calc(100% - 240px);
+    left: 50%;
+    top: 25px;
+    width: min(250px, calc(100% - 100px));
+    max-width: min(250px, calc(100% - 100px));
   }
-  .date-toolbar.has-job-actions { min-height: 125px; }
-  .date-toolbar.has-job-actions .date-display,
-  .date-range-view .date-toolbar.has-job-actions .date-display {
-    max-width: 100%;
+  .date-toolbar:not(.has-job-actions) .date-display .date-current,
+  .date-range-view .date-toolbar:not(.has-job-actions) .date-display .date-current {
+    font-size: 18px;
   }
-  .date-action-main .status-actions-trigger { font-size: 23px; }
+  .date-toolbar.has-job-actions { min-height: 68px; }
+  .date-action-main .status-actions-trigger { font-size: 21px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .date-toolbar-wrap,
   .date-toolbar .date-display,
+  .date-toolbar .date-display .date-current,
   .date-action-panel .status-menu,
   .date-action-main .status-chevron { transition-duration: 0ms; }
 }
