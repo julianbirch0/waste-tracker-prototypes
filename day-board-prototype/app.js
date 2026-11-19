@@ -1,4 +1,4 @@
-/* WasteTracker Day Board V00031
+/* WasteTracker Day Board V00032
    Standalone, file:// compatible. Custom pointer drag-and-drop; no dependencies. */
 (function () {
   "use strict";
@@ -510,6 +510,15 @@
   }
 
   function renderUnallocated() {
+    if (!state.unallocated.length) {
+      // Retain a permanent, narrow drop target when Unallocated is empty.
+      // The nested .job-list hosts the normal pointer-drag placeholder.
+      return '<div class="trip-column unallocated-column unallocated-column-empty drop-zone" ' +
+        'data-trip="" data-zone="unallocated" aria-label="Unallocated – drop Planned Jobs here">' +
+        '<div class="unallocated-empty-rail"><span>Unallocated</span></div>' +
+        '<div class="unallocated-empty-host job-list" aria-hidden="true"></div>' +
+      '</div>';
+    }
     return '<div class="trip-column unallocated-column">' +
       '<div class="column-header">' +
         '<div class="column-heading-line"><span class="column-name">Unallocated</span>' +
