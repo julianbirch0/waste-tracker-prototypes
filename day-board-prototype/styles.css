@@ -3327,11 +3327,10 @@ button:focus-visible, .board-scroll:focus-visible {
   border-radius: 3px;
   outline: 1px solid rgba(35, 58, 80, .10);
 }
-/* Unselected dates have an empty swatch position: the colour is reassigned
-   immediately to the next currently plotted Trip. */
-.map-filter-swatch-empty {
-  background: transparent;
-  outline: none;
+/* Map-hidden dated Trips retain their assigned grid colour in the filter,
+   but a faint swatch distinguishes them from Trips actually plotted. */
+.map-filter-swatch-inactive {
+  opacity: .28;
 }
 .map-filter-name {
   flex: 1 1 auto;
