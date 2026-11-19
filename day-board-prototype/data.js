@@ -1,4 +1,4 @@
-/* Sample data for Day Board V00025.
+/* Sample data for Day Board V00026.
    All data is invented; no calls to WasteTracker or other services. */
 (function () {
   "use strict";
@@ -51,6 +51,9 @@
     "Oak & Stone Ltd", "Central Facilities", "Hilltop Renovations",
     "Town Centre Stores", "Southgate Joinery", "Example Customer"
   ];
+  // Illustrative organisation-defined Other services. A full dictionary
+  // editor belongs elsewhere in WasteTracker, not on the Day Board.
+  const otherServices = ["Refill soap dispenser", "Inspect equipment"];
   // Keep the containers/vehicle work consistent within each Round.
   // Unallocated is intentionally mixed because those Jobs have no Round yet.
   const activitiesByRound = {
@@ -63,7 +66,7 @@
     "recycling-1": ["Empty · 660 L recycling bin", "Empty · 1100 L recycling bin", "Exchange · 1100 L recycling bin"],
     "muck-away": ["Collect · Loose soil", "Collect · Loose hardcore", "Collect · Loose rubble"],
     "bin-deliveries": ["Deliver · 660 L bin", "Deliver · 1100 L bin", "Recover · 660 L bin", "Exchange · 1100 L bin"],
-    "trade-2": ["Empty · 660 L bin", "Exchange · 660 L bin", "Collect · 660 L bin"],
+    "trade-2": ["Empty · 660 L bin", "Exchange · 660 L bin", "Collect · 660 L bin", "Other · " + otherServices[0], "Other · " + otherServices[1]],
     "wait-load": ["Wait and load · Loose waste", "Wait and load · 12 yd skip", "Wait and load · 14 yd skip"],
     "skips-4": ["Collect · 12 yd skip", "Exchange · 12 yd skip", "Deliver · 14 yd skip", "Collect · 14 yd skip"]
   };
