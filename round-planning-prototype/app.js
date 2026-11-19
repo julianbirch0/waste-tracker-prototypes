@@ -389,6 +389,9 @@
         '" fill="none" stroke="#208f83" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity=".8"/>';
     }
     const visibleSeq=visibleIds('sequenced');
+    // Dense All views can contain 30+ markers. Keep the map legible by
+    // showing place text only for small sets or the selected service.
+    const showPlaceLabels=points.length<=12;
     points.forEach(p=>{
       const v=coord(p), i=visibleSeq.indexOf(p.id)+1, unseq=i===0;
       const held=p.s.onHold, selected=selectedIds.has(p.id);
@@ -402,7 +405,8 @@
         '" stroke="'+(selected?'#154f68':'white')+'" stroke-width="'+(selected?'5':'3')+'"/>'+
         (unseq?'<circle cx="'+v.x+'" cy="'+v.y+'" r="4" fill="white"/>':
           '<text x="'+v.x+'" y="'+(v.y+5)+'" text-anchor="middle" fill="white" font-size="13" font-weight="700">'+i+'</text>')+
-        '<text x="'+(v.x+20)+'" y="'+(v.y-12)+'" class="map-label">'+esc(p.a.location||p.a.site)+'</text></g>';
+        (showPlaceLabels||selected?'<text x="'+(v.x+20)+'" y="'+(v.y-12)+'" class="map-label">'+
+          esc(p.a.location||p.a.site)+'</text>':'')+'</g>';
     });
     svg.innerHTML=html;
     svg.setAttribute('viewBox',mapViewBox());
@@ -434,7 +438,8 @@
     if(!row)return;
     const rect=row.getBoundingClientRect(), viewport=tableScroll.getBoundingClientRect();
     const stack=parseFloat(tableScroll.style.getPropertyValue('--sticky-stack-height'))||40;
-    const top=tableScroll.scrollTop+rect.top-viewport.top-Math.min(stack+12,viewport.height*0.55);
+    const top=tableScroll.scrollTop+rect.top-viewport.top-
+      Math.min(stack+12,Math.max(40,viewport.height-65));
     if(row.dataset.section==='unsequenced')tableScroll.scrollTo({top:0,behavior:'smooth'});
     else tableScroll.scrollTo({top:Math.max(0,top),behavior:'smooth'});
     tableScroll.scrollIntoView({behavior:'smooth',block:'nearest'});
