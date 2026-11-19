@@ -1,4 +1,4 @@
-/* WasteTracker Day Board V00030
+/* WasteTracker Day Board V00031
    Standalone, file:// compatible. Custom pointer drag-and-drop; no dependencies. */
 (function () {
   "use strict";
@@ -264,11 +264,16 @@
     return result;
   }
 
-  function driverAssignmentsValid(assignments) {
+  // A Trip cannot have a driver without a vehicle. In production, driver
+  // eligibility must ALSO be filtered using the existing driver↔vehicle
+  // qualification records (see Jira requirement in README).
+  function driverAssignmentsValid(assignments, vehicles) {
     if (!assignments || typeof assignments !== "object" || Array.isArray(assignments)) return false;
+    const vehicleByTrip = vehicles || getVehicleAssignments();
     return state.trips.every(function (trip) {
+      const driver = assignments[trip.id];
       return Object.prototype.hasOwnProperty.call(assignments, trip.id) &&
-        (assignments[trip.id] === "" || availableDrivers.includes(assignments[trip.id]));
+        (driver === "" || (availableDrivers.includes(driver) && Boolean(vehicleByTrip[trip.id])));
     });
   }
 
@@ -294,7 +299,10 @@
 
   function applyVehicleAssignments(assignments) {
     if (!vehicleAssignmentsValid(assignments)) return false;
-    state.trips.forEach(function (trip) { trip.vehicle = assignments[trip.id]; });
+    state.trips.forEach(function (trip) {
+      trip.vehicle = assignments[trip.id];
+      if (!trip.vehicle) trip.driver = "";
+    });
     return true;
   }
 
@@ -307,11 +315,11 @@
 
   function applyHistoryState(snapshot) {
     if (!snapshot || !placementIsValid(snapshot.placement) ||
-        !driverAssignmentsValid(snapshot.drivers) ||
-        !vehicleAssignmentsValid(snapshot.vehicles)) return false;
+        !vehicleAssignmentsValid(snapshot.vehicles) ||
+        !driverAssignmentsValid(snapshot.drivers, snapshot.vehicles)) return false;
     applyPlacement(snapshot.placement);
-    applyDriverAssignments(snapshot.drivers);
     applyVehicleAssignments(snapshot.vehicles);
+    applyDriverAssignments(snapshot.drivers);
     return true;
   }
 
@@ -357,6 +365,8 @@
       else if (record.drivers && record.drivers[trip.id] === "") trip.driver = "";
       if (record.vehicles && availableVehicles.includes(record.vehicles[trip.id])) trip.vehicle = record.vehicles[trip.id];
       else if (record.vehicles && record.vehicles[trip.id] === "") trip.vehicle = "";
+      // Older saved records could contain orphan drivers on vehicle-less Trips.
+      if (!trip.vehicle) trip.driver = "";
     });
     day.jobs = Object.fromEntries(ids.map(function (id) { return [id, resolveJob(id)]; }));
   }
@@ -520,6 +530,7 @@
     const driver = trip.driver
       ? escapeHtml(trip.driver)
       : '<span class="column-meta-empty">Unassigned</span>';
+    const swapIcon = '<span class="trip-swap-icon" aria-hidden="true">⇄</span>';
     const group = groups.find(function (item) { return item.id === trip.groupId; });
     return '<div class="trip-column" data-group-id="' + escapeHtml(trip.groupId) + '">' +
       '<div class="column-header">' +
@@ -530,14 +541,15 @@
             '<span class="column-trip-date">' + escapeHtml(shortDate(trip.date)) + '</span>' : '') +
           '</span><span class="column-count">' + total + ' jobs</span></div>' +
         '<div class="column-meta column-driver-meta"><span class="meta-label">Vehicle:</span> ' +
-          '<span class="column-driver-name">' + vehicle + '</span>' +
-          '<button type="button" class="driver-change-button vehicle-change-button" data-vehicle-trip="' +
-            escapeHtml(trip.id) + '" aria-label="Change vehicle for ' +
-            escapeHtml(trip.name) + '" title="Change or swap vehicle">⇄</button></div>' +
+          '<button type="button" class="trip-assignment-button driver-change-button vehicle-change-button" data-vehicle-trip="' +
+            escapeHtml(trip.id) + '" aria-label="Swap vehicle" title="Swap vehicle">' +
+            '<span class="column-driver-name">' + vehicle + '</span>' + swapIcon + '</button></div>' +
         '<div class="column-meta column-driver-meta"><span class="meta-label">Driver:</span> ' +
-          '<span class="column-driver-name">' + driver + '</span>' +
-          '<button type="button" class="driver-change-button" data-driver-trip="' + escapeHtml(trip.id) +
-            '" aria-label="Change driver for ' + escapeHtml(trip.name) + '" title="Change or swap driver">⇄</button></div>' +
+          (trip.vehicle
+            ? '<button type="button" class="trip-assignment-button driver-change-button" data-driver-trip="' +
+              escapeHtml(trip.id) + '" aria-label="Swap driver" title="Swap driver">' +
+              '<span class="column-driver-name">' + driver + '</span>' + swapIcon + '</button>'
+            : '') + '</div>' +
       '</div>' +
       '<div class="unsequenced-block">' +
         '<div class="zone-heading"><span>Unsequenced</span><span class="zone-count">' +
@@ -1126,7 +1138,8 @@
   }
 
   function openDriverDialog(tripId) {
-    if (!getTrip(tripId) || pendingDrag || activeDrag) return;
+    const trip = getTrip(tripId);
+    if (!trip || !trip.vehicle || pendingDrag || activeDrag) return;
     driverDialogTripId = tripId;
     draftDrivers = getDriverAssignments();
     closeGroupFilter();
@@ -1150,7 +1163,7 @@
   }
 
   function updateDraftDriver(action, driverName, otherTripId) {
-    if (!draftDrivers || !driverDialogTripId) return;
+    if (!draftDrivers || !driverDialogTripId || !getTrip(driverDialogTripId).vehicle) return;
     if (action === "unassign") {
       draftDrivers[driverDialogTripId] = "";
     } else if (action === "assign" && availableDrivers.includes(driverName)) {
@@ -1350,16 +1363,19 @@
     if (!draftVehicles || !vehicleAssignmentsValid(draftVehicles)) return;
     const before = getHistoryState();
     const name = getTrip(vehicleDialogTripId).name;
+    // Removing a vehicle must simultaneously remove its driver. Keep both
+    // changes in one history entry so Undo/Redo cannot restore an orphan.
     applyVehicleAssignments(draftVehicles);
     const after = getHistoryState();
-    if (JSON.stringify(before.vehicles) !== JSON.stringify(after.vehicles)) {
+    const changed = JSON.stringify(before.vehicles) !== JSON.stringify(after.vehicles) ||
+      JSON.stringify(before.drivers) !== JSON.stringify(after.drivers);
+    if (changed) {
       addHistoryEntry({
         kind: "vehicles", before: before, after: after,
-        description: "Vehicle assignments updated for " + name
+        description: "Vehicle and associated driver allocations updated for " + name
       });
     }
     persistPlacement();
-    // Always refresh the Day Board, even if no warning is affected.
     renderBoard();
     closeVehicleDialog();
     showToast("Vehicle assignments saved", name);
