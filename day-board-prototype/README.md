@@ -1,4 +1,4 @@
-# Day Board prototype — V00029
+# Day Board prototype — V00030
 
 A standalone, local-file-friendly WasteTracker Day Board prototype.
 
@@ -15,7 +15,7 @@ There is **no localhost, build step, framework, CDN or web service**. Keep index
 - 12 Trip columns, each showing the **parent Round name only**, with **both Vehicle and Driver editable through separate ⇄ dialogs**.
 - **Round groups** are represented by four invented operational groups: Skips Team, Trade & Bins, Recycling & Deliveries, and Specialist Fleet. These are mock assignments independent of the existing Round Definition prototype.
 - The **Groups and Trips** multi-select above the Day Board defaults to everything selected. A **Select All** checkbox is followed by a subtle divider, a non-expandable **Unallocated** entry, four expandable ordinary groups with individual Trip checkboxes, and finally four **compact warning pseudo-filters**: **Trips with no driver assigned**, **Trips with duplicate driver**, **Trips with no vehicle assigned**, and **Trips with duplicate vehicle**. These four warning filters sit **at the bottom** of the dropdown, with **no expandable child Trip lists**; they primarily reflect the live filters activated by the amber warnings' **Show** buttons. They are disabled when they have no affected Trips; choosing either one activates exactly the same live issue filter as its warning's Show button. Clicking the active pseudo-group again restores the prior ordinary filter; choosing a normal group or Trip exits the special filter and starts a new manual selection. Ordinary group checkboxes select/deselect all their Trips, partial selections show mixed states, and Unallocated can be independently hidden. Chevrons expand/collapse without changing selections.
-- **V00026–V00027: Job status and contextual Actions prototype.** Select one or more Jobs to show the floating Actions control. Cards use muted background colours and display the full status at the bottom (two lines where useful), with slightly more vertical breathing room.
+- **V00026–V00030: Job status and contextual Actions prototype.** Select one or more Jobs to switch the date toolbar into contextual Actions mode. Cards use muted background colours and display the full status at the bottom (two lines where useful), with slightly more vertical breathing room.
 - A **horizontally sticky Unallocated column** on the left, now using the **same muted amber background as Unsequenced Jobs** throughout its header and body.
 - Trip headers that remain visible when scrolling vertically.
 - An **always-visible sticky Unsequenced area** immediately below each Trip header, including a compact empty drop target when there are no unsequenced Jobs.
@@ -40,11 +40,20 @@ There is **no localhost, build step, framework, CDN or web service**. Keep index
 - Browser storage of changed positions when supported by the browser's file:// storage rules. The board still works in memory if browser storage is unavailable.
 - **Reset sample data** to restore the initial positions (also clears Undo/Redo history).
 
+## View Job details and amendments (V00030)
+
+- **View job details** is the **first action** for any selected Job, regardless of Trip allocation or current status. It is enabled for **exactly one selected Job**; for multiple Jobs it remains visible but disabled, with a gentle explanation.
+- Until the dedicated **Job details page** is designed, clicking **View job details** opens a simple, read-only **prototype preview** (Job reference, customer, service, status and Trip) that explicitly says the full page will be linked here later. It does **not** navigate to a nonexistent page.
+- Former **Corrections** are now **Amendments**, with softer wording in the dialogs and confirmation feedback. Normal progression actions remain separate.
+- When at least one **eligible amendment** exists for the selected Job(s), a subtle **Available amendments** heading appears **at the bottom** of the expanded Actions panel, with a downward chevron. The amendments are **collapsed by default** and can be expanded independently. The chevron changes upwards when opened.
+- The section does not appear when no amendment can be performed. Opening and closing it does not change selection, Job statuses or planning Undo/Redo.
+- Existing date controls, status eligibility, notes, Job card styling and persistence remain unchanged.
+
 ## Two-row Actions control (V00029)
 
 - Following the annotated layout sketch: when Jobs are selected the header's **first row** shows the current date/date range on the **left**, a prominent, centrally aligned **N Jobs selected** heading, and underlined **Deselect** on the **right**.
 - The **second row** is a centred expand/collapse button. In the collapsed state it reads **Expand to see available actions** with a **downward chevron**; expanded it reads **Available actions** with an **upward chevron**. The first row stays in place while toggling.
-- The available actions are displayed as **individually centred buttons** within the expanded blue panel. Disabled options are visibly subdued, with a gentle, centred explanation underneath. Corrections remain grouped separately.
+- The available actions are displayed as **individually centred buttons** within the expanded blue panel. Disabled options are visibly subdued, with a gentle, centred explanation underneath. Eligible amendments are now behind their own collapsed section (V00030).
 - The normal date navigation toolbar retains its **two animated widths**, and the selected Actions header retains the same compact **68px footprint** when collapsed; opening it extends down over the board without pushing warning banners or other board content.
 - Status eligibility, operations and persistence are unchanged.
 
@@ -72,7 +81,7 @@ There is **no localhost, build step, framework, CDN or web service**. Keep index
 - **Failures** distinguish customer and non-customer fault. Single-Job failure reporting offers a follow-up decision: leave outstanding, replan or abandon. Bulk failure reporting accepts one optional note applied to all selected Jobs.
 - **Replanning** (single or bulk) creates a **new linked Planned Job** in Unallocated on **one chosen date**, which can be today. The original remains Failed – replanned on its previous Trip. Replanning stays on the current Day Board date, with an optional link to the new date. Later successful completion resolves ancestor failures; abandonment or cancellation of the replacement abandons them. Fault classifications remain intact.
 - **Cancellation** requires Planned/unattempted Jobs, confirms the action and offers one optional reason (shared across a bulk selection). Cancelling a replanned replacement also abandons its earlier failed Jobs.
-- A separate **Corrections** menu section supports simple reversals (service completion → Planned) and correction of an outstanding failure's fault classification. Operational updates, including corrections, record a lightweight status history and clear **planning Undo/Redo**. Complex corrections after On way to facility are deliberately deferred.
+- A separate **Available amendments** section (V00030, collapsed by default) supports simple reversals (service completion → Planned) and correction of an outstanding failure's fault classification. Operational updates, including corrections, record a lightweight status history and clear **planning Undo/Redo**. Complex corrections after On way to facility are deliberately deferred.
 - **Moving between Trips or Unallocated is only permitted for Planned Jobs.** Any Job may be reordered **within its existing Trip**, regardless of status. Status changes never automatically remove or reshuffle cards.
 - Job statuses, optional actuals, recorded notes, replanning links, and replacement Jobs persist in a **separate browser-local storage record**. Existing V00025 placement/assignment data is retained. **Reset sample data** also clears this status record.
 - This deliberately does **not** implement the future full-page Job view, configurable Agreement-specific actuals, an organisation-wide Other-service dictionary editor, receiving-facility integrations or formal correction workflows.
