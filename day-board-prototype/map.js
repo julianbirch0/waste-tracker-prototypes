@@ -1,4 +1,4 @@
-/* WasteTracker Day Board V00037 — Leaflet / OpenFreeMap prototype.
+/* WasteTracker Day Board V00038 — Leaflet / OpenFreeMap prototype.
    Demo Job points are illustrative, NOT geocoded customer addresses.
    Main Groups & Trips controls the grid and the available map choices;
    this map controls its own plotted dated Trips only. */
@@ -30,9 +30,8 @@
   const scroller = document.getElementById("board-scroll");
   const toggleButton = document.getElementById("toggle-map");
   const mapElement = document.getElementById("day-map");
-  const filterButton = document.getElementById("map-filter-button");
   const filterPanel = document.getElementById("map-filter-panel");
-  const filterWrap = document.getElementById("map-filter-wrap");
+  const tripTotal = document.getElementById("map-trip-total");
   const jobTotal = document.getElementById("map-job-total");
   const fitButton = document.getElementById("map-fit");
   let bridge = null;
@@ -134,9 +133,7 @@
     const hasRepeatedPlottedColours = new Set(plottedColours).size < plottedColours.length;
     const scroll = filterPanel.querySelector(".map-filter-items");
     const oldScroll = scroll ? scroll.scrollTop : 0;
-    filterButton.innerHTML = '<span>Show on Map: ' +
-      (selectedCount === allIds.length ? 'All' : selectedCount + ' of ' + allIds.length) +
-      '</span><span aria-hidden="true" class="group-filter-chevron">▾</span>';
+    tripTotal.textContent = selectedCount + ' of ' + allIds.length + ' Trips';
     const groups = state().groups.map(function (group) {
       const inGroup = eligible.filter(function (trip) { return trip.groupId === group.id; });
       if (!inGroup.length) return '';
@@ -198,11 +195,6 @@
       input.indeterminate = count > 0 && count < members.length;
     });
   }
-  function setFilterOpen(show) {
-    filterPanel.hidden = !show;
-    filterButton.setAttribute("aria-expanded", String(show));
-  }
-
   // Sample coordinates in V00032 are only an invented 1100 x 720 layout.
   // Project them onto a Swindon-area basemap. Real latitude/longitude
   // fields, when available, take precedence without changing the map code.
@@ -389,7 +381,6 @@
   function hideMap() {
     if (!opened) return;
     opened = false;
-    setFilterOpen(false);
     frame.classList.remove("map-mode", "map-no-grid");
     workspace.classList.remove("is-opening");
     workspace.classList.add("is-closing");
@@ -409,10 +400,6 @@
     toggleButton.addEventListener("click", function () {
       if (opened) hideMap(); else openMap();
     });
-    filterButton.addEventListener("click", function () {
-      if (!opened) return;
-      setFilterOpen(filterPanel.hidden);
-    });
     filterPanel.addEventListener("change", function (event) {
       const input = event.target.closest('input[data-map-level]');
       if (!input || !opened) return;
@@ -425,14 +412,15 @@
         });
       selectIds(choices.map(function (trip) { return trip.id; }), input.checked);
       renderFilter();
+      // The key is permanently displayed, so keep keyboard focus on the
+      // checkbox even though its rows are refreshed to update counts.
+      const replacement = Array.from(filterPanel.querySelectorAll('input[data-map-level]'))
+        .find(function (box) {
+          return box.dataset.mapLevel === level && box.dataset.mapKey === key;
+        });
+      if (replacement) replacement.focus({ preventScroll: true });
       draw();
       fitAll();
-    });
-    document.addEventListener("pointerdown", function (event) {
-      if (!filterPanel.hidden && !filterWrap.contains(event.target)) setFilterOpen(false);
-    });
-    document.addEventListener("keydown", function (event) {
-      if (event.key === "Escape" && !filterPanel.hidden) setFilterOpen(false);
     });
     fitButton.addEventListener("click", fitAll);
     window.addEventListener("resize", function () {
