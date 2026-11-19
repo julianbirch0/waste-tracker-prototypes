@@ -40,7 +40,7 @@
   // Group headings select all their children; individual Trips remain
   // independently selectable in the full-grid view.
   let visibleTripIds = null;
-  let showUnallocated = true;
+  // Unallocated is always visible, folded to a narrow rail only when empty.
   let expandedFilterGroups = new Set(groups.map(function (group) { return group.id; }));
   // An active issue filter is a live view of today's allocations, not a
   // frozen list of Trip IDs. Keep the ordinary selection untouched beneath it.
@@ -653,7 +653,6 @@
     activeWarningFilter = null;
     if (savedFilterBeforeWarning) {
       visibleTripIds = new Set(savedFilterBeforeWarning.tripIds);
-      showUnallocated = savedFilterBeforeWarning.unallocated;
       visibleGroupIds = new Set(savedFilterBeforeWarning.groupIds);
     }
     savedFilterBeforeWarning = null;
@@ -664,7 +663,6 @@
     if (!activeWarningFilter) {
       savedFilterBeforeWarning = {
         tripIds: Array.from(visibleTripIds),
-        unallocated: showUnallocated,
         groupIds: Array.from(visibleGroupIds)
       };
     }
@@ -686,7 +684,6 @@
     // Explicitly choosing an ordinary group/Trip starts a new selection,
     // rather than unexpectedly re-enabling all the old hidden Trips.
     visibleTripIds = new Set();
-    showUnallocated = false;
     visibleGroupIds = new Set();
     return true;
   }
@@ -755,8 +752,6 @@
       ? savedFilterBeforeWarning.tripIds
       : Array.from(visibleTripIds);
     const roundIds = new Set(chosenTrips.map(function (id) { return id.split("@")[0]; }));
-    const includeUnallocated = activeWarningFilter && savedFilterBeforeWarning
-      ? savedFilterBeforeWarning.unallocated : showUnallocated;
     let days = 0;
     const allowed = new Set(candidate.weekdays);
     for (let day = candidate.start, n = 0;
@@ -764,7 +759,7 @@
          day = addDays(day, 1), n += 1) {
       if (allowed.has(dayIndex(day))) days += 1;
     }
-    return days * roundIds.size + (includeUnallocated && days > 0 ? 1 : 0);
+    return days * roundIds.size + (days > 0 ? 1 : 0);
   }
 
   function draftColumnCandidate() {
@@ -827,20 +822,14 @@
         return trip ? renderTrip(trip) : "";
       }).join("");
     } else {
-      // The full board shows only Trips in the chosen/expanded groups.
-      // Unallocated remains the sticky first column even for "Nothing".
-      const showAvailable = !activeWarningFilter && showUnallocated;
-      const shownTrips = displayTripsInOrder().slice(0,
-        MAX_GRID_COLUMNS - (showAvailable ? 1 : 0));
-      displayedJobs = (showAvailable ? state.unallocated.length : 0) +
+      // Unallocated stays visible in the full grid, including warning filters
+      // and the case where no Trips are selected.
+      const shownTrips = displayTripsInOrder().slice(0, MAX_GRID_COLUMNS - 1);
+      displayedJobs = state.unallocated.length +
         shownTrips.reduce(function (total, trip) {
           return total + trip.unsequenced.length + trip.sequenced.length;
         }, 0);
-      board.innerHTML = (showAvailable ? renderUnallocated() : "") +
-        shownTrips.map(renderTrip).join("");
-      if (!showAvailable && shownTrips.length === 0) {
-        board.innerHTML = '<div class="board-no-columns">No Trips selected. Use Groups and Trips to choose what to display.</div>';
-      }
+      board.innerHTML = renderUnallocated() + shownTrips.map(renderTrip).join("");
     }
     updateSummary(displayedJobs);
     updateColumnLimitNotice();
@@ -852,9 +841,8 @@
 
   function groupSelectionText() {
     if (activeWarningFilter) return warningGroupDetails[activeWarningFilter].shortName;
-    if (showUnallocated && visibleTripIds.size === state.trips.length) return "All";
-    if (!showUnallocated && !visibleTripIds.size) return "Nothing";
-    if (showUnallocated && !visibleTripIds.size) return "Unallocated";
+    if (visibleTripIds.size === state.trips.length) return "All";
+    if (!visibleTripIds.size) return "No Trips";
     return visibleTripIds.size + " of " + state.trips.length + " Trips";
   }
 
@@ -870,8 +858,8 @@
     groupFilterButton.innerHTML = escapeHtml(groupSelectionText()) +
       ' <span aria-hidden="true" class="group-filter-chevron">▾</span>';
     const ordinary = !activeWarningFilter;
-    const selectedTotal = ordinary ? visibleTripIds.size + (showUnallocated ? 1 : 0) : 0;
-    const total = state.trips.length + 1;
+    const selectedTotal = ordinary ? visibleTripIds.size : 0;
+    const total = state.trips.length;
     groupFilterPanel.innerHTML =
       '<label class="group-filter-select-all">' +
         '<input type="checkbox" data-group-select-all' +
@@ -880,13 +868,6 @@
       '</label>' +
       '<div class="group-filter-divider" role="separator"></div>' +
       '<div class="group-filter-options">' +
-        '<div class="group-filter-ungrouped">' +
-          '<label class="group-filter-option group-filter-unallocated">' +
-            '<input type="checkbox" data-filter-unallocated' +
-              (ordinary && showUnallocated ? ' checked' : '') + '>' +
-            '<span>Unallocated</span><small>' + state.unallocated.length + '</small>' +
-          '</label>' +
-        '</div>' +
         groups.map(function (group) {
           const trips = state.trips.filter(function (trip) {
             return trip.groupId === group.id;
@@ -956,11 +937,10 @@
     });
   }
 
-  function chooseTripSelection(ids, unallocatedSelected) {
+  function chooseTripSelection(ids) {
     clearWarningFilterForManualSelection();
     const valid = new Set(state.trips.map(function (trip) { return trip.id; }));
     visibleTripIds = new Set(ids.filter(function (id) { return valid.has(id); }));
-    showUnallocated = Boolean(unallocatedSelected);
     visibleGroupIds = new Set(groups.filter(function (group) {
       return selectedTripsInGroup(group.id) > 0;
     }).map(function (group) { return group.id; }));
@@ -982,7 +962,7 @@
   function toggleTripSelection(tripId, selected) {
     const ids = activeWarningFilter ? new Set() : new Set(visibleTripIds);
     if (selected) ids.add(tripId); else ids.delete(tripId);
-    chooseTripSelection(Array.from(ids), activeWarningFilter ? false : showUnallocated);
+    chooseTripSelection(Array.from(ids));
   }
 
   function chooseGroups(ids) {
@@ -992,7 +972,7 @@
       if (wanted.has(trip.groupId)) chosen.add(trip.id);
       else chosen.delete(trip.id);
     });
-    chooseTripSelection(Array.from(chosen), activeWarningFilter ? false : showUnallocated);
+    chooseTripSelection(Array.from(chosen));
   }
 
   function toggleGroup(groupId, expanded) {
@@ -1001,7 +981,7 @@
       .forEach(function (trip) {
         if (expanded) ids.add(trip.id); else ids.delete(trip.id);
       });
-    chooseTripSelection(Array.from(ids), activeWarningFilter ? false : showUnallocated);
+    chooseTripSelection(Array.from(ids));
   }
 
   function closeGroupFilter() {
@@ -1032,7 +1012,6 @@
         activeWarningFilter = null;
         if (savedFilterBeforeWarning) {
           visibleTripIds = new Set(savedFilterBeforeWarning.tripIds);
-          showUnallocated = savedFilterBeforeWarning.unallocated;
           visibleGroupIds = new Set(savedFilterBeforeWarning.groupIds);
         }
         savedFilterBeforeWarning = null;
@@ -1043,12 +1022,7 @@
     const selectAll = event.target.closest('input[data-group-select-all]');
     if (selectAll) {
       chooseTripSelection(selectAll.checked
-        ? state.trips.map(function (trip) { return trip.id; }) : [], selectAll.checked);
-      return;
-    }
-    const unallocated = event.target.closest('input[data-filter-unallocated]');
-    if (unallocated) {
-      chooseTripSelection(activeWarningFilter ? [] : Array.from(visibleTripIds), unallocated.checked);
+        ? state.trips.map(function (trip) { return trip.id; }) : []);
       return;
     }
     const group = event.target.closest('input[data-group-option]');
@@ -2051,7 +2025,6 @@
     savedFilterBeforeWarning = null;
     visibleTripIds = new Set(state.trips.map(function (trip) { return trip.id; }));
     visibleGroupIds = new Set(groups.map(function (group) { return group.id; }));
-    showUnallocated = true;
     selectedJobIds = new Set();
     selectionAnchorId = null;
     undoStack = [];
@@ -2202,7 +2175,6 @@
       savedFilterBeforeWarning.tripIds.forEach(function (id) {
         selectedRounds.add(id.split("@")[0]);
       });
-      showUnallocated = savedFilterBeforeWarning.unallocated;
     }
     if (window.DayBoardMap && window.DayBoardMap.isOpen()) window.DayBoardMap.hideMap();
     dateSelection = next;
@@ -2604,7 +2576,6 @@
       showToast: showToast,
       clearSelection: function () { setSelectedJobs([], null); },
       navigateToDate: function (date, jobIds) {
-        showUnallocated = true;
         chooseDateSelection({
           mode: "single", day: date, start: date, end: date,
           weekdays: [0, 1, 2, 3, 4, 5, 6],
@@ -2637,7 +2608,7 @@
           ? sortedWarningTrips(activeWarningFilter).map(function (trip) { return trip.id; })
           : Array.from(visibleTripIds);
       },
-      isUnallocatedSelected: function () { return !activeWarningFilter && showUnallocated; },
+      isUnallocatedSelected: function () { return true; },
       isRangeView: isRangeView,
       formatTripDate: shortDate,
       getDisplayTripIds: function () {
