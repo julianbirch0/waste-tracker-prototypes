@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light">
-  <title>Round Planning | WasteTracker Prototype</title>
+  <title>Round Planning V00001 | WasteTracker Prototype</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -22,12 +22,11 @@
       <div id="message" class="message" role="status" aria-live="polite" hidden></div>
 
       <div id="unsequence-drop" class="unsequence-drop" hidden>Drop here to move an Agreement to Unsequenced</div>
-      <div class="table-scroll">
+      <div id="table-scroll" class="table-scroll" tabindex="0" aria-label="Scrollable Regular Service sequence table">
         <table class="planning-table">
           <colgroup>
-            <col class="col-drag">
             <col class="col-seq">
-            <col class="col-agreement">
+            <col class="col-service">
             <col class="col-timing">
             <col class="col-customer">
             <col class="col-site">
@@ -39,9 +38,8 @@
           </colgroup>
           <thead>
             <tr>
-              <th scope="col"><span class="sr-only">Reorder</span></th>
               <th scope="col">Seq.</th>
-              <th scope="col">Agreement</th>
+              <th scope="col">Service</th>
               <th scope="col">Timing</th>
               <th scope="col">Customer</th>
               <th scope="col">Site</th>
@@ -59,9 +57,12 @@
       <div class="footer-bar">
         <div class="footer-left">
           <button type="button" id="reset-data" class="link-button">Reset sample sequences</button>
-          <span class="footer-note">Drag the handles to reorder, or use ↑ / ↓ when a handle has focus.</span>
+          <span class="footer-note">Click to select · Ctrl-click / Shift-click for multiple · Drag selected services to reorder</span>
         </div>
         <div class="footer-right">
+          <span id="selection-count" class="selection-count" role="status" aria-live="polite"></span>
+          <button type="button" id="undo" class="btn btn-secondary history-button" title="Undo (Ctrl+Z)" disabled>↶ Undo</button>
+          <button type="button" id="redo" class="btn btn-secondary history-button" title="Redo (Ctrl+Y)" disabled>↷ Redo</button>
           <span id="dirty-indicator" class="dirty-indicator" aria-live="polite"></span>
           <button type="button" id="save" class="btn btn-primary">Save</button>
           <button type="button" id="cancel" class="btn btn-secondary">Cancel</button>
