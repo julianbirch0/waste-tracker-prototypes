@@ -2390,3 +2390,203 @@ button:focus-visible, .board-scroll:focus-visible {
     max-width: min(340px, calc(100vw - 24px));
   }
 }
+
+
+/* V00026 — status-aware Job cards and floating Actions control. */
+.job-card { min-height: 98px; padding: 12px 11px 11px; transition: background-color 100ms ease; }
+.job-card.is-selected, .job-card.is-selected:hover { padding: 9px 8px 8px; }
+.job-card.status-neutral { background: #ffffff; }
+.job-card.status-progress { background: #edf5fc; border-color: #d4e2ee; }
+.job-card.status-attention { background: #fff4e1; border-color: #f0dfc3; }
+.job-card.status-success { background: #eaf6ed; border-color: #d1e6d6; }
+.job-card.status-closed { background: #f0f2f4; border-color: #dce1e6; }
+.job-card .job-status-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-top: 9px;
+  padding-top: 7px;
+  border-top: 1px solid rgba(66, 86, 108, .10);
+  color: #526a82;
+  font-size: 11.5px;
+  font-weight: 650;
+  line-height: 1.35;
+  overflow-wrap: break-word;
+}
+.job-card.status-success .job-status-text { color: #407556; }
+.job-card.status-attention .job-status-text { color: #86602e; }
+.job-card.status-closed .job-status-text { color: #71808d; }
+.job-card.status-progress .job-status-text { color: #477397; }
+.job-card .job-status-line-secondary { font-size: 11px; font-weight: 500; }
+.floating-job .job-card.status-progress { background: #edf5fc; }
+.floating-job .job-card.status-attention { background: #fff4e1; }
+.floating-job .job-card.status-success { background: #eaf6ed; }
+.floating-job .job-card.status-closed { background: #f0f2f4; }
+.status-floating {
+  position: fixed;
+  z-index: 1900;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(390px, calc(100vw - 28px));
+  background: #ffffff;
+  border: 1px solid #cad9e5;
+  border-radius: 12px;
+  box-shadow: 0 12px 34px rgba(36, 59, 83, .20), 0 2px 7px rgba(36, 59, 83, .08);
+}
+.status-floating-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 54px;
+  padding: 8px 10px 8px 16px;
+}
+.status-selected-count { color: #344a62; font-size: 12px; }
+.status-actions-trigger { min-width: 110px; }
+.status-clear {
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: #91a0b1;
+  font-size: 23px;
+  width: 28px;
+  height: 32px;
+}
+.status-clear:hover { background: #f1f4f7; color: #405b75; }
+.status-menu {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 8px);
+  width: 100%;
+  max-height: min(65vh, 510px);
+  overflow-y: auto;
+  background: #ffffff;
+  border: 1px solid #d4e0ec;
+  border-radius: 10px;
+  box-shadow: 0 12px 32px rgba(36, 59, 83, .21);
+  padding: 7px;
+}
+.status-option { padding: 0 2px; }
+.status-option > button {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  padding: 9px 12px;
+  text-align: left;
+  border-radius: 6px;
+  color: #3f566f;
+  font-weight: 550;
+}
+.status-option > button:not(:disabled):hover { background: #edf6f4; color: #217c71; }
+.status-option > button:disabled { cursor: default; color: #a8b3bf; }
+.status-option-reason {
+  padding: 0 12px 9px;
+  color: #8291a2;
+  font-size: 11px;
+  line-height: 1.45;
+}
+.status-menu-section {
+  margin: 7px 2px 4px;
+  padding: 10px 12px 4px;
+  color: #8493a4;
+  border-top: 1px solid #edf1f5;
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+}
+.status-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 4500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px;
+  background: rgba(29, 43, 61, .43);
+}
+.status-dialog {
+  width: min(500px, 100%);
+  max-height: calc(100dvh - 28px);
+  overflow-y: auto;
+  border-radius: 12px;
+  background: white;
+  box-shadow: 0 22px 70px rgba(18, 37, 60, .23);
+  color: #293b55;
+}
+.status-dialog-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 22px;
+  border-bottom: 1px solid #e4ebf2;
+}
+.status-dialog-head h2 { margin: 0; font-size: 19px; font-weight: 650; }
+.status-dialog-x {
+  border: 0;
+  color: #8a9aac;
+  background: transparent;
+  font-size: 27px;
+  line-height: 1;
+}
+.status-dialog-body { display: flex; flex-direction: column; gap: 14px; padding: 22px; }
+.status-dialog-body p { margin: 0; }
+.status-job-count {
+  color: #58748e;
+  font-weight: 650;
+  font-size: 12px;
+}
+.status-dialog-body label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-weight: 600;
+  color: #41546a;
+  font-size: 12px;
+}
+.status-dialog-body input,
+.status-dialog-body textarea {
+  display: block;
+  min-height: 38px;
+  padding: 9px 10px;
+  width: 100%;
+  border: 1px solid #cfdae6;
+  border-radius: 6px;
+  color: #2e435b;
+  font: inherit;
+  background: #fff;
+}
+.status-dialog-body textarea { resize: vertical; }
+.status-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.status-muted { color: #778ba0; line-height: 1.6; font-size: 12px; }
+.status-dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 9px;
+  flex-wrap: wrap;
+  padding: 15px 22px;
+  border-top: 1px solid #e7edf3;
+  background: #f9fbfd;
+}
+.status-followup-footer { justify-content: space-between; }
+.status-replan-link {
+  position: absolute;
+  bottom: calc(100% + 12px);
+  left: 0;
+  width: 100%;
+  background: #f0f8f6;
+  border: 1px solid #c9e1da;
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: #29796e;
+  box-shadow: 0 3px 12px rgba(42,81,88,.1);
+  font-size: 11.5px;
+  font-weight: 600;
+}
+@media (max-width: 530px) {
+  .status-dialog-body { padding: 16px; }
+  .status-dialog-head, .status-dialog-footer { padding: 14px 16px; }
+  .status-form-grid { grid-template-columns: 1fr; }
+}
