@@ -3216,3 +3216,218 @@ button:focus-visible, .board-scroll:focus-visible {
   border-color: #61b8a6;
   background: #ddf4ea;
 }
+
+
+/* ================================================================
+   V00033 — Leaflet/OpenStreetMap and independently filtered map.
+   The Day Board retains every main-filtered Trip and its horizontal
+   scrollbar. The map gets the remaining width; no 4-column selection.
+   ================================================================ */
+.board-frame.map-mode {
+  overflow: hidden;
+}
+.board-frame.map-mode .board-scroll {
+  flex: 0 0 var(--grid-pane-width, 850px);
+  width: var(--grid-pane-width, 850px);
+  max-width: calc(100% - 300px);
+  overflow-x: auto;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+.board-frame.map-mode .board-canvas {
+  width: max-content;
+  min-width: 100%;
+}
+.board-frame.map-mode .trip-column .column-header {
+  box-shadow: inset 0 4px 0 var(--trip-accent, transparent);
+}
+.map-workspace {
+  flex: 1 1 0;
+  min-width: 300px;
+}
+.map-main {
+  flex: 1 1 0;
+  min-width: 0;
+}
+.map-topline {
+  position: relative;
+  z-index: 1200;
+  min-height: 51px;
+  height: auto;
+  overflow: visible;
+}
+.map-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 3px 8px;
+  min-width: 0;
+}
+.map-title #map-job-total {
+  margin: 0;
+}
+.map-caption {
+  display: block;
+  white-space: normal;
+}
+.map-filter-wrap {
+  position: relative;
+  margin-left: auto;
+  flex: 0 0 auto;
+}
+.map-filter-button {
+  min-width: 152px;
+  max-width: 205px;
+}
+.map-filter-panel {
+  left: auto;
+  right: 0;
+  top: calc(100% + 6px);
+  width: 328px;
+  max-width: min(328px, calc(100vw - 28px));
+  max-height: min(620px, calc(100dvh - 170px));
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 1250;
+}
+#map-filter-panel[hidden] { display: none !important; }
+.map-filter-items {
+  padding: 3px 0;
+  min-height: 0;
+  max-height: min(500px, calc(100dvh - 280px));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.map-filter-group {
+  border-bottom: 1px solid #e5edf2;
+  padding: 3px 0 6px;
+}
+.map-filter-row {
+  display: flex;
+  align-items: center;
+  min-height: 32px;
+  gap: 8px;
+  padding: 5px 11px;
+  color: #38516b;
+  font-size: 11.5px;
+  cursor: pointer;
+}
+.map-filter-row:hover { background: #f2f8f7; }
+.map-filter-row input {
+  margin: 0;
+  width: 15px;
+  height: 15px;
+  flex: 0 0 15px;
+  accent-color: #258f83;
+  cursor: pointer;
+}
+.map-filter-swatch {
+  width: 9px;
+  height: 17px;
+  flex: 0 0 9px;
+  border-radius: 3px;
+  outline: 1px solid rgba(35, 58, 80, .10);
+}
+.map-filter-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.map-filter-row small {
+  flex: 0 0 auto;
+  color: #8196ab;
+  font-size: 10px;
+}
+.map-filter-group > .map-filter-row {
+  background: #f6f9fa;
+  font-weight: 700;
+}
+.map-filter-round { padding-left: 32px; font-weight: 650; }
+.map-filter-date { padding-left: 59px; color: #627992; }
+.map-filter-empty {
+  padding: 18px 13px;
+  color: #7c8da0;
+  font-size: 11px;
+}
+#day-map {
+  width: 100%;
+  height: 100%;
+  cursor: auto;
+  touch-action: auto;
+  user-select: auto;
+}
+#day-map.leaflet-container { background: #eef2f0; }
+.map-offline {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  padding: 24px;
+  color: #677d92;
+  font-size: 13px;
+  text-align: center;
+}
+.map-tools {
+  right: 12px;
+  top: 12px;
+  z-index: 650;
+}
+.map-tools button { min-height: 31px; min-width: 38px; }
+.map-key {
+  z-index: 650;
+  bottom: 12px;
+  pointer-events: none;
+}
+.map-key-unsequenced { border-color: #5378c9; }
+.wt-leaflet-marker { border: 0 !important; background: none !important; }
+.wt-pin {
+  width: 30px;
+  height: 30px;
+  box-sizing: border-box;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--pin-colour);
+  border: 3px solid #fff;
+  color: #fff;
+  font-size: 10.5px;
+  line-height: 1;
+  font-weight: 750;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  box-shadow: 0 1px 5px rgba(31, 49, 64, .36);
+}
+.wt-pin-unsequenced {
+  border: 4px dashed var(--pin-colour);
+  background: #fff;
+}
+.wt-pin-unsequenced .wt-pin-core,
+.wt-pin-unallocated .wt-pin-core {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--pin-colour);
+}
+.wt-pin-unallocated .wt-pin-core { background: #fff; }
+.wt-pin-selected {
+  outline: 3px solid #263d55;
+  outline-offset: 1px;
+}
+.wt-job-popup {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: #34516c;
+  font: 12px/1.3 system-ui, sans-serif;
+}
+.wt-job-popup strong { font-size: 13px; color: #263f57; }
+.wt-job-popup small { color: #258f83; font-size: 11px; font-weight: 650; }
+.leaflet-container .leaflet-control-attribution { font-size: 10px; }
+@media (max-width: 920px) {
+  .board-frame.map-mode .board-scroll { max-width: 54%; }
+  .map-caption { display: none; }
+}
