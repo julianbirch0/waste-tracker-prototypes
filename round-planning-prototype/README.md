@@ -1,52 +1,56 @@
-# WasteTracker – Round Planning prototype
+# WasteTracker — Round Planning prototype V00001
 
 ## Run it
 
-Pull `main` in GitHub Desktop, then open `round-planning-prototype/index.html` in a browser.
+Pull `main` in GitHub Desktop, then open `round-planning-prototype/index.html` in Edge or another browser.
 
-The prototype uses plain `index.html`, `styles.css`, `data.js` and `app.js`. It works directly from `file://` without a web server, framework, CDN, build step or internet connection.
+Entirely standalone `file://` prototype: plain HTML, CSS and JavaScript. No framework, server, APIs, external libraries or network required.
 
-## 6 November 2026 review build
+## 19 November 2026: Regular Service sequencing
 
-### Round, Day and Week
+**The sequenceable record is a Regular Service's association with a particular day-specific Round — not an Agreement.** Each Regular Service has its own unique internal ID, even when two services have the same activity, container, site and frequency. An Agreement may contain several Regular Services. Each service appears once in each day-specific Round to which it belongs, and may have an independent position on every Round/Day.
 
-- There are **two synchronised copies** of the **Select Round | Select Day | Select Week** controls: one above the inline map and one between the map and Agreement table.
-- The first Round name and its first scheduled Day are selected on load; **Week 1 - This week** is initially selected.
-- Week options: **All**, **Week 1 - This week**, **Week 2 - Next week**, **Week 3 - w/c d-mmm**, **Week 4 - w/c d-mmm**. Weeks run Monday–Sunday. `All` means the current week and next three weeks.
-- Changing Round retains the selected Day if that Round exists for the Day; otherwise it picks the first available Day. Changing Round or Day retains the selected Week.
-- A single named Round can have multiple day-specific Round records, each with its own master sequence.
-- The displayed Agreements are derived from qualifying **Regular Activities** attached to each Agreement. Ad hoc Activities do not make an Agreement eligible. Each Agreement appears **once** in the selected view, even if it is due multiple times in the four-week window.
+- The table's **Service** column displays activity and recurrence/frequency; no Agreement number or technical service ID is shown.
+- **View Agreement** remains unchanged as the user-facing action, opening the parent Agreement preview. The future production version should navigate to its Agreement page.
+- One service with quantity 3 appears **once**, not as three sequenceable items. Services at the same customer site do **not** automatically group.
+- The Agreement still represents one collection site and one waste type; multiple regular services under that Agreement inherit the same material.
+- Regular Services' Round associations are defined in Agreements, never changed through Round Planning. Moving services between Rounds is **not** an action offered here.
 
-### Sequencing and filtering
+## Round, Day, Week and sequencing
 
-- There is **one master Agreement sequence per day-specific Round**, not a separate sequence for every Week.
-- Week filtering hides Agreements not due in the selected Week.
-- Users can drag rows while viewing an individual Week. Dropping below a visible Agreement inserts immediately after it in the master sequence, even if previously hidden Agreements lie between them. Dropping before the first visible scheduled Agreement places it at master position 1.
-- **Unsequenced agreements** are grouped at the top in muted orange, followed by **Scheduled agreements** in the existing row colour. The section dividers appear only if at least one unsequenced Agreement is visible.
-- Dragging within Unsequenced leaves Agreements unsequenced. Dragging across to Scheduled assigns a sequence. Dragging back to Unsequenced removes it. A drop area appears while dragging so the reverse is possible even when every Agreement was previously scheduled.
-- Saving while there are Unsequenced Agreements is allowed. Sequence persists through browser `localStorage`. Reset returns to the sample defaults.
-- Newly associated/due Agreements default to Unsequenced unless explicitly marked as pre-sequenced **demo fixtures** in `data.js`.
+- Two synchronised copies of **Select Round**, **Select Day**, **Select Week** (above the map and above the table).
+- The Round picker shows distinct parent Round names; Day shows its day-specific Round instances. First Round and first Day selected on load.
+- Week choices: **All**, **Week 1 — This week**, **Week 2 — Next week**, **Week 3 — w/c...**, **Week 4 — w/c...**; weeks run Monday–Sunday.
+- **All** means **all associated current and future Regular Services**, even when their next due date falls beyond four weeks. Ended services are excluded from the working view.
+- Each individual Week shows services **normally due in that week**, according to their recurrence. Temporarily **On hold** services still appear where they would normally be due, with a clear indicator; putting a service on hold does not delete its sequence or generate a Job.
+- **Sequence numbers are consecutive in the visible view**, including On hold services. The map shows the same visible sequence numbers. Hidden services still retain positions in the underlying master sequence.
+- The master sequence is **one per day-specific Round**, not one per Week. Rearranging services in a Week view updates their position in that master sequence relative to other visible/hidden services. Existing historical IDs for ended services remain in the stored sequence.
 
-### Map
+## Selection and drag-and-drop
 
-- Map is **inline**, above the table, shown by default. Hide/Show persists when changing Round, Day or Week during the open session.
-- Only Agreements allocated to the selected Round and due for the selected Week/All are plotted. **Unallocated** Agreements are not shown.
-- Scheduled Agreements have numbered teal markers connected by **straight line segments** in master sequence order. Unsequenced Agreements have separate amber unnumbered markers and are **not** connected.
-- The map updates immediately when rows are moved, even before Save. Discard restores the saved sequence and map.
-- Switching Round, Day or Week fits the current locations. Drag-and-drop doesn't reset the current map zoom/pan.
-- The offline map is a **schematic location visualisation using illustrative sample coordinates**. It is **not** a Google Maps/OSM road map, and no routing or route optimisation is performed.
+- **No drag handles.** Click a row to select; Ctrl-click / Cmd-click toggles rows; Shift-click selects a range. Selection may span **Unsequenced services** and **Sequenced services**, provided they belong to the same day-specific Round.
+- Drag a selected row to move all selected services together in their existing relative order, including between the two sections. Dragging an unselected row begins a one-service selection.
+- Section headings act as drop targets for placing services at the top of either section. A separate Unsequenced drop target is available while dragging, including when the Unsequenced section is initially empty.
+- The section headings use **Unsequenced services** and **Sequenced services**.
+- Rows support keyboard selection (Enter/Space) and individual movement (Alt+Up/Down). Ctrl+A while the table has focus selects all visible services. Selection clears on changing Round, Day or Week.
 
-### Other controls
+## Save, Discard, Undo/Redo
 
-- Agreement **Notes** are in the table, with a **View columns** dropdown that can show/hide Notes and several other columns.
-- **View Agreement** opens the existing lightweight detail preview. The Agreement editor is not built yet; intended return-to-planning behaviour is described but cannot be demonstrated until that screen exists.
-- If there are unsaved sequencing changes, selecting another Round/Day/Week or opening an Agreement invokes the **Save / Discard / Cancel** dialogue. The browser's unsaved-page prompt applies on close/reload.
-- **Cancel** on the screen discards changes to the currently selected Round sequence.
+- **Explicit Save remains**: drag operations update a local draft only. **Undo** and **Redo** traverse individual edits within that unsaved session (Ctrl+Z, Ctrl+Y, Ctrl+Shift+Z). They reset after Save, Discard, reset or navigation.
+- **Save** persists the entire day-specific Round's master sequence, including currently hidden services, using browser `localStorage`.
+- **Cancel** discards the draft with confirmation. Navigating to another Round/Day/Week, or opening an Agreement, while dirty invokes **Save / Discard / Cancel**. Browser navigation/reload warns when dirty.
+- Week switching after Save keeps the same master sequence and resets selection/Undo/Redo. Reset restores sample defaults.
+- A new sample storage key (`wastetracker.round-planning.prototype.v3`) prevents Agreement-based sequences from the previous review build being incorrectly applied to Service IDs.
 
-## Data model and deliberately excluded scope
+## Map, sticky areas and larger sample data
 
-`data.js` is editable sample data. `activities` on an Agreement define which day-specific Round IDs it belongs to and its recurrence (`everyWeeks`, `startDate`, optional `endDate`). The same Activity may refer to multiple day-specific Rounds of the same named Round; distinct Activities can target different named Rounds. Round Planning **does not add/remove Activity–Round associations**; these are maintained in the future Agreement editor.
+- Map is inline and can be shown/hidden. Numbered teal markers represent visible Sequenced Services; amber markers represent Unsequenced; On hold markers are muted.
+- **Click a map marker** to select its Regular Service and smoothly bring its row into view in the scrollable table. Keyboard Enter/Space on a focused marker has the same action.
+- The map immediately follows draft changes; rearranging services does not reset map zoom/pan. Changing Round/Day/Week re-fits the locations.
+- Table has a **sticky column header** and a **sticky Unsequenced services section including its rows**, so Sequenced Services scroll beneath it. The **Save/Discard/Undo/Redo footer is fixed** to the bottom of the viewport.
+- The sample now has **256 Regular Services on 131 Agreements**, approximately **25–32 active services per day-specific Round**, including same-Agreement multiple services, different frequencies, on-hold and future-start services, and an ended historic example.
+- The map is still an offline **illustrative schematic**, using invented locations and straight-line connections; no actual roads or route optimisation.
 
-The data and map are demonstrative, not production records. The prototype does **not** build Jobs or Trips, perform backend scheduling, prevent duplicate/overlapping Activities, manage Agreement closure, implement the true Agreements editor or integrate with Round Definitions. These require subsequent work.
+## Excluded scope
 
-Browser storage is scoped to the same local file origin where supported. Save doesn't change `data.js` or GitHub. The review build uses a new `localStorage` key (`wastetracker.round-planning.prototype.v2`) so earlier sample sequences aren't unintentionally applied to the new test fixtures.
+This prototype does not modify real production data; call WasteTracker APIs; edit Agreement/Regular Service details or memberships; build dated Jobs or Trips; calculate road routes; or implement historical audit. The Agreements and Round Definitions prototypes remain independent. The ultimate scheduling workflow should use the stored Regular Service + day-specific Round sequence when generating each dated Trip's Jobs.
