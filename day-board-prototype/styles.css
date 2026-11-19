@@ -3238,6 +3238,9 @@ button:focus-visible, .board-scroll:focus-visible {
   width: max-content;
   min-width: 100%;
 }
+/* V00038: The map uses the full grid height; its persistent legend sits
+   over the map at top-right. A content-sized panel grows LEFT because its
+   right edge remains anchored, with vertical scrolling when necessary. */
 .map-workspace {
   flex: 1 1 0;
   min-width: 300px;
@@ -3246,56 +3249,100 @@ button:focus-visible, .board-scroll:focus-visible {
   flex: 1 1 0;
   min-width: 0;
 }
-.map-topline {
-  position: relative;
-  z-index: 1200;
-  min-height: 51px;
-  height: auto;
-  overflow: visible;
-}
-.map-title {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 3px 8px;
-  min-width: 0;
-}
-.map-title #map-job-total {
-  margin: 0;
-}
-.map-caption {
-  display: block;
-  white-space: normal;
-}
 .map-filter-wrap {
-  position: relative;
-  margin-left: auto;
-  flex: 0 0 auto;
-}
-.map-filter-button {
-  min-width: 152px;
-  max-width: 205px;
-}
-.map-filter-panel {
-  left: auto;
-  right: 0;
-  top: calc(100% + 6px);
-  width: 328px;
-  max-width: min(328px, calc(100vw - 28px));
-  max-height: min(440px, calc(100dvh - 240px));
-  min-height: 0;
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 1250;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
-  z-index: 1250;
-}
-#map-filter-panel[hidden] { display: none !important; }
-.map-filter-items {
-  padding: 3px 0;
+  width: max-content;
+  max-width: min(420px, calc(100% - 24px));
+  max-height: calc(100% - 24px);
   min-height: 0;
-  max-height: min(500px, calc(100dvh - 280px));
+  overflow: hidden;
+  background: rgba(255, 255, 255, .97);
+  border: 1px solid #cbdbe4;
+  border-radius: 7px;
+  box-shadow: 0 5px 18px rgba(30, 53, 73, .20);
+}
+.map-filter-heading {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 2px 9px;
+  flex: 0 0 auto;
+  padding: 10px 12px 8px;
+  background: #f6f9fa;
+  border-bottom: 1px solid #e0e9ee;
+}
+.map-filter-heading strong {
+  font-size: 12px;
+  font-weight: 750;
+  color: #334c64;
+  white-space: nowrap;
+}
+.map-filter-heading #map-trip-total {
+  margin-left: auto;
+  font-size: 10px;
+  font-weight: 650;
+  color: #607c91;
+  white-space: nowrap;
+}
+.map-filter-heading #map-job-total {
+  flex: 0 0 100%;
+  font-size: 10px;
+  color: #8295a4;
+}
+.map-filter-panel {
+  position: static;
+  top: auto;
+  left: auto;
+  right: auto;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  width: auto;
+  min-height: 0;
+  max-width: none;
+  max-height: none;
+  overflow: hidden;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+  z-index: auto;
+}
+.map-filter-panel .group-filter-select-all {
+  flex: 0 0 auto;
+  min-height: 37px;
+  padding: 7px 12px;
+}
+.map-filter-panel .group-filter-divider {
+  flex: 0 0 auto;
+}
+.map-filter-items {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
+  padding: 3px 0;
   overflow-y: auto;
+  overflow-x: hidden;
   overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+.map-filter-panel .group-filter-hint {
+  flex: 0 0 auto;
+  max-width: 100%;
+  white-space: normal;
+}
+.map-legend-note {
+  flex: 0 0 auto;
+  padding: 7px 12px;
+  color: #8195a6;
+  font-size: 10px;
+  background: #f8fafb;
+  border-top: 1px solid #e7eef1;
 }
 .map-filter-group {
   border-bottom: 1px solid #e5edf2;
@@ -3333,7 +3380,7 @@ button:focus-visible, .board-scroll:focus-visible {
   opacity: .28;
 }
 .map-filter-name {
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -3391,8 +3438,9 @@ button:focus-visible, .board-scroll:focus-visible {
   pointer-events: none;
 }
 .map-tools {
-  right: 12px;
-  top: 12px;
+  left: 12px;
+  right: auto;
+  top: 87px; /* Immediately beneath Leaflet's +/- controls. */
   z-index: 650;
 }
 .map-tools button { min-height: 31px; min-width: 38px; }
