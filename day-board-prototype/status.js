@@ -1,4 +1,4 @@
-/* WasteTracker Day Board V00029 — Job status prototype.
+/* WasteTracker Day Board V00030 — Job status prototype.
    Self-contained, file:// friendly; no backend or external services. */
 (function () {
   "use strict";
@@ -17,6 +17,7 @@
   let bar, menu, backdrop, dialog, pendingAction = null;
   let followupJob = null;
   let menuOpen = false;
+  let amendmentsOpen = false;
 
   const LABELS = {
     planned: "Planned",
@@ -180,8 +181,8 @@
       return location && location.zone === "unallocated";
     });
   }
-  function option(key, label, ok, reason, correction) {
-    return { key: key, label: label, ok: Boolean(ok), reason: reason || "", correction: Boolean(correction) };
+  function option(key, label, ok, reason, amendment) {
+    return { key: key, label: label, ok: Boolean(ok), reason: reason || "", amendment: Boolean(amendment) };
   }
   function options(jobs) {
     if (!jobs.length) return [];
@@ -196,7 +197,10 @@
     });
     const same = sameService(jobs);
     const tripOk = sameTrip(jobs);
-    const result = [];
+    // Navigation is always first, including for unallocated and terminal Jobs.
+    // Bulk selections keep it visible but unavailable with a gentle explanation.
+    const result = [option("view-details", "View job details",
+      jobs.length === 1, "Select one Job to view its details.")];
     const offTrip = unallocated(jobs);
     if (offTrip) {
       result.push(option("cancel", "Cancel " + (jobs.length === 1 ? "Job" : "Jobs"),
@@ -259,21 +263,36 @@
     }
     return result;
   }
+  function optionMarkup(item) {
+    return '<div class="status-option">' +
+      '<button type="button" data-status-action="' + item.key + '"' +
+      (item.ok ? '' : ' disabled') + '>' + safe(item.label) + '</button>' +
+      (!item.ok ? '<div class="status-option-reason">' + safe(item.reason) + '</div>' : '') +
+      '</div>';
+  }
   function menuMarkup() {
-    const jobs = selected(), opts = options(jobs);
-    let hasCorrections = false;
-    return opts.map(function (item) {
-      let heading = "";
-      if (item.correction && !hasCorrections) {
-        heading = '<div class="status-menu-section">Corrections</div>';
-        hasCorrections = true;
-      }
-      return heading + '<div class="status-option">' +
-        '<button type="button" data-status-action="' + item.key + '"' +
-        (item.ok ? "" : " disabled") + '>' + safe(item.label) + '</button>' +
-        (!item.ok ? '<div class="status-option-reason">' + safe(item.reason) + '</div>' : '') +
-        '</div>';
-    }).join("") || '<div class="status-option-reason">No status actions available for this selection.</div>';
+    const opts = options(selected());
+    const normal = opts.filter(function (item) { return !item.amendment; });
+    // An amendment is only offered when there is genuinely something
+    // the current selection can amend. Invalid combinations do not show
+    // an empty or disabled "Available amendments" section.
+    const amendments = opts.filter(function (item) { return item.amendment && item.ok; });
+    let markup = normal.map(optionMarkup).join("") ||
+      '<div class="status-option-reason">No actions available for this selection.</div>';
+    if (amendments.length) {
+      const chevron = '<span class="status-amendments-chevron" aria-hidden="true">' +
+        '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" ' +
+        'stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">' +
+        '<path d="m6 9 6 6 6-6"></path></svg></span>';
+      markup += '<div class="status-amendments' + (amendmentsOpen ? ' is-expanded' : '') + '">' +
+        '<button type="button" class="status-amendments-trigger" ' +
+        'aria-expanded="' + String(amendmentsOpen) + '" aria-controls="job-amendments-list">' +
+        '<span>Available amendments</span>' + chevron + '</button>' +
+        '<div class="status-amendments-list" id="job-amendments-list" aria-hidden="' +
+        String(!amendmentsOpen) + '"' + (amendmentsOpen ? '' : ' inert') + '>' +
+        amendments.map(optionMarkup).join("") + '</div></div>';
+    }
+    return markup;
   }
   function updateActionHeading() {
     if (!bar) return;
@@ -289,6 +308,7 @@
   }
   function closeMenu() {
     menuOpen = false;
+    amendmentsOpen = false;
     if (bar) bar.classList.remove("is-expanded");
     if (menu) {
       menu.classList.remove("is-expanded");
@@ -317,6 +337,7 @@
   }
 
   function titleForAction(key, jobs) {
+    if (key === "view-details") return "View job details";
     if (key === "complete") return jobs.length === 1 ? "Complete Job" : "Complete " + jobs.length + " Jobs";
     if (key === "fail-customer") return "Mark as Failed – customer";
     if (key === "fail-non-customer") return "Mark as Failed – non-customer";
@@ -324,7 +345,7 @@
     if (key === "replan") return "Replan " + (jobs.length === 1 ? "Job" : jobs.length + " Jobs");
     if (key === "abandon") return "Abandon " + (jobs.length === 1 ? "Job" : jobs.length + " Jobs");
     if (key === "revert") return "Revert to Planned";
-    if (key === "correct-fault") return "Correct failure classification";
+    if (key === "correct-fault") return "Amend failure classification";
     const item = options(jobs).find(function (o) { return o.key === key; });
     return item ? item.label : "Update Jobs";
   }
@@ -353,14 +374,41 @@
       'All selected Jobs will use the same date. The existing failed Jobs remain on their original Trips.</p>';
     if (key === "abandon") return '<p class="status-muted">These failed Jobs will be closed without replacement. ' +
       'Earlier failures in their replanning chains will also be marked Abandoned.</p>';
-    if (key === "revert") return '<p class="status-muted">This is a correction, not normal status progression. ' +
-      'The change will be recorded in the Job history and will not restore previous planning Undo steps.</p>';
-    if (key === "correct-fault") return '<p class="status-muted">This corrects the original fault classification ' +
+    if (key === "revert") return '<p class="status-muted">This amendment changes a recorded status. ' +
+      'It will appear in the Job history and will not restore previous planning Undo steps.</p>';
+    if (key === "correct-fault") return '<p class="status-muted">This amends the original fault classification ' +
       'without losing the history of the initial report.</p>';
     if (key === "on-way") return '<p class="status-muted">These Jobs will be marked On way to facility. ' +
       'They will remain on their original Trip.</p>';
     return '<p class="status-muted">Apply this status to ' + jobs.length +
       (jobs.length === 1 ? ' Job?' : ' Jobs?') + '</p>';
+  }
+  function openDetailsPlaceholder(job) {
+    if (!job) return;
+    closeMenu();
+    pendingAction = null;
+    followupJob = null;
+    const location = bridge.findJob(job.id);
+    const trip = location && location.tripId
+      ? bridge.getState().trips.find(function (t) { return t.id === location.tripId; })
+      : null;
+    const tripText = trip ? trip.name : "Unallocated";
+    dialog.innerHTML =
+      '<header class="status-dialog-head"><h2 id="status-dialog-title">Job ' +
+      safe(job.reference) + '</h2>' +
+      '<button type="button" class="status-dialog-x" data-dialog-close aria-label="Close">×</button></header>' +
+      '<div class="status-dialog-body status-details-preview">' +
+      '<p class="status-muted">The full Job details page will be linked here when it is available.</p>' +
+      '<dl>' +
+        '<div><dt>Customer</dt><dd>' + safe(job.customer) + '</dd></div>' +
+        '<div><dt>Service</dt><dd>' + safe(job.detail) + '</dd></div>' +
+        '<div><dt>Status</dt><dd>' + safe(title(job)) + '</dd></div>' +
+        '<div><dt>Trip</dt><dd>' + safe(tripText) + '</dd></div>' +
+      '</dl></div>' +
+      '<footer class="status-dialog-footer">' +
+      '<button type="button" class="btn btn-primary" data-dialog-close>Close</button></footer>';
+    backdrop.hidden = false;
+    dialog.querySelector("button[data-dialog-close]").focus();
   }
   function openDialog(key, jobs) {
     if (!jobs || !jobs.length) return;
@@ -371,7 +419,7 @@
     const question = titleForAction(key, jobs);
     const buttonLabel = key === "complete" ? "Complete" : key === "replan" ? "Replan" :
       key === "cancel" ? "Confirm cancellation" : key === "abandon" ? "Abandon" :
-      key === "revert" ? "Confirm correction" : "Confirm";
+      key === "revert" || key === "correct-fault" ? "Confirm amendment" : "Confirm";
     dialog.innerHTML = '<header class="status-dialog-head"><h2 id="status-dialog-title">' +
       safe(question) + '</h2><button type="button" class="status-dialog-x" data-dialog-close aria-label="Close">×</button></header>' +
       '<form id="status-action-form"><div class="status-dialog-body">' +
@@ -488,7 +536,7 @@
     closeDialog();
     afterChange(key === "replan" ? "Jobs replanned" : key === "complete" ? "Jobs completed" :
       key === "cancel" ? "Jobs cancelled" : key === "abandon" ? "Jobs abandoned" :
-      key === "revert" || key === "correct-fault" ? "Correction recorded" : "Job statuses updated",
+      key === "revert" || key === "correct-fault" ? "Amendment recorded" : "Job statuses updated",
       key === "replan" ? jobs.length + " replacement " + (jobs.length === 1 ? "Job" : "Jobs") +
         " created in Unallocated for " + date + "."
         : jobs.length + (jobs.length === 1 ? " Job updated." : " Jobs updated."));
@@ -547,9 +595,25 @@
       closeMenu();
     });
     menu.addEventListener("click", function (event) {
+      const amendmentTrigger = event.target.closest(".status-amendments-trigger");
+      if (amendmentTrigger) {
+        amendmentsOpen = !amendmentsOpen;
+        const container = amendmentTrigger.closest(".status-amendments");
+        const list = container.querySelector(".status-amendments-list");
+        container.classList.toggle("is-expanded", amendmentsOpen);
+        amendmentTrigger.setAttribute("aria-expanded", String(amendmentsOpen));
+        list.setAttribute("aria-hidden", String(!amendmentsOpen));
+        list.inert = !amendmentsOpen;
+        return;
+      }
       const button = event.target.closest("button[data-status-action]");
       if (!button || button.disabled) return;
-      openDialog(button.dataset.statusAction, selected());
+      const jobs = selected();
+      if (button.dataset.statusAction === "view-details") {
+        if (jobs.length === 1) openDetailsPlaceholder(jobs[0]);
+        return;
+      }
+      openDialog(button.dataset.statusAction, jobs);
     });
     dialog.addEventListener("click", function (event) {
       if (event.target.closest("[data-dialog-close]")) { closeDialog(); return; }
