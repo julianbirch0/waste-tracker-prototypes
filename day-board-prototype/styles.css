@@ -3150,3 +3150,69 @@ button:focus-visible, .board-scroll:focus-visible {
   outline: 2px solid #6d9aa8;
   outline-offset: 1px;
 }
+
+
+/* V00032 — Unallocated is a permanent drop destination.
+   With no Jobs it folds into a narrow sticky, bottom-to-top labelled rail.
+   The entire rail, not just the text, accepts pointer-dragged Planned Jobs. */
+:root { --empty-unallocated-width: 46px; }
+.unallocated-column.unallocated-column-empty {
+  flex: 0 0 var(--empty-unallocated-width);
+  width: var(--empty-unallocated-width);
+  min-width: var(--empty-unallocated-width);
+  position: sticky;
+  left: 0;
+  z-index: 40;
+  border-right: 1px solid var(--amber-line);
+  background: var(--amber-bg);
+  box-shadow: 3px 0 7px rgba(45,70,98,.13);
+  cursor: default;
+}
+.unallocated-column-empty .unallocated-empty-rail {
+  position: sticky;
+  top: 12px;
+  z-index: 1;
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 152px;
+  padding: 10px 0;
+  color: #967446;
+  pointer-events: none;
+}
+.unallocated-column-empty .unallocated-empty-rail span {
+  display: inline-block;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 750;
+  letter-spacing: .2px;
+  line-height: 1.25;
+}
+.unallocated-column-empty .unallocated-empty-host {
+  position: absolute;
+  inset: 0;
+  min-width: 0;
+  padding: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.unallocated-column-empty.is-targeted,
+.unallocated-column-empty.has-placeholder {
+  background: #e7f3e7;
+  outline: 2px solid #3fa58f;
+  outline-offset: -2px;
+}
+.unallocated-column-empty.is-targeted .unallocated-empty-rail {
+  color: #276f69;
+}
+.unallocated-column-empty .job-placeholder {
+  box-sizing: border-box;
+  width: calc(100% - 10px);
+  margin: 175px 5px 8px;
+  border-color: #61b8a6;
+  background: #ddf4ea;
+}
