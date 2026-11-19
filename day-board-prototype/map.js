@@ -1,4 +1,4 @@
-/* WasteTracker Day Board V00025 — standalone illustrative map.
+/* WasteTracker Day Board V00032 — standalone illustrative map.
    No tiles, API keys, map SDK, network requests, or server are needed. */
 (function () {
   "use strict";
@@ -73,7 +73,8 @@
         '<span title="' + escapeHtml(col.name) + '">' + escapeHtml(col.name) + '</span>' +
         '<small>' + col.jobs + '</small></div>' +
       htmlTick(col, "map", onMap, false) +
-      htmlTick(col, "grid", inGrid, reachedLimit && !inGrid) +
+      // Unallocated cannot be switched off in the grid.
+      htmlTick(col, "grid", inGrid, col.id === UNALLOCATED || (reachedLimit && !inGrid)) +
     '</div>';
   }
 
@@ -124,8 +125,13 @@
   function updateWidth() {
     // Each grid column keeps exactly its normal width; no squeezing.
     // Allow for the board's permanently reserved vertical scrollbar.
-    const columnWidth = parseFloat(window.getComputedStyle(frame).getPropertyValue("--trip-width")) || 278;
-    frame.style.setProperty("--grid-pane-width", (columnWidth * gridColumns.length + 18) + "px");
+    const styles = window.getComputedStyle(frame);
+    const columnWidth = parseFloat(styles.getPropertyValue("--trip-width")) || 278;
+    const emptyRailWidth = parseFloat(styles.getPropertyValue("--empty-unallocated-width")) || 44;
+    const compact = !getState().unallocated.length && gridColumns.includes(UNALLOCATED);
+    const width = columnWidth * gridColumns.length -
+      (compact ? columnWidth - emptyRailWidth : 0);
+    frame.style.setProperty("--grid-pane-width", (width + 18) + "px");
     frame.classList.toggle("map-no-grid", opened && gridColumns.length === 0);
   }
 
@@ -139,9 +145,8 @@
     const eligibleTrips = bridge.getDisplayTripIds().map(function (id) {
       return tripById.get(id);
     }).filter(Boolean);
-    gridColumns = state.unallocated.length && bridge.isUnallocatedSelected()
-      ? [UNALLOCATED].concat(eligibleTrips.slice(0, 1).map(function (trip) { return trip.id; }))
-      : eligibleTrips.slice(0, 2).map(function (trip) { return trip.id; });
+    // Unallocated is a permanent column, including its folded empty form.
+    gridColumns = [UNALLOCATED].concat(eligibleTrips.slice(0, 1).map(function (trip) { return trip.id; }));
     visibleOnMap = new Set(gridColumns);
     opened = true;
     workspace.hidden = false;
@@ -403,6 +408,10 @@
       if (!input || !opened) return;
       const key = input.dataset.key, kind = input.dataset.kind;
       if (!allColumns().some(function (column) { return column.id === key; })) return;
+      if (kind === "grid" && key === UNALLOCATED) {
+        input.checked = true;
+        return;
+      }
       hidePopup();
       if (kind === "map") {
         if (input.checked) visibleOnMap.add(key);
@@ -500,7 +509,14 @@
     isOpen: function () { return opened; },
     hideMap: hideMap,
     visibleColumns: function () { return opened ? gridColumns.slice() : null; },
-    onBoardChange: function () { if (opened) draw(); },
+    onBoardChange: function () {
+      if (opened) {
+        // A Job dropped into the folded rail re-expands the grid pane.
+        updateWidth();
+        renderLayers();
+        draw();
+      }
+    },
     onGroupsChange: function () { if (opened) renderLayers(); },
     onSelectionChange: function () {
       if (!opened) return;
