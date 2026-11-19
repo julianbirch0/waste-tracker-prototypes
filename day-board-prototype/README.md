@@ -1,4 +1,4 @@
-# Day Board prototype — V00032
+# Day Board prototype — V00033
 
 A standalone, local-file-friendly WasteTracker Day Board prototype.
 
@@ -8,7 +8,20 @@ A standalone, local-file-friendly WasteTracker Day Board prototype.
 2. Open the **day-board-prototype** folder in your local checkout.
 3. Double-click **index.html** to open it in Edge or Chrome.
 
-There is **no localhost, build step, framework, CDN or web service**. Keep index.html, styles.css, data.js, map.js, status.js and app.js in the same folder.
+There is **no localhost, build step or framework**. Keep index.html, styles.css, data.js, map.js, status.js and app.js in the same folder. **The map needs an internet connection** to load Leaflet from a CDN and OpenStreetMap tiles; the rest of the board still works locally.
+
+## V00033 — Real map and independent filtering (current behaviour)
+
+- **Edit Date Filter** is the only place to choose dates and days of the week. The main **Groups and Trips** dropdown looks the same for a single day or date range: Group → named Round, with no dated entries. Selecting a Round includes every dated occurrence admitted by the Date Filter.
+- **Show Map** now loads Leaflet with real OpenStreetMap street tiles. No API key, account, local web server or build step is needed, but the map requires internet access. Proper OpenStreetMap attribution is retained.
+- **Important: demo Job locations are still fictitious.** Their original 1100×720 test coordinates are projected around the Swindon area purely to demonstrate Leaflet markers. They are NOT actual customer locations; future real latitude/longitude fields will be used preferentially when available.
+- The map has one conventional **Show on Map** checkbox dropdown, permanently listing Group → named Round → individual dated Trips (no group expanders). Parents select/deselect descendants and display indeterminate states for partial selections.
+- The map dropdown offers **only dated Trips in the main Groups and Trips filter and Date Filter**. Its selections affect map visibility **only**. Changing the main filter never lets an excluded Trip reappear on the map.
+- Groups, Rounds and dated Trips have related but distinct colours, carried through the map filter, Job markers and Day Board Trip-header accent bars. Sequence markers are numbered; Unsequenced pins have dashed outlines. Sequenced pins are joined by **straight lines**, not routing along streets.
+- The **Day Board always contains every main-filtered Trip** (subject to the existing 40-column sample safeguard). When the map is open it has space for **up to three Trip columns** alongside the always-sticky Unallocated column; **horizontal scrolling** reaches the others, including when a map marker selects a Job in an offscreen Trip.
+- Unallocated is always shown in the board and on the map (with its compact empty rail preserved); it is excluded from both sets of Trip checkboxes.
+- **Fit**, normal Leaflet +/- zoom buttons, mouse wheel zoom and click-and-drag panning are supported. Reordering and reallocating Jobs updates map markers and straight sequence lines.
+- Older V00025/V00032 design notes below are retained as a historical record; their map-only Grid checkboxes, illustrated SVG basemap and group-expander coupling have been superseded.
 
 ## What is included
 
@@ -175,7 +188,7 @@ The existing production system already stores a relationship between drivers and
 - Demonstration data begins with **two vehicle-unassigned Trips** (Recycling 1 and Wait and Load), **one vehicle on two Trips** (BX73 FHT on Skips 2 and Skips 4), and **five unassigned vehicle registrations** available to assign.
 - Persistence remains on the existing Day Board browser-storage key. **Version 4** stores dated Jobs, driver and vehicle assignments, with backwards-compatible loading of V1–V3. Their existing edits are correctly migrated to the **original Monday 16-Nov-2026 sample day**, not accidentally attributed to Today.
 
-## Map mode (V00025)
+## Map mode (V00025 — historical, superseded by V00033)
 
 - **Show map** slides a self-contained illustrated map in from the right of the Day Board, at one-third of the previous entrance speed (~1.14 seconds); **Hide map** retains its faster exit (~0.34 seconds) and restores the original full grid.
 - The map appears alongside the **selected grid columns**, which retain their normal widths. Adding a grid column shrinks the available map space; removing one expands it. The vertical list of all Trips (plus Unallocated) is always present on the right.
@@ -208,4 +221,4 @@ The existing production system already stores a relationship between drivers and
 | styles.css | Agreements-inspired design, sticky layout and drag/drop styling |
 | data.js | Deterministic sample Trips and Jobs |
 | app.js | Rendering, drag/drop, sequencing, browser storage, Undo/Redo and map integration |
-| map.js | Animated map mode, layer selectors, SVG map, markers, straight lines, zoom/pan and popup |
+| map.js | Leaflet/OpenStreetMap map, independent nested dated Trip filter, markers, straight routes, zoom/pan and popups |
