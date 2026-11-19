@@ -2578,12 +2578,20 @@
       },
       showToast: showToast,
       clearSelection: function () { setSelectedJobs([], null); },
-      navigateToDate: function (date) {
+      navigateToDate: function (date, jobIds) {
+        showUnallocated = true;
         chooseDateSelection({
           mode: "single", day: date, start: date, end: date,
           weekdays: [0, 1, 2, 3, 4, 5, 6],
           order: dateSelection.order, source: "custom", preset: null
         });
+        const ids = (jobIds || []).filter(function (id) {
+          return state.unallocated.includes(id);
+        });
+        if (ids.length) {
+          setSelectedJobs(ids, ids[0]);
+          scrollToJobFromMap(ids[0]);
+        }
       }
     });
   }
