@@ -1,4 +1,4 @@
-/* WasteTracker Day Board V00027
+/* WasteTracker Day Board V00028
    Standalone, file:// compatible. Custom pointer drag-and-drop; no dependencies. */
 (function () {
   "use strict";
