@@ -3048,3 +3048,105 @@ button:focus-visible, .board-scroll:focus-visible {
   .date-action-panel .status-amendments-chevron,
   .date-action-panel .status-amendments-list { transition-duration: 0ms; }
 }
+
+
+/* V00031 — quiet swap affordances, larger text click targets.
+   The registration/name and the icon are one button, not two controls. */
+.column-driver-meta .trip-assignment-button {
+  display: inline-flex;
+  flex: 0 1 auto;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 6px;
+  width: auto;
+  max-width: calc(100% - 57px);
+  min-width: 0;
+  height: 23px;
+  padding: 1px 4px;
+  margin: 0 0 0 -4px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 500;
+  text-align: left;
+  line-height: 1.35;
+}
+.column-driver-meta .trip-assignment-button .column-driver-name {
+  display: inline-block;
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: inherit;
+}
+.column-driver-meta .trip-assignment-button .column-driver-name .column-meta-empty {
+  color: #9cacc0;
+  font-style: italic;
+}
+.column-driver-meta .trip-assignment-button .trip-swap-icon {
+  display: inline-block;
+  flex: 0 0 auto;
+  color: inherit;
+  font-family: "Segoe UI Symbol", "Segoe UI", Arial, sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+}
+.column-driver-meta .trip-assignment-button:hover {
+  color: #41657b;
+  background: rgba(255,255,255,.50);
+  border-color: transparent;
+}
+.column-driver-meta .trip-assignment-button:focus-visible {
+  outline: 2px solid #6d9aa8;
+  outline-offset: 1px;
+}
+
+/* V00031 — Display order: the value and smaller glyph form one link-like button.
+   "Display order:" remains an inert caption. */
+.board-context-controls .board-date-sort .date-sort-control {
+  display: inline-flex;
+  flex: 0 0 auto;
+  width: auto;
+  min-width: 0;
+  height: 29px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 3px 6px;
+  margin: 0 0 0 -5px;
+  border: 0;
+  border-radius: 5px;
+  box-shadow: none;
+  background: transparent;
+  color: #415c73;
+  font: inherit;
+  text-align: left;
+  line-height: 1.2;
+}
+.board-context-controls .board-date-sort .date-sort-control strong {
+  color: inherit;
+  font-size: 11.5px;
+  font-weight: 650;
+}
+.board-context-controls .board-date-sort .date-sort-control .date-sort-icon {
+  display: inline-flex;
+  align-items: center;
+  color: inherit;
+  font-family: "Segoe UI Symbol", "Segoe UI", Arial, sans-serif;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1;
+}
+.board-context-controls .board-date-sort .date-sort-control:hover {
+  color: #286c76;
+  background: #edf5f6;
+  border: 0;
+}
+.board-context-controls .board-date-sort .date-sort-control:focus-visible {
+  outline: 2px solid #6d9aa8;
+  outline-offset: 1px;
+}
