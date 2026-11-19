@@ -2590,3 +2590,245 @@ button:focus-visible, .board-scroll:focus-visible {
   .status-dialog-head, .status-dialog-footer { padding: 14px 16px; }
   .status-form-grid { grid-template-columns: 1fr; }
 }
+
+
+/* V00027 — The date navigator becomes the contextual Actions panel.
+   Its footprint stays in the header; opening Actions overlays the board. */
+.date-toolbar-wrap {
+  --date-toolbar-width: 535px;
+  width: min(var(--date-toolbar-width), calc(100vw - 28px));
+  min-height: 92px;
+  transition: width 460ms cubic-bezier(.2,.75,.2,1);
+}
+.date-range-view .date-toolbar-wrap { --date-toolbar-width: 710px; }
+.date-toolbar {
+  box-sizing: border-box;
+  position: relative;
+  width: 100%;
+  min-height: 92px;
+  padding: 12px 13px;
+  gap: 9px;
+  flex-wrap: nowrap;
+  justify-content: space-between;
+  transition: background-color 240ms ease, border-color 240ms ease,
+    box-shadow 240ms ease;
+}
+.date-toolbar .date-display,
+.date-range-view .date-toolbar .date-display {
+  flex: 0 1 150px;
+  width: 150px;
+  min-width: 0;
+  max-width: 150px;
+  transition: flex-basis 460ms cubic-bezier(.2,.75,.2,1),
+    max-width 460ms cubic-bezier(.2,.75,.2,1);
+}
+.date-range-view .date-toolbar .date-display {
+  flex-basis: 315px;
+  width: 315px;
+  max-width: 315px;
+}
+.date-toolbar .date-display .date-current,
+.date-range-view .date-toolbar .date-display .date-current {
+  font-size: 26px;
+}
+.date-toolbar #date-today { min-width: 108px; }
+.date-toolbar #date-range-open { min-width: 120px; }
+
+/* Changing the date mode gently grows the box in both directions.
+   Only actions mode overlays the content below — no document reflow on expand. */
+.date-toolbar.has-job-actions {
+  position: absolute;
+  inset: 0 auto auto 0;
+  z-index: 120;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  padding: 12px 16px 9px;
+  background: #dceaf0;
+  border-color: #acc8d6;
+  box-shadow: 0 10px 25px rgba(37,67,88,.15);
+  white-space: normal;
+  overflow: visible;
+}
+.date-toolbar.has-job-actions #date-today,
+.date-toolbar.has-job-actions #date-prev,
+.date-toolbar.has-job-actions #date-next,
+.date-toolbar.has-job-actions #date-range-open,
+.date-toolbar.has-job-actions .date-description { display: none; }
+.date-toolbar.has-job-actions .date-display,
+.date-range-view .date-toolbar.has-job-actions .date-display {
+  flex: 0 0 auto;
+  align-self: stretch;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 19px;
+  height: 19px;
+  padding: 0;
+  margin: 0;
+}
+.date-toolbar.has-job-actions .date-display .date-current,
+.date-range-view .date-toolbar.has-job-actions .date-display .date-current {
+  color: #54738b;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: .15px;
+  line-height: 18px;
+}
+.date-action-panel {
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+  min-width: 0;
+  width: 100%;
+  margin: 0;
+}
+.date-action-main {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 48px;
+}
+.date-action-main .status-actions-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  flex: 0 0 auto;
+  min-width: 0;
+  padding: 4px 5px 4px 0;
+  border: 0;
+  border-radius: 5px;
+  color: #254e65;
+  background: transparent;
+  font: 700 25px/1.25 -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+  letter-spacing: -.35px;
+  text-align: left;
+}
+.date-action-main .status-actions-trigger:hover { color: #167c77; }
+.date-action-main .status-actions-trigger:focus-visible {
+  outline: 2px solid #398c9c;
+  outline-offset: 3px;
+}
+.date-action-main .status-chevron {
+  display: inline-block;
+  font-size: 24px;
+  font-weight: 500;
+  transform: translateY(-3px) rotate(0deg);
+  transform-origin: 50% 55%;
+  transition: transform 250ms ease;
+}
+.date-action-panel.is-expanded .status-chevron {
+  transform: translateY(1px) rotate(180deg);
+}
+.date-action-main .status-selected-count {
+  flex: 1 1 auto;
+  color: #58748b;
+  text-align: right;
+  font-size: 12px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+.date-action-main .status-clear {
+  flex: 0 0 30px;
+  color: #708d9e;
+  font-size: 22px;
+}
+.date-action-main .status-clear:hover { color: #214e65; background: rgba(255,255,255,.5); }
+
+/* The menu grows as part of the same blue panel, not as a separate popup. */
+.date-action-panel .status-menu {
+  position: relative;
+  top: auto;
+  left: auto;
+  bottom: auto;
+  width: 100%;
+  box-sizing: border-box;
+  max-height: 0;
+  min-height: 0;
+  margin: 0;
+  padding: 0 3px;
+  overflow: hidden;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  background: transparent;
+  border: 0;
+  border-top: 0 solid transparent;
+  border-radius: 0;
+  box-shadow: none;
+  transition: max-height 360ms cubic-bezier(.2,.72,.2,1),
+    padding 300ms ease, opacity 220ms ease,
+    visibility 0s linear 360ms;
+}
+.date-action-panel .status-menu.is-expanded {
+  max-height: min(56vh, 540px);
+  padding: 11px 3px 12px;
+  overflow-y: auto;
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  border-top: 1px solid rgba(63,101,125,.14);
+  transition: max-height 360ms cubic-bezier(.2,.72,.2,1),
+    padding 300ms ease, opacity 220ms ease,
+    visibility 0s;
+}
+.date-action-panel .status-option {
+  padding: 1px 2px;
+}
+.date-action-panel .status-option > button {
+  min-height: 41px;
+  padding: 10px 13px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #385871;
+}
+.date-action-panel .status-option > button:not(:disabled):hover {
+  color: #165e5e;
+  background: rgba(255,255,255,.75);
+}
+.date-action-panel .status-option > button:disabled { color: #8199aa; opacity: .8; }
+.date-action-panel .status-option-reason { color: #658095; }
+.date-action-panel .status-menu-section { border-top-color: #c4d8e2; color: #637f91; }
+.date-action-panel .status-replan-link {
+  top: calc(100% + 10px);
+  bottom: auto;
+  left: 0;
+  width: 100%;
+  z-index: 2;
+}
+@media (max-width: 770px) {
+  .date-toolbar-wrap { width: min(var(--date-toolbar-width), calc(100vw - 26px)); }
+  .date-toolbar { gap: 5px; padding: 9px 8px; }
+  .date-toolbar .date-display { flex: 1 1 115px; }
+  .date-range-view .date-toolbar .date-display { flex: 1 1 235px; }
+  .date-toolbar #date-today { min-width: 94px; padding-inline: 5px; }
+  .date-toolbar #date-range-open { min-width: 113px; padding-inline: 5px; }
+}
+@media (max-width: 530px) {
+  .date-toolbar-wrap { min-height: 125px; }
+  .date-toolbar:not(.has-job-actions) {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    min-height: 125px;
+  }
+  .date-toolbar:not(.has-job-actions) .date-display,
+  .date-range-view .date-toolbar:not(.has-job-actions) .date-display {
+    flex: 1 0 calc(100% - 250px);
+    min-width: 120px;
+    max-width: calc(100% - 240px);
+  }
+  .date-toolbar.has-job-actions { min-height: 125px; }
+  .date-toolbar.has-job-actions .date-display,
+  .date-range-view .date-toolbar.has-job-actions .date-display {
+    max-width: 100%;
+  }
+  .date-action-main .status-actions-trigger { font-size: 23px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .date-toolbar-wrap,
+  .date-toolbar .date-display,
+  .date-action-panel .status-menu,
+  .date-action-main .status-chevron { transition-duration: 0ms; }
+}
