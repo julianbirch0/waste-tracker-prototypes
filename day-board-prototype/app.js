@@ -1,4 +1,4 @@
-/* WasteTracker Day Board V00034
+/* WasteTracker Day Board V00036
    Standalone, file:// compatible. Custom pointer drag-and-drop; no dependencies. */
 (function () {
   "use strict";
@@ -541,9 +541,8 @@
       : '<span class="column-meta-empty">Unassigned</span>';
     const swapIcon = '<span class="trip-swap-icon" aria-hidden="true">⇄</span>';
     const group = groups.find(function (item) { return item.id === trip.groupId; });
-    const tripAccent = window.DayBoardMap ? window.DayBoardMap.colourForTrip(trip) : "#278f83";
     return '<div class="trip-column" data-group-id="' + escapeHtml(trip.groupId) +
-      '" style="--trip-accent:' + tripAccent + '">' +
+      '">' +
       '<div class="column-header">' +
         '<div class="column-heading-line"><span class="column-trip-title">' +
           '<span class="column-name" title="Group: ' +
