@@ -1,4 +1,4 @@
-/* WasteTracker Day Board V00025
+/* WasteTracker Day Board V00026
    Standalone, file:// compatible. Custom pointer drag-and-drop; no dependencies. */
 (function () {
   "use strict";
@@ -120,7 +120,11 @@
   }
 
   function getDay(key) {
-    if (!dayStore.has(key)) dayStore.set(key, window.DayBoardData.makeInitialState(key));
+    if (!dayStore.has(key)) {
+      const day = window.DayBoardData.makeInitialState(key);
+      if (window.DayBoardStatus) window.DayBoardStatus.restoreDay(day, key);
+      dayStore.set(key, day);
+    }
     return dayStore.get(key);
   }
 
@@ -128,7 +132,11 @@
 
   function resolveJob(id) {
     const origin = jobOrigin(id);
-    return /^\d{4}-\d{2}-\d{2}$/.test(origin) ? getTemplate(origin).jobs[id] : null;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(origin)) return null;
+    const stored = dayStore.get(origin);
+    return (stored && stored.jobs[id]) ||
+      (window.DayBoardStatus && window.DayBoardStatus.resolveClone(id)) ||
+      getTemplate(origin).jobs[id] || null;
   }
 
   function datesInSelection() {
@@ -452,16 +460,27 @@
       padNumber(index + 1) + '</span>' : "";
     const ref = escapeHtml(job.reference);
     const isSelected = selectedJobIds.has(jobId);
-    return '<article class="job-card' + (isSelected ? ' is-selected' : '') +
+    const statusModel = window.DayBoardStatus;
+    const colour = statusModel ? statusModel.colour(job) : "neutral";
+    const label = statusModel ? statusModel.title(job) : "Planned";
+    const lines = statusModel ? statusModel.lines(job) : [label];
+    return '<article class="job-card status-' + escapeHtml(colour) +
+      (isSelected ? ' is-selected' : '') +
       '" data-job-id="' + escapeHtml(jobId) +
       '" role="button" tabindex="0" aria-pressed="' + isSelected +
-      '" aria-label="Job ' + ref + (isSelected ? ', selected. Drag to move' : ', click to select') + '">' +
+      '" aria-label="Job ' + ref + ', ' + escapeHtml(label) +
+      (isSelected ? ', selected. Drag to move' : ', click to select') + '">' +
       '<div class="job-info">' +
         '<div class="job-line"><span class="job-ref">Job ' + ref + '</span>' +
-        '<span class="job-labels"><span class="job-status job-status-planned">' +
-        escapeHtml(job.status || "planned") + '</span>' + marker + '</span></div>' +
+        '<span class="job-labels">' + marker + '</span></div>' +
         '<div class="job-customer" title="' + escapeHtml(job.customer) + '">' + escapeHtml(job.customer) + '</div>' +
         '<div class="job-detail">' + escapeHtml(job.detail) + '</div>' +
+        '<div class="job-status-text" title="' + escapeHtml(label) + '">' +
+          lines.map(function (line, index) {
+            return '<span' + (index ? ' class="job-status-line-secondary"' : '') +
+              '>' + escapeHtml(line) + '</span>';
+          }).join("") +
+        '</div>' +
       '</div>' +
     '</article>';
   }
@@ -805,6 +824,7 @@
     scroller.scrollLeft = left;
     scroller.scrollTop = top;
     if (window.DayBoardMap) window.DayBoardMap.onBoardChange();
+    if (window.DayBoardStatus) window.DayBoardStatus.refresh();
   }
 
   function groupSelectionText() {
@@ -1425,6 +1445,7 @@
       }
     });
     if (window.DayBoardMap) window.DayBoardMap.onSelectionChange();
+    if (window.DayBoardStatus) window.DayBoardStatus.refresh();
   }
 
   function changeSelection(jobId, modifiers) {
@@ -1480,6 +1501,12 @@
     const target = getList(tripId, zone);
     if (sourceColumn === null || !target ||
         ids.some(function (id) { return selectionColumn(id) !== sourceColumn; })) {
+      return false;
+    }
+
+    if (sourceColumn !== (zone === "unallocated" ? "" : tripId) &&
+        ids.some(function (id) { return !state.jobs[id] || state.jobs[id].status !== "planned"; })) {
+      showToast("Move unavailable", "Only Planned Jobs can move between Trips or Unallocated.");
       return false;
     }
 
@@ -1689,6 +1716,15 @@
     const drag = activeDrag;
     if (!drag) return null;
     const zone = findDropZone(x, y);
+    if (zone && drag.sourceTrip !== zone.dataset.trip &&
+        drag.jobIds.some(function (id) {
+          return !state.jobs[id] || state.jobs[id].status !== "planned";
+        })) {
+      drag.blockedByStatus = true;
+      drag.zone.classList.remove("is-targeted");
+      return null;
+    }
+    drag.blockedByStatus = false;
     if (!zone || !mayDropIntoUnsequenced(zone)) {
       drag.zone.classList.remove("is-targeted");
       return null;
@@ -1859,6 +1895,9 @@
     renderBoard();
     releaseFloatingCard(drag);
     if (moved) showToast("Jobs moved", moveDescription(drag.jobIds));
+    else if (drag.blockedByStatus) {
+      showToast("Move unavailable", "Only Planned Jobs can move between Trips or Unallocated.");
+    }
   }
 
   board.addEventListener("pointerdown", function (event) {
@@ -1977,7 +2016,8 @@
   undoButton.addEventListener("click", undo);
   redoButton.addEventListener("click", redo);
   document.getElementById("reset").addEventListener("click", function () {
-    if (!window.confirm("Reset the Day Board to its original sample Jobs, sequences, driver assignments and vehicle assignments? This clears Undo/Redo history.")) return;
+    if (!window.confirm("Reset the Day Board to its original sample Jobs, statuses, sequences, driver assignments and vehicle assignments? This clears Undo/Redo history.")) return;
+    if (window.DayBoardStatus) window.DayBoardStatus.reset();
     dayStore.clear();
     state = buildView();
     activeWarningFilter = null;
@@ -1993,7 +2033,7 @@
     scroller.scrollLeft = 0;
     scroller.scrollTop = 0;
     renderBoard();
-    showToast("Sample data reset", "All dated Jobs, drivers and vehicles restored.");
+    showToast("Sample data reset", "All dated Jobs, statuses, drivers and vehicles restored.");
   });
 
   document.addEventListener("keydown", function (event) {
@@ -2505,6 +2545,46 @@
   bindDateControls();
   renderGroupFilter();
   renderBoard();
+  if (window.DayBoardStatus) {
+    window.DayBoardStatus.bind({
+      getState: function () { return state; },
+      getSelectedIds: function () { return Array.from(selectedJobIds); },
+      findJob: findJob,
+      getToday: function () { return todayKey; },
+      getJobById: function (id) {
+        if (state.jobs[id]) return state.jobs[id];
+        const origin = jobOrigin(id);
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(origin)) return null;
+        const day = getDay(origin);
+        return day.jobs[id] || resolveJob(id);
+      },
+      addReplacementJob: function (job, date) {
+        const day = getDay(date);
+        day.jobs[job.id] = job;
+        if (!day.unallocated.includes(job.id)) day.unallocated.push(job.id);
+        if (datesInSelection().includes(date)) {
+          state.jobs[job.id] = job;
+          if (!state.unallocated.includes(job.id)) state.unallocated.push(job.id);
+        }
+      },
+      commitStatusChange: function () {
+        // Operational records must never be undone by planning Undo/Redo.
+        undoStack = [];
+        redoStack = [];
+        persistPlacement();
+        renderBoard();
+      },
+      showToast: showToast,
+      clearSelection: function () { setSelectedJobs([], null); },
+      navigateToDate: function (date) {
+        chooseDateSelection({
+          mode: "single", day: date, start: date, end: date,
+          weekdays: [0, 1, 2, 3, 4, 5, 6],
+          order: dateSelection.order, source: "custom", preset: null
+        });
+      }
+    });
+  }
   if (window.DayBoardMap) {
     window.DayBoardMap.bind({
       getState: function () { return state; },
