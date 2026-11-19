@@ -6,9 +6,9 @@ A standalone, local-file-friendly WasteTracker Day Board prototype.
 
 1. Pull the latest **main** branch using GitHub Desktop.
 2. Open the **day-board-prototype** folder in your local checkout.
-3. Double-click **index.html** to open it in Edge or Chrome.
+3. For the full interactive map, open the published [Day Board on GitHub Pages](https://julianbirch0.github.io/waste-tracker-prototypes/day-board-prototype/) in Edge or Chrome. You can still double-click **index.html** for the Day Board itself.
 
-There is **no localhost, build step or framework**. Keep index.html, styles.css, data.js, map.js, status.js and app.js in the same folder. **The map needs an internet connection** to load Leaflet from a CDN and OpenStreetMap tiles; the rest of the board still works locally.
+There is **no build step or framework**. Keep index.html, styles.css, data.js, map.js, status.js and app.js in the same folder. **The map needs an internet connection** to load Leaflet from a CDN and OpenStreetMap tiles. Official OSM tile policy requires a normal HTTP Referer, which `file://` cannot reliably provide, so use GitHub Pages (or a local web server) for map testing. The rest of the board still works locally.
 
 ## V00033 — Real map and independent filtering (current behaviour)
 
@@ -20,7 +20,7 @@ There is **no localhost, build step or framework**. Keep index.html, styles.css,
 - Groups, Rounds and dated Trips have related but distinct colours, carried through the map filter, Job markers and Day Board Trip-header accent bars. Sequence markers are numbered; Unsequenced pins have dashed outlines. Sequenced pins are joined by **straight lines**, not routing along streets.
 - The **Day Board always contains every main-filtered Trip** (subject to the existing 40-column sample safeguard). When the map is open it has space for **up to three Trip columns** alongside the always-sticky Unallocated column; **horizontal scrolling** reaches the others, including when a map marker selects a Job in an offscreen Trip.
 - Unallocated is always shown in the board and on the map (with its compact empty rail preserved); it is excluded from both sets of Trip checkboxes.
-- **Fit**, normal Leaflet +/- zoom buttons, mouse wheel zoom and click-and-drag panning are supported. Reordering and reallocating Jobs updates map markers and straight sequence lines.
+- Repeated mock Job locations are given small **date-specific visual offsets** so overlapping dated Trips can still be distinguished; real geocoded locations are not offset. **Fit**, normal Leaflet +/- zoom buttons, mouse wheel zoom and click-and-drag panning are supported. Reordering and reallocating Jobs updates map markers and straight sequence lines.
 - Older V00025/V00032 design notes below are retained as a historical record; their map-only Grid checkboxes, illustrated SVG basemap and group-expander coupling have been superseded.
 
 ## What is included
