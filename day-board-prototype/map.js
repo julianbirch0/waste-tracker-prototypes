@@ -1,4 +1,4 @@
-/* WasteTracker Day Board V00035 — Leaflet / OpenStreetMap prototype.
+/* WasteTracker Day Board V00036 — Leaflet / OpenStreetMap prototype.
    Demo Job points are illustrative, NOT geocoded customer addresses.
    Main Groups & Trips controls the grid and the available map choices;
    this map controls its own plotted dated Trips only. */
@@ -7,7 +7,23 @@
 
   const UNALLOCATED = "unallocated";
   const ORANGE = "#d79542";
-  const GROUP_HUES = [173, 216, 280, 32, 110, 350];
+  // Route colours are allocated in map-filter order to the trips that are
+  // ACTUALLY displayed. Unticking a trip frees its colour for the next one.
+  // Orange is reserved for Unallocated Jobs.
+  const ROUTE_PALETTE = [
+    "#245BCE", // 1 - Blue
+    "#D13A3E", // 2 - Red
+    "#208650", // 3 - Green
+    "#8149B5", // 4 - Purple
+    "#B42D80", // 5 - Magenta
+    "#137F96", // 6 - Teal
+    "#986322", // 7 - Brown
+    "#6675A9", // 8 - Slate blue
+    "#797B2B", // 9 - Olive
+    "#A44C69", // 10 - Rose
+    "#356C89", // 11 - Steel blue
+    "#735B49"  // 12 - Umber
+  ];
   const workspace = document.getElementById("map-workspace");
   const frame = document.querySelector(".board-frame");
   const scroller = document.getElementById("board-scroll");
@@ -37,37 +53,40 @@
     });
   }
   function state() { return bridge.getState(); }
-  function groupHue(id) {
-    const index = state().groups.findIndex(function (g) { return g.id === id; });
-    return GROUP_HUES[Math.max(index, 0) % GROUP_HUES.length];
-  }
-  function roundIndex(trip) {
-    const seen = new Set();
-    let position = 0;
-    state().trips.forEach(function (item) {
-      if (item.groupId !== trip.groupId || seen.has(item.roundId)) return;
-      seen.add(item.roundId);
-      if (item.roundId === trip.roundId) position = seen.size - 1;
-    });
-    return position;
-  }
-  function groupColour(groupId) {
-    return "hsl(" + groupHue(groupId) + ", 62%, 38%)";
-  }
-  function roundColour(trip) {
-    return "hsl(" + ((groupHue(trip.groupId) + 14 + roundIndex(trip) * 18) % 360) + ", 65%, 43%)";
-  }
-  function colourForTrip(trip) {
-    if (!trip) return ORANGE;
-    const day = trip.date ? Number(trip.date.slice(8, 10)) : 0;
-    const month = trip.date ? Number(trip.date.slice(5, 7)) : 0;
-    const hue = (groupHue(trip.groupId) + 24 + roundIndex(trip) * 18 + (day % 7) * 5) % 360;
-    const light = 36 + ((day + month) % 4) * 5;
-    return "hsl(" + hue + ", 70%, " + light + "%)";
-  }
   function eligibleTrips() {
     const byId = new Map(state().trips.map(function (trip) { return [trip.id, trip]; }));
     return bridge.getDisplayTripIds().map(function (id) { return byId.get(id); }).filter(Boolean);
+  }
+  // Match the visual order of the Show on Map checkboxes: Group, Round, Date.
+  // This deliberately does NOT depend on the Day Board's date-first sort mode.
+  function orderedMapTrips() {
+    const eligible = eligibleTrips();
+    const ordered = [];
+    state().groups.forEach(function (group) {
+      const inGroup = eligible.filter(function (trip) { return trip.groupId === group.id; });
+      const seen = new Set();
+      inGroup.forEach(function (trip) {
+        if (seen.has(trip.roundId)) return;
+        seen.add(trip.roundId);
+        ordered.push.apply(ordered, inGroup
+          .filter(function (item) { return item.roundId === trip.roundId; })
+          .sort(function (a, b) { return a.date.localeCompare(b.date); }));
+      });
+    });
+    return ordered;
+  }
+  function assignedRouteColours() {
+    const colours = new Map();
+    let colourIndex = 0;
+    orderedMapTrips().forEach(function (trip) {
+      if (!selectedOnMap.has(trip.id)) return;
+      colours.set(trip.id, ROUTE_PALETTE[colourIndex % ROUTE_PALETTE.length]);
+      colourIndex += 1;
+    });
+    return colours;
+  }
+  function colourForTrip(trip) {
+    return trip ? assignedRouteColours().get(trip.id) || null : null;
   }
   function reconcileSelection() {
     const eligible = eligibleTrips();
@@ -109,7 +128,13 @@
     return '<label class="map-filter-row map-filter-' + level + '">' +
       '<input type="checkbox" data-map-level="' + level + '" data-map-key="' + escapeHtml(key) +
       '"' + (checked ? ' checked' : '') + ' aria-label="Show on map: ' + escapeHtml(name) + '">' +
-      '<i class="map-filter-swatch" style="background:' + colour + '"></i>' +
+      // Only dated Trip rows receive a route colour; their colour disappears
+      // when unticked. Parent Groups and Rounds are not individual routes.
+      (level === 'date'
+        ? '<i class="map-filter-swatch' + (colour ? '' : ' map-filter-swatch-empty') +
+          '"' + (colour ? ' style="background:' + colour + '"' : '') +
+          ' aria-hidden="true"></i>'
+        : '') +
       '<span class="map-filter-name">' + escapeHtml(name) + '</span>' +
       (count == null ? '' : '<small>' + count + '</small>') +
       '</label>';
@@ -119,6 +144,7 @@
     const eligible = eligibleTrips();
     const allIds = eligible.map(function (trip) { return trip.id; });
     const selectedCount = allIds.filter(function (id) { return selectedOnMap.has(id); }).length;
+    const routeColours = assignedRouteColours();
     const scroll = filterPanel.querySelector(".map-filter-items");
     const oldScroll = scroll ? scroll.scrollTop : 0;
     filterButton.innerHTML = '<span>Show on Map: ' +
@@ -136,7 +162,7 @@
       });
       return '<section class="map-filter-group">' +
         checkboxMarkup('group', group.id, groupChecked, group.name,
-          groupColour(group.id),
+          null,
           inGroup.filter(function (trip) { return selectedOnMap.has(trip.id); }).length +
             '/' + inGroup.length) +
         rounds.map(function (round) {
@@ -145,12 +171,12 @@
           const roundChecked = dated.every(function (trip) { return selectedOnMap.has(trip.id); });
           return '<div class="map-filter-round-block">' +
             checkboxMarkup('round', round.roundId, roundChecked, round.name,
-              roundColour(round),
+              null,
               dated.filter(function (trip) { return selectedOnMap.has(trip.id); }).length +
                 '/' + dated.length) +
             dated.map(function (trip) {
               return checkboxMarkup('date', trip.id, selectedOnMap.has(trip.id),
-                bridge.formatTripDate(trip.date), colourForTrip(trip), null);
+                bridge.formatTripDate(trip.date), routeColours.get(trip.id) || null, null);
             }).join('') +
           '</div>';
         }).join('') +
@@ -304,10 +330,10 @@
     current.unallocated.forEach(function (jobId) {
       markerForJob(jobId, UNALLOCATED, 0, ORANGE, null);
     });
-    const eligible = new Set(eligibleTrips().map(function (trip) { return trip.id; }));
+    const routeColours = assignedRouteColours();
     current.trips.forEach(function (trip) {
-      if (!eligible.has(trip.id) || !selectedOnMap.has(trip.id)) return;
-      const colour = colourForTrip(trip);
+      const colour = routeColours.get(trip.id);
+      if (!colour) return;
       const route = trip.sequenced.map(function (jobId) {
         return current.jobs[jobId] ? latLng(current.jobs[jobId], trip) : null;
       }).filter(Boolean);
