@@ -416,12 +416,18 @@
     },
     onBoardChange: function () {
       if (!opened) return;
+      const oldIds = Array.from(previousEligible).sort().join("|");
       reconcileSelection();
+      const eligibilityChanged = oldIds !== Array.from(previousEligible).sort().join("|");
       updateWidth();
       renderFilter();
       draw();
       if (leaflet) window.requestAnimationFrame(function () {
-        if (opened) leaflet.invalidateSize({ animate: false });
+        if (!opened) return;
+        leaflet.invalidateSize({ animate: false });
+        // A genuine filter/date change can move the selected Trips; a
+        // simple Job reorder must not override the user's manual pan/zoom.
+        if (eligibilityChanged) fitAll();
       });
     },
     onSelectionChange: function () {
