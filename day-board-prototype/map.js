@@ -174,12 +174,10 @@
       '<div class="map-filter-items">' +
       (groups || '<div class="map-filter-empty">No Trips available from the main filter.</div>') +
       '</div>' +
-      '<div class="group-filter-hint">' +
-        (hasRepeatedPlottedColours
-          ? 'Some plotted Trips share a colour (the 12-colour grid palette repeats). ' +
-            'Narrow the main Groups and Trips selection to distinguish them. '
-          : '') +
-        'Map choices only. The Day Board grid is unaffected.</div>';
+      (hasRepeatedPlottedColours
+        ? '<div class="group-filter-hint">Some displayed Trips share a route colour. ' +
+          'Narrow the main Groups and Trips selection to distinguish them.</div>'
+        : '');
     const newScroll = filterPanel.querySelector(".map-filter-items");
     if (newScroll) newScroll.scrollTop = oldScroll;
     const master = filterPanel.querySelector('input[data-map-level="all"]');
