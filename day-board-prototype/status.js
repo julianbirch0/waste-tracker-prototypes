@@ -1,4 +1,4 @@
-/* WasteTracker Day Board V00026 — Job status prototype.
+/* WasteTracker Day Board V00027 — Job status prototype.
    Self-contained, file:// friendly; no backend or external services. */
 (function () {
   "use strict";
@@ -277,16 +277,31 @@
   }
   function closeMenu() {
     menuOpen = false;
-    if (menu) menu.hidden = true;
+    if (bar) bar.classList.remove("is-expanded");
+    if (menu) {
+      menu.classList.remove("is-expanded");
+      menu.setAttribute("aria-hidden", "true");
+      menu.inert = true;
+    }
     if (bar) bar.querySelector(".status-actions-trigger").setAttribute("aria-expanded", "false");
   }
   function refresh() {
     if (!bar || !bridge) return;
     const jobs = selected();
-    bar.hidden = jobs.length === 0;
+    const hasSelection = jobs.length > 0;
+    const toolbar = bar.closest(".date-toolbar");
+    bar.hidden = !hasSelection;
+    if (toolbar) {
+      toolbar.classList.toggle("has-job-actions", hasSelection);
+      toolbar.setAttribute("aria-label", hasSelection ? "Selected Job actions" : "Day Board date selection");
+    }
     bar.querySelector(".status-selected-count").textContent =
       jobs.length + (jobs.length === 1 ? " Job selected" : " Jobs selected");
-    if (menuOpen) menu.innerHTML = menuMarkup();
+    if (!hasSelection) {
+      closeMenu();
+    } else if (menuOpen) {
+      menu.innerHTML = menuMarkup();
+    }
   }
 
   function titleForAction(key, jobs) {
@@ -476,6 +491,7 @@
         next.remove();
         bridge.navigateToDate(date, createdIds);
       });
+      // The link remains part of the header rather than a bottom-floating control.
       bar.appendChild(next);
     }
     if (singleFailure) followup(jobs[0].id);
@@ -483,13 +499,15 @@
   function bind(adapter) {
     bridge = adapter;
     bar = document.createElement("div");
-    bar.className = "status-floating";
+    bar.className = "date-action-panel";
     bar.hidden = true;
-    bar.innerHTML = '<div class="status-floating-main"><strong class="status-selected-count"></strong>' +
-      '<button type="button" class="btn btn-primary status-actions-trigger" aria-expanded="false">Actions ▾</button>' +
-      '<button type="button" class="status-clear" title="Clear selection" aria-label="Clear selection">×</button></div>' +
-      '<div class="status-menu" hidden></div>';
-    document.body.appendChild(bar);
+    bar.innerHTML = '<div class="date-action-main">' +
+      '<button type="button" class="status-actions-trigger" aria-expanded="false" aria-controls="job-actions-list">' +
+        '<span>Actions</span><span class="status-chevron" aria-hidden="true">⌄</span></button>' +
+      '<strong class="status-selected-count"></strong>' +
+      '<button type="button" class="status-clear" title="Clear Job selection" aria-label="Clear Job selection">×</button></div>' +
+      '<div class="status-menu" id="job-actions-list" aria-hidden="true" inert></div>';
+    document.querySelector(".date-toolbar").appendChild(bar);
     menu = bar.querySelector(".status-menu");
     backdrop = document.createElement("div");
     backdrop.className = "status-dialog-backdrop";
@@ -500,8 +518,11 @@
 
     bar.querySelector(".status-actions-trigger").addEventListener("click", function () {
       menuOpen = !menuOpen;
-      menu.hidden = !menuOpen;
       if (menuOpen) menu.innerHTML = menuMarkup();
+      bar.classList.toggle("is-expanded", menuOpen);
+      menu.classList.toggle("is-expanded", menuOpen);
+      menu.setAttribute("aria-hidden", String(!menuOpen));
+      menu.inert = !menuOpen;
       this.setAttribute("aria-expanded", String(menuOpen));
     });
     bar.querySelector(".status-clear").addEventListener("click", function () {
