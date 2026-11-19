@@ -1,4 +1,4 @@
-/* WasteTracker Day Board V00032
+/* WasteTracker Day Board V00034
    Standalone, file:// compatible. Custom pointer drag-and-drop; no dependencies. */
 (function () {
   "use strict";
@@ -2552,6 +2552,35 @@
   readSavedPlacement();
   updateDateDisplay();
   bindDateControls();
+  // Map colours are used while rendering Trip columns, so bind before first render.
+  if (window.DayBoardMap) {
+    window.DayBoardMap.bind({
+      getState: function () { return state; },
+      getSelectedIds: function () { return Array.from(selectedJobIds); },
+      renderBoard: renderBoard,
+      getVisibleGroupIds: function () {
+        return activeWarningFilter
+          ? Array.from(new Set(sortedWarningTrips(activeWarningFilter).map(function (trip) {
+              return trip.groupId;
+            })))
+          : Array.from(visibleGroupIds);
+      },
+      getVisibleTripIds: function () {
+        return activeWarningFilter
+          ? sortedWarningTrips(activeWarningFilter).map(function (trip) { return trip.id; })
+          : Array.from(visibleTripIds);
+      },
+      isUnallocatedSelected: function () { return true; },
+      isRangeView: isRangeView,
+      formatTripDate: shortDate,
+      getDisplayTripIds: function () {
+        return displayTripsInOrder().map(function (trip) { return trip.id; });
+      },
+      toggleGroup: toggleGroup,
+      selectJob: function (jobId) { setSelectedJobs([jobId], jobId); },
+      scrollToJob: scrollToJobFromMap
+    });
+  }
   renderGroupFilter();
   renderBoard();
   if (window.DayBoardStatus) {
@@ -2601,32 +2630,5 @@
       }
     });
   }
-  if (window.DayBoardMap) {
-    window.DayBoardMap.bind({
-      getState: function () { return state; },
-      getSelectedIds: function () { return Array.from(selectedJobIds); },
-      renderBoard: renderBoard,
-      getVisibleGroupIds: function () {
-        return activeWarningFilter
-          ? Array.from(new Set(sortedWarningTrips(activeWarningFilter).map(function (trip) {
-              return trip.groupId;
-            })))
-          : Array.from(visibleGroupIds);
-      },
-      getVisibleTripIds: function () {
-        return activeWarningFilter
-          ? sortedWarningTrips(activeWarningFilter).map(function (trip) { return trip.id; })
-          : Array.from(visibleTripIds);
-      },
-      isUnallocatedSelected: function () { return true; },
-      isRangeView: isRangeView,
-      formatTripDate: shortDate,
-      getDisplayTripIds: function () {
-        return displayTripsInOrder().map(function (trip) { return trip.id; });
-      },
-      toggleGroup: toggleGroup,
-      selectJob: function (jobId) { setSelectedJobs([jobId], jobId); },
-      scrollToJob: scrollToJobFromMap
-    });
-  }
+
 }());
