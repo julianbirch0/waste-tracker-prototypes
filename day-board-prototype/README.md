@@ -1,4 +1,4 @@
-# Day Board prototype — V00028
+# Day Board prototype — V00029
 
 A standalone, local-file-friendly WasteTracker Day Board prototype.
 
@@ -39,6 +39,14 @@ There is **no localhost, build step, framework, CDN or web service**. Keep index
 - The demonstration data retains the **V00008 browser storage key** to preserve previously saved Job, driver and vehicle changes. Starting with V00025, edits are stored against dated Trip/Job instances (storage format V4).
 - Browser storage of changed positions when supported by the browser's file:// storage rules. The board still works in memory if browser storage is unavailable.
 - **Reset sample data** to restore the initial positions (also clears Undo/Redo history).
+
+## Two-row Actions control (V00029)
+
+- Following the annotated layout sketch: when Jobs are selected the header's **first row** shows the current date/date range on the **left**, a prominent, centrally aligned **N Jobs selected** heading, and underlined **Deselect** on the **right**.
+- The **second row** is a centred expand/collapse button. In the collapsed state it reads **Expand to see available actions** with a **downward chevron**; expanded it reads **Available actions** with an **upward chevron**. The first row stays in place while toggling.
+- The available actions are displayed as **individually centred buttons** within the expanded blue panel. Disabled options are visibly subdued, with a gentle, centred explanation underneath. Corrections remain grouped separately.
+- The normal date navigation toolbar retains its **two animated widths**, and the selected Actions header retains the same compact **68px footprint** when collapsed; opening it extends down over the board without pushing warning banners or other board content.
+- Status eligibility, operations and persistence are unchanged.
 
 ## Date and Actions polish (V00028)
 
