@@ -134,9 +134,11 @@
     const origin = jobOrigin(id);
     if (!/^\d{4}-\d{2}-\d{2}$/.test(origin)) return null;
     const stored = dayStore.get(origin);
-    return (stored && stored.jobs[id]) ||
-      (window.DayBoardStatus && window.DayBoardStatus.resolveClone(id)) ||
+    const inMemory = stored && stored.jobs[id];
+    if (inMemory) return inMemory;
+    const source = (window.DayBoardStatus && window.DayBoardStatus.resolveClone(id)) ||
       getTemplate(origin).jobs[id] || null;
+    return window.DayBoardStatus ? window.DayBoardStatus.hydrateJob(source) : source;
   }
 
   function datesInSelection() {
