@@ -1,4 +1,4 @@
-/* WasteTracker Day Board V00027 — Job status prototype.
+/* WasteTracker Day Board V00028 — Job status prototype.
    Self-contained, file:// friendly; no backend or external services. */
 (function () {
   "use strict";
@@ -503,9 +503,13 @@
     bar.hidden = true;
     bar.innerHTML = '<div class="date-action-main">' +
       '<button type="button" class="status-actions-trigger" aria-expanded="false" aria-controls="job-actions-list">' +
-        '<span>Actions</span><span class="status-chevron" aria-hidden="true">⌄</span></button>' +
+        '<span>Actions</span>' +
+        '<span class="status-chevron" aria-hidden="true">' +
+          '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" ' +
+          'stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">' +
+          '<path d="m6 9 6 6 6-6"></path></svg></span></button>' +
       '<strong class="status-selected-count"></strong>' +
-      '<button type="button" class="status-clear" title="Clear Job selection" aria-label="Clear Job selection">×</button></div>' +
+      '<button type="button" class="status-clear" title="Deselect Jobs" aria-label="Deselect Jobs">Deselect</button></div>' +
       '<div class="status-menu" id="job-actions-list" aria-hidden="true" inert></div>';
     document.querySelector(".date-toolbar").appendChild(bar);
     menu = bar.querySelector(".status-menu");
