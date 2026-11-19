@@ -468,7 +468,7 @@ tr.drop-after td { border-bottom: 3px solid var(--teal) !important; }
 body.dragging-services, body.dragging-services * {
   user-select: none !important;
 }
-#unsequence-drop { position: sticky; top: 0; z-index: 45; margin: 6px 0; }
+#unsequence-drop { position: fixed; bottom: 82px; left: 18px; z-index: 810; width: min(330px, calc(100vw - 36px)); margin: 0; box-shadow: 0 5px 16px #264a6230; }
 #unsequence-drop.is-drop-target { background: #d9f4ea; border-color: #349d88; }
 .map-point[role="button"] { cursor: pointer; outline: none; }
 .map-point[role="button"]:hover circle:first-of-type,
