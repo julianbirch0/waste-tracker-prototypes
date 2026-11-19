@@ -1,4 +1,4 @@
-/* WasteTracker Day Board V00033 — Leaflet / OpenStreetMap prototype.
+/* WasteTracker Day Board V00035 — Leaflet / OpenStreetMap prototype.
    Demo Job points are illustrative, NOT geocoded customer addresses.
    Main Groups & Trips controls the grid and the available map choices;
    this map controls its own plotted dated Trips only. */
@@ -207,9 +207,13 @@
   }
   function initialiseMap() {
     if (leaflet) return true;
-    if (!window.L) {
+    // OpenStreetMap's volunteer raster server blocks file:// requests without
+    // a Referer header. OpenFreeMap's vector tiles require no key/account and
+    // can be rendered inside Leaflet via the MapLibre GL Leaflet adapter.
+    if (!window.L || !window.maplibregl || !window.L.maplibreGL) {
       mapElement.innerHTML = '<div class="map-offline">' +
-        'Map library unavailable. Check your internet connection and reopen the prototype.' +
+        'Interactive map libraries could not be loaded. Check your internet connection, ' +
+        'then reopen this page.' +
         '</div>';
       return false;
     }
@@ -217,10 +221,31 @@
       center: [51.56, -1.78], zoom: 11, minZoom: 5, maxZoom: 18,
       zoomControl: true, scrollWheelZoom: true, preferCanvas: true
     });
-    window.L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      maxZoom: 19,
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    const baseLayer = window.L.maplibreGL({
+      style: "https://tiles.openfreemap.org/styles/positron",
+      attribution: '<a href="https://openfreemap.org/">OpenFreeMap</a> · ' +
+        '<a href="https://openmaptiles.org/">OpenMapTiles</a> · ' +
+        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     }).addTo(leaflet);
+    // Errors fetching the style/tiles should be explained in the UI rather
+    // than silently producing an empty map.
+    if (baseLayer.getMaplibreMap) {
+      const vectorMap = baseLayer.getMaplibreMap();
+      let styleLoaded = false;
+      vectorMap.on("load", function () { styleLoaded = true; });
+      vectorMap.on("error", function (event) {
+        if (styleLoaded) return;
+        console.warn("OpenFreeMap basemap could not load:", event.error || event);
+        mapElement.classList.add("map-basemap-error");
+        const notice = document.getElementById("map-basemap-notice");
+        if (notice) return;
+        const warning = document.createElement("div");
+        warning.id = "map-basemap-notice";
+        warning.className = "map-basemap-notice";
+        warning.textContent = "Map background could not load. Check the internet connection or try opening the prototype from a web server.";
+        mapElement.appendChild(warning);
+      });
+    }
     routesLayer = window.L.layerGroup().addTo(leaflet);
     pinsLayer = window.L.layerGroup().addTo(leaflet);
     return true;
