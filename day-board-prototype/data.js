@@ -1,4 +1,4 @@
-/* Sample data for Day Board V00030.
+/* Sample data for Day Board V00031.
    All data is invented; no calls to WasteTracker or other services. */
 (function () {
   "use strict";
@@ -23,7 +23,7 @@
     { id: "muck-away", groupId: "specialist", routeCenter: [910, 365], name: "Muck Away", vehicle: "DN23 JVF", driver: "Chris Turner", unsequenced: 1, sequenced: 18 },
     { id: "bin-deliveries", groupId: "recycling", routeCenter: [245, 565], name: "Bin Deliveries", vehicle: "LE69 NBG", driver: "", unsequenced: 0, sequenced: 14 },
     { id: "trade-2", groupId: "commercial", routeCenter: [465, 565], name: "Trade Waste 2", vehicle: "MP74 ACV", driver: "Amy Taylor", unsequenced: 2, sequenced: 16 },
-    { id: "wait-load", groupId: "specialist", routeCenter: [690, 565], name: "Wait and Load", vehicle: "", driver: "Peter Lewis", unsequenced: 0, sequenced: 11 },
+    { id: "wait-load", groupId: "specialist", routeCenter: [690, 565], name: "Wait and Load", vehicle: "", driver: "", unsequenced: 0, sequenced: 11 },
     { id: "skips-4", groupId: "skips", routeCenter: [910, 565], name: "Skips 4", vehicle: "BX73 FHT", driver: "Lisa Walker", unsequenced: 1, sequenced: 15 }
   ];
 
