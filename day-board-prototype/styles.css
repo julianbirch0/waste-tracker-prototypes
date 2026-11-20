@@ -3501,22 +3501,36 @@ button:focus-visible, .board-scroll:focus-visible {
   .map-caption { display: none; }
 }
 
-/* V00041 — A compact View job button belongs to each Job card, not to
-   the Job Actions toolbar. The card remains the normal drag/select target. */
+/* V00042 — Status and View job share the bottom row of the card.
+   This avoids a separate footer and keeps multi-line statuses readable. */
 .job-card {
   display: flex;
   flex-direction: column;
 }
 .job-card .job-info {
+  display: flex;
   flex: 1 1 auto;
+  flex-direction: column;
 }
-.job-card-footer {
+.job-card-status-row {
   display: flex;
   flex: 0 0 auto;
-  justify-content: flex-end;
-  margin-top: 7px;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  margin-top: auto;
+  padding-top: 7px;
+  border-top: 1px solid rgba(66, 86, 108, .10);
+}
+.job-card .job-status-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
 }
 .job-view-button {
+  flex: 0 0 auto;
   min-width: 0;
   min-height: 23px;
   padding: 3px 8px;
