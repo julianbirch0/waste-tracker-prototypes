@@ -404,6 +404,9 @@
       '<dl>' +
         '<div><dt>Customer</dt><dd>' + safe(job.customer) + '</dd></div>' +
         '<div><dt>Service</dt><dd>' + safe(job.detail) + '</dd></div>' +
+        '<div><dt>Quantity</dt><dd>' + safe(job.quantity == null ? 1 : job.quantity) + '</dd></div>' +
+        '<div><dt>Site</dt><dd>' + safe(job.siteName || "Site not specified") + '</dd></div>' +
+        '<div><dt>Timing</dt><dd>' + safe(job.timingPreference || "Any time") + '</dd></div>' +
         '<div><dt>Status</dt><dd>' + safe(title(job)) + '</dd></div>' +
         '<div><dt>Trip</dt><dd>' + safe(tripText) + '</dd></div>' +
       '</dl></div>' +
@@ -517,6 +520,8 @@
         const copy = {
           id: "job-r" + reference + "@" + date,
           reference: reference, customer: job.customer, detail: job.detail,
+          quantity: job.quantity, siteName: job.siteName,
+          timingPreference: job.timingPreference,
           mapX: job.mapX, mapY: job.mapY, status: "planned",
           replannedFrom: job.id,
           statusHistory: [{
