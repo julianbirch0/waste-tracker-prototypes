@@ -3608,3 +3608,17 @@ button:focus-visible, .board-scroll:focus-visible {
 .job-card .job-card-status-row {
   margin-top: 9px;
 }
+
+/* V00044 — Custom ranges expose only weekdays actually present between
+   the chosen dates; absent weekdays stay visible but unchecked/disabled. */
+.date-range-weekdays label.is-outside-range,
+.date-range-weekdays label.is-outside-range:hover {
+  background: #f5f7f9;
+  border-color: #e0e7ed;
+  color: #a5b0bd;
+  opacity: .72;
+  cursor: not-allowed;
+}
+.date-range-weekdays label.is-outside-range input {
+  cursor: not-allowed;
+}
