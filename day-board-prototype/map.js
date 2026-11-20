@@ -1,4 +1,4 @@
-/* WasteTracker Day Board V00038 — Leaflet / OpenFreeMap prototype.
+/* WasteTracker Day Board V00039 — Leaflet / OpenFreeMap prototype.
    Demo Job points are illustrative, NOT geocoded customer addresses.
    Main Groups & Trips controls the grid and the available map choices;
    this map controls its own plotted dated Trips only. */
@@ -309,9 +309,12 @@
     selectedMarkers.clear();
     lastPinPositions = [];
     const current = state();
-    current.unallocated.forEach(function (jobId) {
-      markerForJob(jobId, UNALLOCATED, 0, ORANGE, null);
-    });
+    // Match the grid: date-range views do not display Unallocated Jobs.
+    if (!bridge.isRangeView()) {
+      current.unallocated.forEach(function (jobId) {
+        markerForJob(jobId, UNALLOCATED, 0, ORANGE, null);
+      });
+    }
     const routeColours = assignedRouteColours();
     current.trips.forEach(function (trip) {
       if (!selectedOnMap.has(trip.id)) return;
@@ -345,9 +348,10 @@
     const width = parseFloat(window.getComputedStyle(frame).getPropertyValue("--trip-width")) || 278;
     const compact = !state().unallocated.length;
     const foldedWidth = parseFloat(window.getComputedStyle(frame).getPropertyValue("--empty-unallocated-width")) || 46;
-    const columnWidth = compact ? foldedWidth : width;
-    // Up to THREE Trip columns, plus the permanently sticky Unallocated rail.
-    // All other Trip columns remain rendered inside a horizontally scrolling grid.
+    // The Unallocated rail only contributes width in single-day view.
+    const columnWidth = bridge.isRangeView() ? 0 : (compact ? foldedWidth : width);
+    // Up to THREE Trip columns, plus Unallocated when applicable. All other
+    // filtered Trips remain accessible by horizontal scrolling.
     const ideal = columnWidth + 3 * width + 18;
     const available = Math.max(320, frame.clientWidth - 510);
     frame.style.setProperty("--grid-pane-width", Math.min(ideal, available) + "px");
