@@ -197,10 +197,9 @@
     });
     const same = sameService(jobs);
     const tripOk = sameTrip(jobs);
-    // Navigation is always first, including for unallocated and terminal Jobs.
-    // Bulk selections keep it visible but unavailable with a gentle explanation.
-    const result = [option("view-details", "View job details",
-      jobs.length === 1, "Select one Job to view its details.")];
+    // The View job button is now on every Job card, independently of selection.
+    // This menu is reserved for operational actions on selected Jobs.
+    const result = [];
     const offTrip = unallocated(jobs);
     if (offTrip) {
       result.push(option("cancel", "Cancel " + (jobs.length === 1 ? "Job" : "Jobs"),
@@ -341,7 +340,6 @@
   }
 
   function titleForAction(key, jobs) {
-    if (key === "view-details") return "View job details";
     if (key === "complete") return jobs.length === 1 ? "Complete Job" : "Complete " + jobs.length + " Jobs";
     if (key === "fail-customer") return "Mark as Failed – customer";
     if (key === "fail-non-customer") return "Mark as Failed – non-customer";
@@ -613,10 +611,6 @@
       const button = event.target.closest("button[data-status-action]");
       if (!button || button.disabled) return;
       const jobs = selected();
-      if (button.dataset.statusAction === "view-details") {
-        if (jobs.length === 1) openDetailsPlaceholder(jobs[0]);
-        return;
-      }
       openDialog(button.dataset.statusAction, jobs);
     });
     dialog.addEventListener("click", function (event) {
@@ -661,6 +655,13 @@
   }
 
   window.DayBoardStatus = {
+    // Opens the existing Job details preview directly from a card.
+    // Does not alter the current grid/map Job selection or Action mode.
+    viewJob: function (jobId) {
+      if (!bridge) return;
+      const job = bridge.getJobById(jobId);
+      if (job) openDetailsPlaceholder(job);
+    },
     bind: bind, refresh: refresh, restoreDay: restoreDay, resolveClone: resolveClone,
     reset: reset, title: title, lines: lines, colour: colour, status: status,
     hydrateJob: hydrateJob
