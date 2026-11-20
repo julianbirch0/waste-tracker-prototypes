@@ -1,4 +1,4 @@
-/* Sample data for Day Board V00032.
+/* Sample data for Day Board V00043.
    All data is invented; no calls to WasteTracker or other services. */
 (function () {
   "use strict";
@@ -51,6 +51,36 @@
     "Oak & Stone Ltd", "Central Facilities", "Hilltop Renovations",
     "Town Centre Stores", "Southgate Joinery", "Example Customer"
   ];
+
+  // Two illustrative sites per customer. These are readable site names,
+  // not verified addresses, and do not replace the map's sample coordinates.
+  const sitesByCustomer = [
+    ["North Swindon Development", "Westlea Construction Compound"],
+    ["Kingsdown Business Centre", "Blunsdon Industrial Estate"],
+    ["Wichelstowe Building Site", "Great Western Trading Estate"],
+    ["The Willows Housing Development", "Abbey Meads Phase Two"],
+    ["Rodbourne Road Depot", "Stratton Commercial Yard"],
+    ["Peatmoor Retail Units", "Meadowcroft Business Park"],
+    ["Old Town Refurbishment Site", "Marlborough Road Workshop"],
+    ["Orbital Shopping Centre", "Greenbridge Distribution Warehouse"],
+    ["Hilltop Renovation Site", "South Marston Business Park"],
+    ["Town Centre Service Yard", "The Brunel Shopping Centre"],
+    ["Southgate Joinery Workshop", "Hobley Drive Storage Compound"],
+    ["Example Site", "Longbridge Industrial Estate and Distribution Centre"]
+  ];
+  const timingPreferences = [
+    "Any time", "Morning", "Afternoon",
+    "08:30–10:00", "10:00–11:30", "13:00–14:30", "14:30–16:00"
+  ];
+  // Illustrative fixed quantities, distinct from the existing service
+  // description so status transitions and activity matching still work.
+  function sampleQuantity(detail, index) {
+    if (/\bbin\b/i.test(detail)) return 1 + (index % 4);
+    if (/\bloose\b/i.test(detail)) return 1 + (index % 3);
+    if (/\bRoRo\b/i.test(detail)) return 1;
+    if (/^Other\b/i.test(detail)) return 1 + (index % 2);
+    return index % 7 === 0 ? 2 : 1;
+  }
   // Illustrative organisation-defined Other services. A full dictionary
   // editor belongs elsewhere in WasteTracker, not on the Day Board.
   const otherServices = ["Refill soap dispenser", "Inspect equipment"];
@@ -105,11 +135,16 @@
         ? activitiesByRound[activityRound]
         : unallocatedActivities;
       const id = "job-" + number + suffix;
+      const customerIndex = sampleIndex % customers.length;
+      const detail = activityPool[(sampleIndex * 3 + Math.floor(sampleIndex / 4)) % activityPool.length];
       jobs[id] = {
         id: id,
         reference: String(number),
-        customer: customers[sampleIndex % customers.length],
-        detail: activityPool[(sampleIndex * 3 + Math.floor(sampleIndex / 4)) % activityPool.length],
+        customer: customers[customerIndex],
+        detail: detail,
+        quantity: sampleQuantity(detail, sampleIndex),
+        siteName: sitesByCustomer[customerIndex][Math.floor(sampleIndex / customers.length) % 2],
+        timingPreference: timingPreferences[(sampleIndex + Math.floor(sampleIndex / 5)) % timingPreferences.length],
         status: "planned",
         // Fixed illustrative coordinates. Reallocation never moves a pin.
         mapX: point.x,
