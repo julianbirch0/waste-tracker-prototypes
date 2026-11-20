@@ -1,4 +1,4 @@
-/* WasteTracker Day Board V00040
+/* WasteTracker Day Board V00041
    Standalone, file:// compatible. Custom pointer drag-and-drop; no dependencies. */
 (function () {
   "use strict";
@@ -498,6 +498,9 @@
           }).join("") +
         '</div>' +
       '</div>' +
+      '<div class="job-card-footer"><button type="button" class="job-view-button" ' +
+        'data-view-job="' + escapeHtml(jobId) + '" aria-label="View job ' + ref +
+        '">View job</button></div>' +
     '</article>';
   }
 
@@ -1910,8 +1913,18 @@
     }
   }
 
+  // A dedicated View job control never selects the card or starts a drag.
+  // The status/details preview can be opened without changing selection mode.
+  board.addEventListener("click", function (event) {
+    const button = event.target.closest("button[data-view-job]");
+    if (!button || !board.contains(button)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    if (window.DayBoardStatus) window.DayBoardStatus.viewJob(button.dataset.viewJob);
+  });
+
   board.addEventListener("pointerdown", function (event) {
-    if (event.target.closest(".driver-change-button")) return;
+    if (event.target.closest(".driver-change-button, .job-view-button")) return;
     if (event.button !== 0 || pendingDrag || activeDrag) return;
     const card = event.target.closest(".job-card");
     if (!card || !board.contains(card)) {
@@ -1952,6 +1965,9 @@
 
   board.addEventListener("keydown", function (event) {
     if (event.key !== "Enter" && event.key !== " ") return;
+    // Allow native Enter/Space activation of the nested View job button;
+    // it is not a keyboard card selection.
+    if (event.target.closest(".job-view-button")) return;
     const card = event.target.closest(".job-card");
     if (!card || !board.contains(card)) return;
     event.preventDefault();
