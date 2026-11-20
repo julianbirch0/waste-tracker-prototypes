@@ -1,4 +1,4 @@
-/* WasteTracker Day Board V00042
+/* WasteTracker Day Board V00043
    Standalone, file:// compatible. Custom pointer drag-and-drop; no dependencies. */
 (function () {
   "use strict";
@@ -468,6 +468,17 @@
       : name + " · position " + padNumber(location.index + 1);
   }
 
+  // The combined detail remains unchanged for the operational status model.
+  // Card text adds quantity and uses readable units without changing that data.
+  function cardServiceText(job) {
+    const parts = String(job.detail || "").split(" · ");
+    const activity = (parts.shift() || "Service").trim();
+    const description = (parts.join(" · ") || "Service").trim()
+      .replace(/\b(\d+)\s*L\b/gi, "$1 litre");
+    const quantity = job.quantity == null ? 1 : job.quantity;
+    return activity + ": " + quantity + " × " + description;
+  }
+
   function renderCard(jobId, zone, index) {
     const job = state.jobs[jobId];
     if (!job) return "";
@@ -475,6 +486,10 @@
       '<span class="job-sequence" title="Position on this trip, not job reference">' +
       padNumber(index + 1) + '</span>' : "";
     const ref = escapeHtml(job.reference);
+    const customer = escapeHtml(job.customer || "Customer not specified");
+    const service = escapeHtml(cardServiceText(job));
+    const site = escapeHtml(job.siteName || "Site not specified");
+    const timing = escapeHtml(job.timingPreference || "Any time");
     const isSelected = selectedJobIds.has(jobId);
     const statusModel = window.DayBoardStatus;
     const colour = statusModel ? statusModel.colour(job) : "neutral";
@@ -484,13 +499,17 @@
       (isSelected ? ' is-selected' : '') +
       '" data-job-id="' + escapeHtml(jobId) +
       '" role="button" tabindex="0" aria-pressed="' + isSelected +
-      '" aria-label="Job ' + ref + ', ' + escapeHtml(label) +
+      '" aria-label="Job ' + ref + ', ' + customer + ', ' + escapeHtml(label) +
       (isSelected ? ', selected. Drag to move' : ', click to select') + '">' +
       '<div class="job-info">' +
-        '<div class="job-line"><span class="job-ref">Job ' + ref + '</span>' +
-        '<span class="job-labels">' + marker + '</span></div>' +
-        '<div class="job-customer" title="' + escapeHtml(job.customer) + '">' + escapeHtml(job.customer) + '</div>' +
-        '<div class="job-detail">' + escapeHtml(job.detail) + '</div>' +
+        '<div class="job-line">' +
+          '<div class="job-customer" title="' + customer + '">' + customer + '</div>' +
+          '<span class="job-labels">' + marker + '</span>' +
+        '</div>' +
+        '<div class="job-service" title="' + service + '">' + service + '</div>' +
+        '<div class="job-site" title="' + site + '">' + site + '</div>' +
+        '<div class="job-timing" title="Timing preference">' + timing + '</div>' +
+        '<div class="job-reference-subtle">Job ' + ref + '</div>' +
         '<div class="job-card-status-row">' +
           '<div class="job-status-text" title="' + escapeHtml(label) + '">' +
             lines.map(function (line, index) {
