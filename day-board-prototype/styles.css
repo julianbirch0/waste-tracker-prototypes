@@ -3500,3 +3500,41 @@ button:focus-visible, .board-scroll:focus-visible {
   .board-frame.map-mode .board-scroll { max-width: 54%; }
   .map-caption { display: none; }
 }
+
+/* V00041 — A compact View job button belongs to each Job card, not to
+   the Job Actions toolbar. The card remains the normal drag/select target. */
+.job-card {
+  display: flex;
+  flex-direction: column;
+}
+.job-card .job-info {
+  flex: 1 1 auto;
+}
+.job-card-footer {
+  display: flex;
+  flex: 0 0 auto;
+  justify-content: flex-end;
+  margin-top: 7px;
+}
+.job-view-button {
+  min-width: 0;
+  min-height: 23px;
+  padding: 3px 8px;
+  border: 1px solid #c4d3df;
+  border-radius: 4px;
+  background: rgba(255,255,255,.82);
+  color: #41647c;
+  font: 650 10.5px/1.2 system-ui, -apple-system, "Segoe UI", sans-serif;
+  white-space: nowrap;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.job-view-button:hover {
+  color: #1c655d;
+  background: #f2faf7;
+  border-color: #7bad9f;
+}
+.job-view-button:focus-visible {
+  outline: 2px solid #388e84;
+  outline-offset: 2px;
+}
