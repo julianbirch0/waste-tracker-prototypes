@@ -320,16 +320,20 @@
   function refresh() {
     if (!bar || !bridge) return;
     const jobs = selected();
-    const hasSelection = jobs.length > 0;
+    // A marker click still selects the Job for highlighting and dragging,
+    // but must not replace the date controls with operational Job Actions.
+    const hasActionSelection = jobs.length > 0 &&
+      (!bridge.getSelectionMode || bridge.getSelectionMode() !== "planning");
     const toolbar = bar.closest(".date-toolbar");
-    bar.hidden = !hasSelection;
+    bar.hidden = !hasActionSelection;
     if (toolbar) {
-      toolbar.classList.toggle("has-job-actions", hasSelection);
-      toolbar.setAttribute("aria-label", hasSelection ? "Selected Job actions" : "Day Board date selection");
+      toolbar.classList.toggle("has-job-actions", hasActionSelection);
+      toolbar.setAttribute("aria-label", hasActionSelection ? "Selected Job actions" : "Day Board date selection");
     }
     bar.querySelector(".status-selected-count").textContent =
       jobs.length + (jobs.length === 1 ? " Job selected" : " Jobs selected");
-    if (!hasSelection) {
+    if (!hasActionSelection) {
+      // Close any previously expanded menu when a map click takes over.
       closeMenu();
     } else if (menuOpen) {
       menu.innerHTML = menuMarkup();
