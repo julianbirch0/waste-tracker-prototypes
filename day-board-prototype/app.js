@@ -2442,8 +2442,8 @@
 
     const candidate = proposedDateSelection();
     const showWeekdays = candidate && candidate.mode === "range" &&
-      dateDraft.preset !== "today-tomorrow" &&
-      (custom ? Boolean(dateDraft.end) : Boolean(dateDraft.preset));
+      (custom ? Boolean(dateDraft.end)
+        : Boolean(dateDraft.preset) && dateDraft.preset !== "today-tomorrow");
     dateRangeWeekdayBlock.hidden = !showWeekdays;
     const availableWeekdays = custom && dateDraft.end
       ? weekdaysInRange(dateDraft.start, dateDraft.end)
