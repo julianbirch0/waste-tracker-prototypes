@@ -1,4 +1,4 @@
-/* WasteTracker Day Board V00037
+/* WasteTracker Day Board V00039
    Standalone, file:// compatible. Custom pointer drag-and-drop; no dependencies. */
 (function () {
   "use strict";
@@ -40,7 +40,8 @@
   // Group headings select all their children; individual Trips remain
   // independently selectable in the full-grid view.
   let visibleTripIds = null;
-  // Unallocated is always visible, folded to a narrow rail only when empty.
+  // Unallocated is a single-day-only drop destination; when empty it folds
+  // to a narrow sticky rail. Date-range views hide it without losing the Jobs.
   let expandedFilterGroups = new Set(groups.map(function (group) { return group.id; }));
   // An active issue filter is a live view of today's allocations, not a
   // frozen list of Trip IDs. Keep the ordinary selection untouched beneath it.
@@ -510,6 +511,9 @@
   }
 
   function renderUnallocated() {
+    // In a date range Unallocated Jobs are retained in state, but no longer
+    // displayed or offered as a drag/drop destination.
+    if (isRangeView()) return "";
     if (!state.unallocated.length) {
       // Retain a permanent, narrow drop target when Unallocated is empty.
       // The nested .job-list hosts the normal pointer-drag placeholder.
@@ -575,21 +579,21 @@
     '</div>';
   }
 
-  function updateSummary(displayedJobs) {
-    const unsequenced = state.trips.reduce(function (n, t) { return n + t.unsequenced.length; }, 0);
-    // "Jobs displayed" means Jobs in the actual rendered grid columns,
-    // including the 40-column cap and current Group/Trip selection.
-    const jobs = isRangeView() ? displayedJobs : Object.keys(state.jobs).length;
+  function updateSummary(displayedJobs, shownTrips) {
+    // All four counters describe the rendered grid, not Jobs in other
+    // filtered-out Trips or the hidden Unallocated area in a date range.
+    const unsequenced = shownTrips.reduce(function (n, trip) {
+      return n + trip.unsequenced.length;
+    }, 0);
+    const unallocated = isRangeView() ? "n/a" : state.unallocated.length;
     summary.innerHTML =
-      '<span class="summary-item"><strong>' + jobs + '</strong> ' +
-        (isRangeView() ? 'jobs displayed' : dateSelection.day === todayKey ? 'jobs today' : 'jobs on day') +
-        '</span>' +
+      '<span class="summary-item">Jobs displayed <strong>' + displayedJobs + '</strong></span>' +
       '<span class="summary-dot"></span>' +
-      '<span class="summary-item"><strong>' + state.trips.length + '</strong> trips</span>' +
+      '<span class="summary-item">Trips <strong>' + shownTrips.length + '</strong></span>' +
       '<span class="summary-dot"></span>' +
-      '<span class="summary-item"><strong>' + state.unallocated.length + '</strong> unallocated</span>' +
+      '<span class="summary-item">Unallocated <strong>' + unallocated + '</strong></span>' +
       '<span class="summary-dot"></span>' +
-      '<span class="summary-item"><strong>' + unsequenced + '</strong> unsequenced</span>';
+      '<span class="summary-item">Unsequenced <strong>' + unsequenced + '</strong></span>';
     undoButton.disabled = undoStack.length === 0;
     redoButton.disabled = redoStack.length === 0;
     updateAllocationWarnings();
@@ -760,7 +764,8 @@
          day = addDays(day, 1), n += 1) {
       if (allowed.has(dayIndex(day))) days += 1;
     }
-    return days * roundIds.size + (days > 0 ? 1 : 0);
+    // A date-range grid has no Unallocated column.
+    return days * roundIds.size;
   }
 
   function draftColumnCandidate() {
@@ -810,13 +815,14 @@
     const top = scroller.scrollTop;
     // Main Groups & Trips filter alone determines every column in the grid.
     // Map mode only constrains the width of its scrollable viewport.
-    const shownTrips = displayTripsInOrder().slice(0, MAX_GRID_COLUMNS - 1);
-    const displayedJobs = state.unallocated.length +
+    const shownTrips = displayTripsInOrder().slice(0,
+      MAX_GRID_COLUMNS - (isRangeView() ? 0 : 1));
+    const displayedJobs = (isRangeView() ? 0 : state.unallocated.length) +
       shownTrips.reduce(function (sum, trip) {
         return sum + trip.unsequenced.length + trip.sequenced.length;
       }, 0);
     board.innerHTML = renderUnallocated() + shownTrips.map(renderTrip).join("");
-    updateSummary(displayedJobs);
+    updateSummary(displayedJobs, shownTrips);
     updateColumnLimitNotice();
     scroller.scrollLeft = left;
     scroller.scrollTop = top;
@@ -1492,6 +1498,10 @@
 
   function acceptMove(jobIds, tripId, zone, targetIndex, grabbedJobId) {
     if (!Array.isArray(jobIds) || !jobIds.length) return false;
+    // Defence in depth: even a programmatic move must respect the
+    // single-day-only Unallocated rule.
+    if (isRangeView() && (zone === "unallocated" ||
+        jobIds.some(function (id) { return state.unallocated.includes(id); }))) return false;
     const ids = Array.from(new Set(jobIds));
     const sourceColumn = selectionColumn(ids[0]);
     const target = getList(tripId, zone);
