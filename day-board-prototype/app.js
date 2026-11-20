@@ -1,4 +1,4 @@
-/* WasteTracker Day Board V00043
+/* WasteTracker Day Board V00044
    Standalone, file:// compatible. Custom pointer drag-and-drop; no dependencies. */
 (function () {
   "use strict";
@@ -2228,7 +2228,9 @@
       : dateLabel(dateSelection.start) + " – " + dateLabel(dateSelection.end);
     dateDescriptionElement.textContent = single
       ? relativeDateDescription(dateSelection.day)
-      : weekdaySelectionDescription(dateSelection.weekdays);
+      : dateSelection.preset === "today-tomorrow"
+        ? "Today and tomorrow"
+        : weekdaySelectionDescription(dateSelection.weekdays);
     dateLabelElement.title = single ? shortDate(dateSelection.day)
       : shortDate(dateSelection.start) + " to " + shortDate(dateSelection.end) +
         " · " + weekdaySelectionDescription(dateSelection.weekdays);
@@ -2306,8 +2308,27 @@
 
   function startOfWeek(key) { return addDays(key, -dayIndex(key)); }
 
+  // Only weekday controls corresponding to dates actually inside a custom
+  // range are meaningful. A Wed–Fri selection cannot include Mon or Sun.
+  function weekdaysInRange(start, end) {
+    const days = new Set();
+    if (!start || !end || start > end) return days;
+    for (let date = start, n = 0; date <= end && n < 366;
+         date = addDays(date, 1), n += 1) {
+      days.add(dayIndex(date));
+    }
+    return days;
+  }
+
   function presetSelection(key) {
     let start, end;
+    if (key === "today-tomorrow") {
+      // A fixed two-day shortcut: both dates are always included, regardless
+      // of any weekday selections previously made on the Custom tab.
+      return { mode: "range", day: todayKey, start: todayKey,
+        end: addDays(todayKey, 1), weekdays: [0, 1, 2, 3, 4, 5, 6],
+        order: dateSelection.order, source: "preset", preset: key };
+    }
     if (key === "today" || key === "tomorrow") {
       const day = key === "today" ? todayKey : addDays(todayKey, 1);
       return { mode: "single", day: day, start: day, end: day,
@@ -2336,7 +2357,9 @@
     if (dateDraft.tab === "preset") {
       if (!dateDraft.preset) return null;
       const candidate = presetSelection(dateDraft.preset);
-      if (candidate && candidate.mode === "range") candidate.weekdays = weekdays;
+      if (candidate && candidate.mode === "range" && dateDraft.preset !== "today-tomorrow") {
+        candidate.weekdays = weekdays;
+      }
       return candidate;
     }
     if (!dateDraft.start) return null;
@@ -2419,11 +2442,23 @@
 
     const candidate = proposedDateSelection();
     const showWeekdays = candidate && candidate.mode === "range" &&
+      dateDraft.preset !== "today-tomorrow" &&
       (custom ? Boolean(dateDraft.end) : Boolean(dateDraft.preset));
     dateRangeWeekdayBlock.hidden = !showWeekdays;
-    dateWeekdayToggle.textContent = dateDraft.weekdays.size === 7 ? "Deselect all" : "Select all";
+    const availableWeekdays = custom && dateDraft.end
+      ? weekdaysInRange(dateDraft.start, dateDraft.end)
+      : new Set([0, 1, 2, 3, 4, 5, 6]);
+    const selectedAvailable = Array.from(availableWeekdays).filter(function (day) {
+      return dateDraft.weekdays.has(day);
+    });
+    dateWeekdayToggle.textContent = selectedAvailable.length === availableWeekdays.size
+      ? "Deselect all" : "Select all";
     dateWeekdays.querySelectorAll('input[type="checkbox"]').forEach(function (input) {
-      input.checked = dateDraft.weekdays.has(Number(input.value));
+      const day = Number(input.value);
+      const available = availableWeekdays.has(day);
+      input.disabled = !available;
+      input.checked = available && dateDraft.weekdays.has(day);
+      input.closest("label").classList.toggle("is-outside-range", !available);
     });
 
     if (custom) {
@@ -2445,11 +2480,12 @@
   }
 
   function openDateFilter() {
-    // Only an existing *custom range* opens directly on Custom.
+    // A custom single date must reopen on Custom too: the user's last
+    // applied filter was entered there, even if it is not a date range.
     const existingCustom = dateSelection.source === "custom";
     const range = existingCustom && isRangeView();
     dateDraft = {
-      tab: range ? "custom" : "preset",
+      tab: existingCustom ? "custom" : "preset",
       // The user must explicitly choose a preset; nothing starts highlighted.
       preset: null,
       start: existingCustom ? dateSelection.start : null,
@@ -2457,7 +2493,11 @@
       // The last edited endpoint matters if the user thinks end-first.
       lastEndpoint: range ? (dateSelection.lastEndpoint || "end") :
         (existingCustom ? "start" : null),
-      weekdays: new Set(range ? dateSelection.weekdays : [0, 1, 2, 3, 4, 5, 6])
+      weekdays: new Set(range
+        ? dateSelection.weekdays.filter(function (day) {
+            return weekdaysInRange(dateSelection.start, dateSelection.end).has(day);
+          })
+        : [0, 1, 2, 3, 4, 5, 6])
     };
     // A custom range spanning two months must start on the start month.
     rangeCalendarMonth = (dateDraft.start || todayKey).slice(0, 7) + "-01";
@@ -2480,6 +2520,7 @@
     if (!item || !dateDraft || dateDraft.tab !== "custom") return;
     const iso = item.dataset.calendarDay;
     const start = dateDraft.start, end = dateDraft.end;
+    const previouslyAvailable = weekdaysInRange(start, end);
     if (!start) {
       dateDraft.start = iso;
       dateDraft.end = null;
@@ -2518,6 +2559,17 @@
     } else {
       dateDraft.end = iso;
       dateDraft.lastEndpoint = "end";
+    }
+    if (!dateDraft.end) {
+      // A fresh single-date selection has no weekday restrictions.
+      dateDraft.weekdays = new Set([0, 1, 2, 3, 4, 5, 6]);
+    } else {
+      // Keep explicit unticks for weekdays still inside the range, remove
+      // those no longer present, and select newly introduced weekdays.
+      const available = weekdaysInRange(dateDraft.start, dateDraft.end);
+      dateDraft.weekdays = new Set(Array.from(available).filter(function (day) {
+        return dateDraft.weekdays.has(day) || !previouslyAvailable.has(day);
+      }));
     }
     renderDateFilter();
   }
@@ -2563,11 +2615,18 @@
       const button = event.target.closest("button[data-date-preset]");
       if (!button) return;
       const key = button.dataset.datePreset;
-      if (key === "today" || key === "tomorrow") {
-        // One-click shortcuts: selecting either is equivalent to Apply.
+      if (key === "today-tomorrow" || key === "tomorrow") {
+        // One-click shortcuts: do not show weekday controls or require Apply.
         const next = presetSelection(key);
         closeDateFilter();
-        if (!sameDateFilter(next, dateSelection)) chooseDateSelection(next);
+        if (!sameDateFilter(next, dateSelection)) {
+          chooseDateSelection(next);
+        } else {
+          // Even if the dates coincide, the last applied choice is a preset.
+          dateSelection.source = "preset";
+          dateSelection.preset = key;
+          updateDateDisplay();
+        }
         return;
       }
       dateDraft.preset = key;
@@ -2585,8 +2644,13 @@
     });
     dateWeekdayToggle.addEventListener("click", function () {
       if (!dateDraft) return;
-      dateDraft.weekdays = dateDraft.weekdays.size === 7
-        ? new Set() : new Set([0, 1, 2, 3, 4, 5, 6]);
+      const available = dateDraft.tab === "custom" && dateDraft.end
+        ? weekdaysInRange(dateDraft.start, dateDraft.end)
+        : new Set([0, 1, 2, 3, 4, 5, 6]);
+      const allSelected = Array.from(available).every(function (day) {
+        return dateDraft.weekdays.has(day);
+      });
+      dateDraft.weekdays = allSelected ? new Set() : available;
       renderDateFilter();
     });
     document.getElementById("date-sort-toggle").addEventListener("click", function () {
