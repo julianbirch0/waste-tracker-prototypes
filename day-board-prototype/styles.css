@@ -560,6 +560,8 @@ button:focus-visible, .board-scroll:focus-visible {
 .map-key > span { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
 .map-key-dot { width: 10px; height: 10px; display: inline-block; border-radius: 50%; }
 .map-key-unallocated { background: #d79542; border: 1px solid #fff; outline: 1px solid #d79542; }
+/* V00039: there are no Unallocated Jobs or drop targets in date ranges. */
+.date-range-view .map-key > span:first-child { display: none; }
 .map-key-unsequenced { background: #fff; border: 3px dashed #5378c9; }
 .map-key-line { display: inline-block; width: 19px; height: 0; border-top: 3px solid #319d8f; }
 .map-layers {
