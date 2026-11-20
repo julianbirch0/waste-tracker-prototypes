@@ -1,4 +1,4 @@
-/* WasteTracker Day Board V00039
+/* WasteTracker Day Board V00040
    Standalone, file:// compatible. Custom pointer drag-and-drop; no dependencies. */
 (function () {
   "use strict";
@@ -198,6 +198,9 @@
   let redoStack = [];
   let selectedJobIds = new Set();
   let selectionAnchorId = null;
+  // Map markers select for planning/moving only. Grid clicks select for
+  // operational Job Actions. Both modes share the same selected Job IDs.
+  let selectionMode = "actions";
   let pendingDrag = null;
   let activeDrag = null;
   let targetFrame = 0;
@@ -1429,8 +1432,9 @@
     });
   }
 
-  function setSelectedJobs(ids, anchorId) {
+  function setSelectedJobs(ids, anchorId, mode) {
     selectedJobIds = new Set(ids);
+    selectionMode = selectedJobIds.size && mode === "planning" ? "planning" : "actions";
     selectionAnchorId = anchorId && selectedJobIds.has(anchorId)
       ? anchorId
       : (ids[0] || null);
@@ -1937,7 +1941,10 @@
       startX: event.clientX,
       startY: event.clientY,
       card: card,
-      jobId: jobId
+      jobId: jobId,
+      // A click on a map-selected card promotes it to Job Actions; a drag
+      // does not. Only decide on pointerup after the drag threshold.
+      activateActionsOnClick: selectionMode === "planning"
     };
     // A single press can lift a new selection; an existing group moves together.
     event.preventDefault();
@@ -1949,7 +1956,14 @@
     if (!card || !board.contains(card)) return;
     event.preventDefault();
     if (!event.shiftKey && !event.ctrlKey && !event.metaKey &&
-        selectedJobIds.has(card.dataset.jobId)) return;
+        selectedJobIds.has(card.dataset.jobId)) {
+      // An explicit keyboard activation of a planning-selected grid card
+      // should behave like a deliberate grid click.
+      if (selectionMode === "planning") {
+        setSelectedJobs(Array.from(selectedJobIds), selectionAnchorId);
+      }
+      return;
+    }
     changeSelection(card.dataset.jobId, event);
   });
 
@@ -1971,7 +1985,13 @@
   document.addEventListener("pointerup", function (event) {
     if (!pendingDrag || event.pointerId !== pendingDrag.pointerId) return;
     if (!activeDrag) {
+      const promoteToActions = pendingDrag.activateActionsOnClick;
       pendingDrag = null;
+      if (promoteToActions) {
+        // This was a click rather than a drag. The same Job stays
+        // highlighted, now with its normal Job Actions available.
+        setSelectedJobs(Array.from(selectedJobIds), selectionAnchorId);
+      }
       return;
     }
     moveFloat(activeDrag, event.clientX, event.clientY);
@@ -2000,7 +2020,7 @@
       showToast(action, entry.description);
     } else {
       const ids = entry.jobIds || [entry.jobId];
-      setSelectedJobs(ids, entry.jobId);
+      setSelectedJobs(ids, entry.jobId, selectionMode);
       showToast(action, moveDescription(ids));
     }
   }
@@ -2032,6 +2052,7 @@
     visibleGroupIds = new Set(groups.map(function (group) { return group.id; }));
     selectedJobIds = new Set();
     selectionAnchorId = null;
+    selectionMode = "actions";
     undoStack = [];
     redoStack = [];
     persistPlacement();
@@ -2210,6 +2231,7 @@
     }).map(function (group) { return group.id; }));
     selectedJobIds = new Set();
     selectionAnchorId = null;
+    selectionMode = "actions";
     undoStack = [];
     redoStack = [];
     scroller.scrollTop = 0;
@@ -2586,7 +2608,7 @@
         return displayTripsInOrder().map(function (trip) { return trip.id; });
       },
       toggleGroup: toggleGroup,
-      selectJob: function (jobId) { setSelectedJobs([jobId], jobId); },
+      selectJob: function (jobId) { setSelectedJobs([jobId], jobId, "planning"); },
       scrollToJob: scrollToJobFromMap
     });
   }
@@ -2596,6 +2618,7 @@
     window.DayBoardStatus.bind({
       getState: function () { return state; },
       getSelectedIds: function () { return Array.from(selectedJobIds); },
+      getSelectionMode: function () { return selectionMode; },
       findJob: findJob,
       getToday: function () { return todayKey; },
       getJobById: function (id) {
