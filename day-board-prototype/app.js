@@ -1,4 +1,4 @@
-/* WasteTracker Day Board V00041
+/* WasteTracker Day Board V00042
    Standalone, file:// compatible. Custom pointer drag-and-drop; no dependencies. */
 (function () {
   "use strict";
@@ -491,16 +491,18 @@
         '<span class="job-labels">' + marker + '</span></div>' +
         '<div class="job-customer" title="' + escapeHtml(job.customer) + '">' + escapeHtml(job.customer) + '</div>' +
         '<div class="job-detail">' + escapeHtml(job.detail) + '</div>' +
-        '<div class="job-status-text" title="' + escapeHtml(label) + '">' +
-          lines.map(function (line, index) {
-            return '<span' + (index ? ' class="job-status-line-secondary"' : '') +
-              '>' + escapeHtml(line) + '</span>';
-          }).join("") +
+        '<div class="job-card-status-row">' +
+          '<div class="job-status-text" title="' + escapeHtml(label) + '">' +
+            lines.map(function (line, index) {
+              return '<span' + (index ? ' class="job-status-line-secondary"' : '') +
+                '>' + escapeHtml(line) + '</span>';
+            }).join("") +
+          '</div>' +
+          '<button type="button" class="job-view-button" ' +
+            'data-view-job="' + escapeHtml(jobId) + '" aria-label="View job ' + ref +
+            '">View job</button>' +
         '</div>' +
       '</div>' +
-      '<div class="job-card-footer"><button type="button" class="job-view-button" ' +
-        'data-view-job="' + escapeHtml(jobId) + '" aria-label="View job ' + ref +
-        '">View job</button></div>' +
     '</article>';
   }
 
