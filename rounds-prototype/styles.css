@@ -303,6 +303,25 @@ select.field {
 /* Round Groups: contextual help requested during 6 November review. */
 .group-info { display: inline-flex; align-items: center; justify-content: center; width: 17px; height: 17px;
   border: 1px solid #aebed0; border-radius: 50%; margin-left: 4px; color: #677e99; font-size: 12px;
-  font-weight: 700; cursor: help; vertical-align: middle; text-transform: none; }
-.group-info:focus { outline: 2px solid #4e94c7; outline-offset: 2px; }
+  font-weight: 700; cursor: help; vertical-align: middle; text-transform: none; position: relative; }
+.group-tooltip {
+  display: none;
+  position: absolute;
+  z-index: 2;
+  inset-block-start: 100%;
+  inset-inline-end: 0;
+  box-sizing: content-box;
+  width: 30ch;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: #fff;
+  color: var(--text);
+  box-shadow: 0 4px 12px #29374d26;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  font-weight: 400;
+  cursor: auto;
+}
+.group-info:hover .group-tooltip { display: block; }
 .group-explanation { margin: 11px 3px 0; color: #74879c; font-size: 11.5px; }
