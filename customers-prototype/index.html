@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Customers | WasteTracker</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.16.0/dist/maplibre-gl.css">
+  <link rel="stylesheet" href="../jobs-prototype/styles.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="top"><a class="brand" href="../index.html"><span aria-hidden="true">WT</span> WasteTracker</a></header>
+  <main id="app"></main>
+  <dialog id="coordinate-picker" aria-labelledby="picker-title">
+    <div class="picker-header">
+      <h2 id="picker-title"></h2>
+      <form method="dialog"><button type="submit" autofocus>Cancel</button></form>
+    </div>
+    <p class="muted" id="map-help">Click a location on the map, or pan the map and use its centre.</p>
+    <div id="site-map" aria-label="Site location map" aria-describedby="map-help"></div>
+    <div class="picker-footer">
+      <p id="coordinate-preview" class="muted" role="status"></p>
+      <div class="actions">
+        <button type="button" id="map-centre">Use map centre</button>
+        <button type="button" class="primary" id="save-coordinates" disabled>Save coordinates</button>
+      </div>
+    </div>
+  </dialog>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/maplibre-gl@5.16.0/dist/maplibre-gl.js"></script>
+  <script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.1.4/leaflet-maplibre-gl.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
