@@ -1,4 +1,4 @@
-# Day Board prototype — V00033
+# Day Board prototype — V00045
 
 A standalone, local-file-friendly WasteTracker Day Board prototype.
 
@@ -10,7 +10,14 @@ A standalone, local-file-friendly WasteTracker Day Board prototype.
 
 There is **no build step or framework**. Keep index.html, styles.css, data.js, map.js, status.js and app.js in the same folder. **The map needs an internet connection** to load Leaflet from a CDN and OpenStreetMap tiles. Official OSM tile policy requires a normal HTTP Referer, which `file://` cannot reliably provide, so use GitHub Pages (or a local web server) for map testing. The rest of the board still works locally.
 
-## V00033 — Real map and independent filtering (current behaviour)
+## V00045 — Facility Loads
+
+- Confirming **On way to facility** creates one Load for the selected Jobs on their Trip. Jobs left out can still depart separately.
+- For one eligible completed Job that missed departure, open **Available amendments → Add to existing Load**. The picker shows the Trip’s Loads with their number, creation time, status and Job count. The added Job inherits the chosen Load’s current status.
+- Facility status updates still apply to the selected Jobs. A Load shows its earliest outstanding facility stage. Once all Jobs have an outcome, rejection takes precedence over acceptance. Sending a rejected Job out again puts it on a new Load.
+- Loads and amendments are stored alongside the prototype’s Job statuses in the browser.
+
+## V00033 — Real map and independent filtering
 
 - **Edit Date Filter** is the only place to choose dates and days of the week. The main **Groups and Trips** dropdown looks the same for a single day or date range: Group → named Round, with no dated entries. Selecting a Round includes every dated occurrence admitted by the Date Filter.
 - **Show Map** now loads Leaflet with real OpenStreetMap street tiles. No API key, account, local web server or build step is needed, but the map requires internet access. Proper OpenStreetMap attribution is retained.

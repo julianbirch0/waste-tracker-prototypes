@@ -2549,6 +2549,7 @@ button:focus-visible, .board-scroll:focus-visible {
   font-size: 12px;
 }
 .status-dialog-body input,
+.status-dialog-body select,
 .status-dialog-body textarea {
   display: block;
   min-height: 38px;

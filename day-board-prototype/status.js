@@ -1,14 +1,15 @@
-/* WasteTracker Day Board V00032 — Job status prototype.
+/* WasteTracker Day Board V00045 — Job status prototype.
    Self-contained, file:// friendly; no backend or external services. */
 (function () {
   "use strict";
 
   const KEY = "wastetracker.dayboard.v00026.statuses";
-  let saved = { overrides: {}, clones: {}, nextReference: 900001 };
+  let saved = { overrides: {}, clones: {}, loads: [], nextReference: 900001 };
   try {
     const record = JSON.parse(localStorage.getItem(KEY) || "null");
     if (record && record.overrides && record.clones) {
       saved = record;
+      if (!Array.isArray(saved.loads)) saved.loads = [];
       saved.nextReference = Math.max(900001, Number(saved.nextReference) || 900001);
     }
   } catch (_) { /* file:// may not provide storage */ }
@@ -39,6 +40,7 @@
     "exchange-complete", "wait-load-complete", "service-complete"
   ]);
   const TERMINAL = new Set(["delivery-complete", "service-complete", "accepted"]);
+  const FACILITY_STAGES = ["on-way", "at-facility", "rejected", "accepted"];
   const FAIL = /^failed-(customer|non-customer)-(outstanding|replanned|resolved|abandoned)$/;
 
   function safe(value) {
@@ -75,6 +77,44 @@
     if (name === "deliver" || name === "recover" || name.indexOf("other:") === 0) return false;
     if (name === "collect" && /\bbin\b/i.test(job.detail || "")) return false;
     return ["collect", "empty", "exchange", "wait and load"].includes(name);
+  }
+  function readyForFacility(job) {
+    return SERVICE_COMPLETED.has(status(job)) && needsFacility(job);
+  }
+  function existingLoads(jobs) {
+    if (jobs.length !== 1 || !readyForFacility(jobs[0])) return [];
+    const id = jobs[0].id;
+    const location = bridge.findJob(id);
+    if (!location || !location.tripId || saved.loads.some(function (load) {
+      return load.jobIds.includes(id);
+    })) return [];
+    return saved.loads.filter(function (load) {
+      return load.tripId === location.tripId && load.jobIds.length > 0;
+    });
+  }
+  function createLoad(jobs) {
+    const ids = new Set(jobs.map(function (job) { return job.id; }));
+    // A rejected Job can leave again, forming part of a new journey.
+    saved.loads.forEach(function (load) {
+      load.jobIds = load.jobIds.filter(function (id) { return !ids.has(id); });
+    });
+    saved.loads.push({
+      id: String(saved.loads.length + 1),
+      tripId: bridge.findJob(jobs[0].id).tripId,
+      createdAt: new Date().toISOString(),
+      status: "on-way",
+      jobIds: Array.from(ids)
+    });
+  }
+  function refreshLoadStatuses() {
+    saved.loads.forEach(function (load) {
+      const stages = load.jobIds.map(function (id) { return saved.overrides[id].status; });
+      // Individual updates stay available. The Load reflects the earliest
+      // outstanding stage, with rejection taking precedence over acceptance.
+      if (stages.length) load.status = FACILITY_STAGES.find(function (stage) {
+        return stages.includes(stage);
+      });
+    });
   }
   function isFinal(job) {
     const code = status(job);
@@ -229,7 +269,7 @@
     }
     if (anyCompletion || statuses.some(function (s) { return s === "rejected"; })) {
       const ready = all(function (j) {
-        return (SERVICE_COMPLETED.has(status(j)) && needsFacility(j)) || status(j) === "rejected";
+        return readyForFacility(j) || status(j) === "rejected";
       });
       result.push(option("on-way", "On way to facility", tripOk && ready,
         "All selected Jobs must have completed a waste-moving service or been rejected by a facility."));
@@ -259,6 +299,9 @@
       const fault = status(jobs[0]).includes("non-customer") ? "customer" : "non-customer";
       result.push(option("correct-fault", "Change failure to " + fault,
         tripOk, "All selected Jobs must have the same outstanding failure classification.", true));
+    }
+    if (existingLoads(jobs).length) {
+      result.push(option("add-to-load", "Add to existing Load", true, "", true));
     }
     return result;
   }
@@ -380,6 +423,17 @@
       'It will appear in the Job history and will not restore previous planning Undo steps.</p>';
     if (key === "correct-fault") return '<p class="status-muted">This amends the original fault classification ' +
       'without losing the history of the initial report.</p>';
+    if (key === "add-to-load") {
+      const choices = existingLoads(jobs).map(function (load) {
+        const created = new Date(load.createdAt).toLocaleString("en-GB");
+        const label = "Load " + load.id + " · " + created + " · " + LABELS[load.status] +
+          " · " + load.jobIds.length + (load.jobIds.length === 1 ? " Job" : " Jobs");
+        return '<option value="' + safe(load.id) + '">' + safe(label) + '</option>';
+      });
+      return '<label>Load<select name="load" required><option value="">Select a Load</option>' +
+        choices.join("") + '</select></label>' +
+        '<p class="status-muted">The Job will inherit the selected Load’s current status.</p>';
+    }
     if (key === "on-way") return '<p class="status-muted">These Jobs will be marked On way to facility. ' +
       'They will remain on their original Trip.</p>';
     return '<p class="status-muted">Apply this status to ' + jobs.length +
@@ -424,7 +478,7 @@
     const question = titleForAction(key, jobs);
     const buttonLabel = key === "complete" ? "Complete" : key === "replan" ? "Replan" :
       key === "cancel" ? "Confirm cancellation" : key === "abandon" ? "Abandon" :
-      key === "revert" || key === "correct-fault" ? "Confirm amendment" : "Confirm";
+      fresh.amendment ? "Confirm amendment" : "Confirm";
     dialog.innerHTML = '<header class="status-dialog-head"><h2 id="status-dialog-title">' +
       safe(question) + '</h2><button type="button" class="status-dialog-x" data-dialog-close aria-label="Close">×</button></header>' +
       '<form id="status-action-form"><div class="status-dialog-body">' +
@@ -436,7 +490,7 @@
       '<button type="submit" class="btn btn-primary">' + safe(buttonLabel) + '</button>' +
       '</footer></form>';
     backdrop.hidden = false;
-    dialog.querySelector("input,textarea,button[data-dialog-close]").focus();
+    (dialog.querySelector("input,textarea,select") || dialog.querySelector("[data-dialog-close]")).focus();
   }
   function closeDialog() {
     backdrop.hidden = true;
@@ -470,12 +524,24 @@
     if (!valid) { closeDialog(); return; }
     const form = dialog.querySelector("form");
     const data = new FormData(form), key = pending.key;
+    if (key === "add-to-load") {
+      const load = existingLoads(jobs).find(function (item) { return item.id === data.get("load"); });
+      if (!load) return;
+      const job = jobs[0];
+      load.jobIds.push(job.id);
+      addEvent(job, load.status, "", "Added to Load " + load.id);
+      if (load.status === "accepted") propagate(job, "resolved");
+      closeDialog();
+      afterChange("Amendment recorded", "Job " + job.reference + " added to Load " + load.id + ".");
+      return;
+    }
     const note = String(data.get("note") || "").trim();
     const date = String(data.get("date") || "");
     if (key === "replan" && !/^\d{4}-\d{2}-\d{2}$/.test(date)) return;
     const qty = String(data.get("quantity") || "");
     const weight = String(data.get("weight") || "");
     const createdIds = [];
+    if (key === "on-way") createLoad(jobs);
     jobs.forEach(function (job) {
       let next = "";
       switch (key) {
@@ -538,6 +604,7 @@
       if (key === "abandon" || key === "cancel") propagate(job, "abandoned");
       else if (key === "accepted" || (key === "complete" && isFinal(job))) propagate(job, "resolved");
     });
+    if (FACILITY_STAGES.includes(key)) refreshLoadStatuses();
     const singleFailure = jobs.length === 1 &&
       (key === "fail-customer" || key === "fail-non-customer");
     closeDialog();
@@ -649,7 +716,7 @@
     refresh();
   }
   function reset() {
-    saved = { overrides: {}, clones: {}, nextReference: 900001 };
+    saved = { overrides: {}, clones: {}, loads: [], nextReference: 900001 };
     try { localStorage.removeItem(KEY); } catch (_) {}
     if (bar) {
       const link = document.getElementById("status-replan-link");
