@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Home | WasteTracker</title>
+  <style>
+    * { box-sizing: border-box; }
+    :root { color: #24344d; background: #f5f8fb; font: 16px/1.5 Inter, system-ui, sans-serif; }
+    body { margin: 0; }
+    .top, .drawer-heading { display: flex; align-items: center; gap: 14px; padding: 14px 20px; }
+    .top { background: #fff; border-bottom: 1px solid #dae5ed; }
+    .brand { font-weight: 750; }
+    button { font: inherit; color: inherit; cursor: pointer; }
+    .control {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      min-height: 42px;
+      padding: 6px 12px;
+      border: 1px solid #bdcddd;
+      border-radius: 7px;
+      background: #fff;
+    }
+    .control:hover, nav a:hover { background: #edf4f8; }
+    :focus-visible { outline: 3px solid #268fb0; outline-offset: 2px; }
+    dialog {
+      position: fixed;
+      inset: 0 auto 0 0;
+      max-width: 100%;
+      max-height: 100%;
+      width: min(20rem, 100%);
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      border: 0;
+      background: #fff;
+      color: inherit;
+      box-shadow: 8px 0 30px #24344d26;
+      overflow: auto;
+    }
+    dialog[open] { animation: slide-in 180ms ease-out; }
+    dialog::backdrop { background: #24344d66; }
+    @keyframes slide-in { from { transform: translateX(-100%); } }
+    @media (prefers-reduced-motion: reduce) { dialog[open] { animation: none; } }
+    .drawer-heading { justify-content: space-between; border-bottom: 1px solid #dae5ed; }
+    nav ul { margin: 0; padding: 12px; list-style: none; }
+    nav a, nav .unavailable {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 10px 12px;
+      border-radius: 6px;
+    }
+    nav a { color: inherit; text-decoration: none; font-weight: 600; }
+    .unavailable { color: #52647c; }
+    .unavailable small { font-size: .8rem; }
+  </style>
+</head>
+<body>
+  <header class="top">
+    <button type="button" class="control" id="menu-toggle" aria-haspopup="dialog" aria-controls="main-menu" aria-expanded="false">
+      <span aria-hidden="true">☰</span> Menu
+    </button>
+    <span class="brand">WasteTracker</span>
+  </header>
+  <main aria-label="Home"></main>
+
+  <dialog id="main-menu" aria-labelledby="menu-title">
+    <div class="drawer-heading">
+      <span class="brand" id="menu-title">WasteTracker menu</span>
+      <form method="dialog"><button class="control" autofocus>Close</button></form>
+    </div>
+    <nav aria-label="Main navigation">
+      <ul>
+        <li><a href="day-board-prototype/index.html">Day board</a></li>
+        <li><a href="rounds-prototype/index.html">Rounds</a></li>
+        <li><a href="round-planning-prototype/index.html">Round planning</a></li>
+        <li><a href="agreements-prototype/index.html">Agreements</a></li>
+        <li><a href="jobs-prototype/index.html">Jobs</a></li>
+        <li><span class="unavailable">Vehicles <small>Unavailable</small></span></li>
+        <li><span class="unavailable">Drivers <small>Unavailable</small></span></li>
+        <li><span class="unavailable">Dictionaries <small>Unavailable</small></span></li>
+      </ul>
+    </nav>
+  </dialog>
+
+  <script>
+    const menu = document.getElementById("main-menu");
+    const toggle = document.getElementById("menu-toggle");
+
+    toggle.addEventListener("click", () => {
+      menu.showModal();
+      toggle.setAttribute("aria-expanded", "true");
+    });
+
+    menu.addEventListener("close", () => {
+      toggle.setAttribute("aria-expanded", "false");
+      toggle.focus();
+    });
+
+    menu.addEventListener("click", event => {
+      if (event.target !== menu) return;
+      const bounds = menu.getBoundingClientRect();
+      if (event.clientX < bounds.left || event.clientX > bounds.right ||
+          event.clientY < bounds.top || event.clientY > bounds.bottom) menu.close();
+    });
+
+    menu.querySelector("nav").addEventListener("click", event => {
+      if (event.target.closest("a")) menu.close();
+    });
+  </script>
+</body>
+</html>
