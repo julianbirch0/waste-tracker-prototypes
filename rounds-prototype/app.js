@@ -28,6 +28,8 @@
   let saved = loadSavedRows();
   let draft = clone(saved);
   let invalidById = new Map();
+  let draggedRowId = null;
+  let dropRow = null;
 
   function clone(value) {
     return JSON.parse(JSON.stringify(value));
@@ -131,12 +133,17 @@
   function renderRows() {
     closeDayPicker();
     if (!draft.length) {
-      body.innerHTML = '<tr><td colspan="7" class="empty-row">No rounds defined. Select Add Round to create one.</td></tr>';
+      body.innerHTML = '<tr><td colspan="8" class="empty-row">No rounds defined. Select Add Round to create one.</td></tr>';
     } else {
       body.innerHTML = draft.map(row => {
         const invalid = invalidById.get(row.id) || new Set();
         return `
           <tr data-row-id="${escapeHTML(row.id)}">
+            <td class="reorder-cell">
+              <button type="button" class="round-drag-handle" draggable="true" aria-label="Reorder round" title="Drag to reorder, or use the Up and Down arrow keys">
+                <span aria-hidden="true">⠿</span>
+              </button>
+            </td>
             <td><input class="field${invalid.has('name') ? ' invalid' : ''}" data-field="name" type="text" maxlength="120" aria-label="Round Name" aria-invalid="${invalid.has('name')}" placeholder="Round name" value="${escapeHTML(row.name)}"></td>
             <td>
               <button type="button" class="days-trigger${invalid.has('days') ? ' invalid' : ''}" data-action="days" aria-label="Choose days for ${escapeHTML(row.name || 'new round')}" aria-haspopup="dialog" aria-expanded="false" aria-invalid="${invalid.has('days')}" data-empty="${!row.days.length}" title="${escapeHTML(row.days.join(', '))}">
@@ -181,6 +188,30 @@
 
   function getRowElement(id) {
     return Array.from(body.querySelectorAll('tr[data-row-id]')).find(el => el.dataset.rowId === id);
+  }
+
+  function moveRound(id, targetId, after) {
+    if (id === targetId) return;
+    const from = draft.findIndex(row => row.id === id);
+    const target = draft.findIndex(row => row.id === targetId);
+    if (from < 0 || target < 0) return;
+    const to = target + Number(after) - Number(from < target);
+    if (from === to) return;
+    const [row] = draft.splice(from, 1);
+    draft.splice(to, 0, row);
+    clearMessage();
+    renderRows();
+    getRowElement(id)?.querySelector('.round-drag-handle')?.focus();
+  }
+
+  function clearDropHint() {
+    dropRow?.classList.remove('drop-before', 'drop-after');
+    dropRow = null;
+  }
+
+  function isLowerHalf(row, event) {
+    const rect = row.getBoundingClientRect();
+    return event.clientY >= rect.top + rect.height / 2;
   }
 
   function addRound() {
@@ -342,6 +373,54 @@
     updateRoundCount();
     updateDirtyIndicator();
   }
+
+  body.addEventListener('dragstart', function (event) {
+    const handle = event.target.closest('.round-drag-handle');
+    if (!handle) return;
+    draggedRowId = handle.closest('tr').dataset.rowId;
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', draggedRowId);
+  });
+
+  body.addEventListener('dragover', function (event) {
+    if (!draggedRowId) return;
+    clearDropHint();
+    const row = event.target.closest('tr[data-row-id]');
+    if (!row || row.dataset.rowId === draggedRowId) return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+    dropRow = row;
+    row.classList.add(isLowerHalf(row, event) ? 'drop-after' : 'drop-before');
+  });
+
+  body.addEventListener('dragleave', function (event) {
+    if (!body.contains(event.relatedTarget)) clearDropHint();
+  });
+
+  body.addEventListener('drop', function (event) {
+    if (!draggedRowId) return;
+    event.preventDefault();
+    const id = draggedRowId;
+    draggedRowId = null;
+    clearDropHint();
+    const row = event.target.closest('tr[data-row-id]');
+    if (row) moveRound(id, row.dataset.rowId, isLowerHalf(row, event));
+  });
+
+  body.addEventListener('dragend', function () {
+    draggedRowId = null;
+    clearDropHint();
+  });
+
+  body.addEventListener('keydown', function (event) {
+    const handle = event.target.closest('.round-drag-handle');
+    if (!handle || !['ArrowUp', 'ArrowDown'].includes(event.key)) return;
+    event.preventDefault();
+    const row = handle.closest('tr');
+    const down = event.key === 'ArrowDown';
+    const target = down ? row.nextElementSibling : row.previousElementSibling;
+    if (target) moveRound(row.dataset.rowId, target.dataset.rowId, down);
+  });
 
   body.addEventListener('input', function (event) {
     const input = event.target.closest('[data-field="name"]');
