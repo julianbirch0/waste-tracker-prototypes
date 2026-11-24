@@ -5,3 +5,37 @@ function renderDict(){const tree=$('tree'),preview=$('preview');const sy=tree.sc
 $('all').onclick=()=>{for(const r of DATA)draft[r.name]=r.wpas.map(w=>w.name);renderDict()};$('none').onclick=()=>{draft={};renderDict()};$('collapse').onclick=()=>{expanded.clear();renderDict()};$('discard').onclick=()=>{draft=copy(saved);renderDict();toast('Changes discarded')};$('save').onclick=()=>{saved=clean(draft);draft=copy(saved);const ok=persist();renderDict();toast(ok?'Origins shortlist saved':'Shortlist saved for this session only')};function navigate(to){closeDropdown();$('dict').classList.toggle('hide',to!=='dict');$('intake').classList.toggle('hide',to!=='intake');$('navDict').classList.toggle('active',to==='dict');$('navIntake').classList.toggle('active',to==='intake');$('navDict').setAttribute('aria-current',to==='dict'?'page':'false');$('navIntake').setAttribute('aria-current',to==='intake'?'page':'false');if(to==='intake')renderIntake();else renderDict()};$('navDict').onclick=()=>navigate('dict');$('navIntake').onclick=()=>navigate('intake');function renderIntake(){const list=items(saved);$('comboValue').textContent=selection?selection.name:'Select origin';$('comboValue').classList.toggle('placeholder',!selection);$('clearOrigin').classList.toggle('hide',!selection);$('selectedDetail').classList.toggle('hide',!selection);if(selection){$('selectedDetail').innerHTML=`<strong>Selected:</strong> ${esc(selection.path)} <span>·</span> ${esc(selection.type)}${list.some(x=>x.value===selection.value)?'':' · No longer in the current shortlist (existing selection retained)'}`;}$('intakeHelp').textContent=list.length?'Select the geographical origin of the waste, at the most detailed level known.':'No origins shortlisted. Go to Company → Dictionaries → Origins to create and save your shortlist.';if(dirty())$('intakeHelp').textContent+=' Unsaved dictionary changes are not included.';}
 function showDropdown(){open=true;active=-1;$('dropdown').classList.remove('hide');$('comboValue').setAttribute('aria-expanded','true');$('comboArrow').setAttribute('aria-expanded','true');$('comboArrow').innerHTML=icon('m6 15 6-6 6 6');$('search').value='';renderOptions();$('search').focus()}function closeDropdown(){open=false;$('dropdown').classList.add('hide');$('comboValue').setAttribute('aria-expanded','false');$('comboArrow').setAttribute('aria-expanded','false');$('comboArrow').innerHTML=down}function toggleDropdown(){open?closeDropdown():showDropdown()}$('comboValue').onclick=toggleDropdown;$('comboArrow').onclick=toggleDropdown;$('clearOrigin').onclick=()=>{selection=null;persist();closeDropdown();renderIntake();$('comboValue').focus()};function choose(x){selection=x;persist();closeDropdown();renderIntake();$('comboValue').focus()}function renderOptions(){const q=$('search').value.trim().toLowerCase(),all=items(saved);shown=all.filter(x=>[x.name,x.path,x.value,...(x.aliases||[])].some(s=>s.toLowerCase().includes(q)));active=-1;const target=$('options');target.innerHTML='';for(let i=0;i<shown.length;i++){const x=shown[i],b=document.createElement('button');b.type='button';b.className='option'+(selection?.value===x.value?' selected':'');b.dataset.level=q?0:x.level;b.setAttribute('role','option');b.setAttribute('aria-selected',selection?.value===x.value);b.innerHTML=`<span class="name">${esc(x.name)}${q&&x.level?`<span class="context">${esc(x.path)}</span>`:''}</span><span class="type">${esc(x.type)}</span>${selection?.value===x.value?'✓':''}`;b.onclick=()=>choose(x);target.append(b)}if(!shown.length)target.innerHTML=`<div class="empty" style="padding:20px">${all.length?'No matching origins.':'No origins shortlisted. Save a shortlist in the Origins dictionary.'}</div>`;target.scrollTop=0;$('dropdownFoot').textContent=`${shown.length} ${shown.length===1?'origin':'origins'}${q?' found':' available'}`}
 $('search').oninput=renderOptions;$('search').onkeydown=e=>{if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();if(!shown.length)return;active=Math.max(0,Math.min(shown.length-1,active+(e.key==='ArrowDown'?1:-1)));const options=[...$('options').querySelectorAll('button')];options.forEach((x,i)=>x.classList.toggle('active',i===active));options[active].scrollIntoView({block:'nearest'})}else if(e.key==='Enter'&&shown.length){e.preventDefault();choose(shown[Math.max(0,active)])}else if(e.key==='Escape'){closeDropdown();$('comboValue').focus()}};document.addEventListener('keydown',e=>{if(open&&e.key==='Escape'){closeDropdown();$('comboValue').focus()}});document.addEventListener('pointerdown',e=>{if(open&&!$('originField').contains(e.target))closeDropdown()});window.addEventListener('beforeunload',e=>{if(dirty()){e.preventDefault();e.returnValue=''}});renderDict();
+
+// Keep the dictionary columns stable, using the entire hierarchy rather than
+// only the currently expanded or shortlisted rows.
+function sizeDictionaryPanels() {
+  const fontFamily = getComputedStyle(document.documentElement).fontFamily;
+  const context = document.createElement('canvas').getContext('2d');
+  if (!context) return;
+  const width = (text, size, weight=400) => {
+    context.font = `${weight} ${size}px ${fontFamily}`;
+    return context.measureText(text).width;
+  };
+  let treeNameWidth=0, treeCountWidth=0, previewRowWidth=0;
+  for (const r of DATA) {
+    treeNameWidth=Math.max(treeNameWidth,width(r.name,15,650));
+    treeCountWidth=Math.max(treeCountWidth,width(`${r.wpas.length}/${r.wpas.length} WPAs`,12));
+    previewRowWidth=Math.max(previewRowWidth,10+width(r.name,15,750)+10+width('REGION',10,700)+3);
+    for (const w of r.wpas) {
+      treeNameWidth=Math.max(treeNameWidth,width(w.name,14));
+      treeCountWidth=Math.max(treeCountWidth,width(`${w.districts.length} ${w.districts.length===1?'district':'districts'}`,12));
+      previewRowWidth=Math.max(previewRowWidth,27+width(w.name,14,650)+9+width('WPA',10,700)+3);
+      for (const d of w.districts) {
+        previewRowWidth=Math.max(previewRowWidth,51+width(d.name,14)+9+width('DISTRICT',10,700)+5);
+      }
+    }
+  }
+  // Row indentation, checkbox/expander, gaps, borders, scrollbars and breathing room.
+  const available=Math.ceil(Math.max(310,treeNameWidth+treeCountWidth+126));
+  const shortlist=Math.ceil(Math.max(340,previewRowWidth+64));
+  const columns=document.querySelector('#dict .columns');
+  columns.style.setProperty('--available-width',`${available}px`);
+  columns.style.setProperty('--shortlist-width',`${shortlist}px`);
+}
+sizeDictionaryPanels();
+if (document.fonts) document.fonts.ready.then(sizeDictionaryPanels);
