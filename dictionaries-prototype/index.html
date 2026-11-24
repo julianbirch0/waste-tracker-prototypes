@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Custom Dictionaries | WasteTracker</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Custom Dictionaries</h1>
+      <p>Maintain your custom dictionaries.</p>
+    </header>
+    <ul class="tabs" aria-label="Dictionaries">
+      <li>Waste Types</li>
+      <li>Containers</li>
+      <li>Standard Services</li>
+      <li>Vehicle Types</li>
+      <li>Means of Transport</li>
+      <li aria-current="page">Round Groups</li>
+    </ul>
+    <section aria-labelledby="round-groups">
+      <h2 id="round-groups">Round Groups</h2>
+      <p>Create and maintain the groups used to organise Rounds.</p>
+      <form id="groups-form">
+        <div class="add-row"><button type="button" id="add">Add Round Group</button></div>
+        <div class="table-wrap">
+          <table aria-label="Round Groups">
+            <thead><tr><th scope="col">Name</th><th scope="col" class="action">Action</th></tr></thead>
+            <tbody id="groups"></tbody>
+          </table>
+        </div>
+        <footer>
+          <p id="notice" role="status"></p>
+          <div class="buttons">
+            <button type="button" id="cancel" disabled>Cancel</button>
+            <button type="submit" id="save" class="primary" disabled>Save</button>
+          </div>
+        </footer>
+      </form>
+    </section>
+    <a class="home" href="../index.html">WasteTracker home</a>
+  </main>
+  <script src="../rounds-prototype/data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

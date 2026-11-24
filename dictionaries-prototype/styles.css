@@ -1,0 +1,49 @@
+* { box-sizing: border-box; }
+:root {
+  color: #10192e;
+  background: #fdfdfd;
+  font: 16px/1.45 Inter, system-ui, sans-serif;
+  --line: #dae3ef;
+  --field: #f5f7fa;
+  --muted: #475a75;
+  --teal: #117e73;
+}
+body { margin: 0; }
+main { padding: 22px 16px; }
+h1, h2, p { margin: 0; }
+h1 { font-size: clamp(1.6rem, 4vw, 1.95rem); font-weight: 650; }
+h2 { font-size: 1.4rem; font-weight: 650; }
+p { color: var(--muted); }
+.tabs {
+  display: flex;
+  gap: clamp(8px, 2.3vw, 36px);
+  margin: 20px 0;
+  padding: 0;
+  list-style: none;
+  border-bottom: 1px solid var(--line);
+  overflow-x: auto;
+}
+.tabs li { padding: 12px 5px 14px; color: #52647f; white-space: nowrap; }
+.tabs [aria-current] { color: var(--teal); border-bottom: 2px solid #36b9ac; font-weight: 650; }
+section { padding: clamp(14px, 2vw, 26px); border: 1px solid var(--line); border-radius: 9px; }
+.add-row { margin: 20px 0 14px; }
+.table-wrap { border: 1px solid var(--line); border-radius: 7px; overflow: hidden; }
+table { width: 100%; border-collapse: collapse; text-align: left; }
+th, td { padding: 9px 13px; }
+th { background: var(--field); color: #52647f; font-size: .84rem; text-transform: uppercase; }
+td { border-top: 1px solid var(--line); }
+.action { width: 1%; text-align: right; }
+input, button { font: inherit; border: 1px solid #c1d0e2; border-radius: 7px; color: inherit; }
+input { padding: 8px 10px; width: 100%; max-width: 30rem; background: var(--field); }
+button { padding: 8px 14px; background: #fff; cursor: pointer; }
+button:hover { background: #eef4f8; }
+button:disabled { opacity: .55; cursor: default; }
+.primary, .primary:hover { background: var(--teal); border-color: var(--teal); color: #fff; }
+.delete { background: #c51e31; border-color: #c51e31; color: #fff; padding: 6px 10px; font-size: .875rem; }
+.delete:hover { background: #a91627; }
+:focus-visible { outline: 2px solid #21879c; outline-offset: 2px; }
+input[aria-invalid="true"] { border-color: #c51e31; }
+footer, .buttons { display: flex; gap: 10px; align-items: center; }
+footer { margin-top: 20px; justify-content: space-between; flex-wrap: wrap; }
+.buttons { margin-left: auto; }
+.home { display: inline-block; color: var(--teal); margin-top: 14px; }
