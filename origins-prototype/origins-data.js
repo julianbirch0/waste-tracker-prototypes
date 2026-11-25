@@ -1325,11 +1325,6 @@ const DATA = [
     "value": "Northern Ireland"
   },
   {
-    "name": "Outside of UK",
-    "wpas": [],
-    "value": "Outside of UK"
-  },
-  {
     "name": "Scotland",
     "wpas": [
       {
@@ -2538,5 +2533,10 @@ const DATA = [
       }
     ],
     "value": "Yorks & Humber"
+  },
+  {
+    "name": "Outside of UK",
+    "wpas": [],
+    "value": "Outside of UK"
   }
 ];
